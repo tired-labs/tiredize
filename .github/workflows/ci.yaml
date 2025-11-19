@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: pip install pytest pytest-cov flake8
 
+      - name: Install tiredize
+        run: pip install -e .
+
       - name: Lint with flake8
         run: |
           flake8 tiredize tests
