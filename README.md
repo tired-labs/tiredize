@@ -1,5 +1,7 @@
 # Tiredize
 
+[![CI](https://github.com/tired-labs/tiredize/actions/workflows/ci.yml/badge.svg)](https://github.com/tired-labs/tiredize/actions/workflows/ci.yml)
+
 Tiredize is a schema driven markdown validation tool that ensures [TIRED Labs]
 documentation adheres to consistent structural and formatting requirements. It
 provides a configurable rules engine that can enforce front matter schemas,
