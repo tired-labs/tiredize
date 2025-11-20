@@ -2,6 +2,7 @@ from tiredize.document import Document
 from tiredize.types import RuleResult
 from tiredize.validators.front_matter import validate_front_matter
 from tiredize.validators.line_length import validate_line_length
+from tiredize.validators.markdown_structure import validate_markdown_structure
 from tiredize.validators.whitespace import validate_whitespace
 from typing import Dict, List, Callable
 
@@ -11,7 +12,8 @@ from typing import Dict, List, Callable
 RULE_REGISTRY: Dict[str, Callable[[Document, Dict], List[RuleResult]]] = {
     "line_length": validate_line_length,
     "whitespace": validate_whitespace,
-    "front_matter": validate_front_matter
+    "front_matter": validate_front_matter,
+    "markdown_structure": validate_markdown_structure
 }
 
 
