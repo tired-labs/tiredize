@@ -1,6 +1,6 @@
 # Tiredize
 
-[![Run tests and upload coverage](https://github.com/tired-labs/tiredize/actions/workflows/ci.yaml/badge.svg)](https://github.com/tired-labs/tiredize/actions/workflows/ci.yaml)  [![codecov](https://codecov.io/github/tired-labs/tiredize/graph/badge.svg?token=MQGTYZOGV4)](https://codecov.io/github/tired-labs/tiredize)
+[![Run tests and upload coverage](https://github.com/tired-labs/tiredize/actions/workflows/ci.yaml/badge.svg)](https://github.com/tired-labs/tiredize/actions/workflows/ci.yaml)  [![Coverage Status](https://coveralls.io/repos/github/tired-labs/tiredize/badge.svg)](https://coveralls.io/github/tired-labs/tiredize)
 
 Tiredize is a schema driven markdown validation tool that ensures [TIRED Labs]
 documentation adheres to consistent structural and formatting requirements. It
