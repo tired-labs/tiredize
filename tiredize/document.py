@@ -6,12 +6,12 @@ import re
 import yaml
 
 # Regular expressions reused across parsing
-RE_FRONT_MATTER_DELIM = re.compile(r"^---\s*$")
+RE_FRONT_MATTER_YAML_DELIM = r"^---$"
 RE_HEADER = re.compile(
     r"^(?P<hashes>#{1,6})\s(?P<title>.+?)$",
     re.MULTILINE,
 )
-RE_CODE_FENCE = re.compile(r"^\s*```")
+RE_CODE_FENCE = re.compile(r"^``[`]+.*$")
 RE_CODE_INLINE = re.compile(r"`[^`]*`")
 RE_TABLE_ROW = re.compile(r"^\s*\|.*\|\s*$")
 RE_TABLE_DIV = re.compile(r"^\s*\|(\s*:?-+:?\s*\|)+\s*$")
@@ -44,17 +44,32 @@ class Link:
 class Document:
     """Parsed view of a markdown document."""
 
-    path: Optional[Path]
-    text: str
-
-    front_matter: Dict
+    # The body text (without front matter)
     body: str
+
+    # Set of 1-based line numbers that are inside fenced code blocks
+    fenced_lines: set[int]
+
+    # The parsed front matter as a dict
+    front_matter: Dict[str, str]
+
+    # Extracted elements
+    headings: List[Heading]
+
+    # The body split into lines
     lines: List[str]
 
-    fenced_lines: set[int]
-    headings: List[Heading]
-    tables: List[Table]
+    # Extracted links
     links: List[Link]
+
+    # The original source path (if any)
+    path: Optional[Path]
+
+    # Extracted tables
+    tables: List[Table]
+
+    # The full original text of the document
+    text: str
 
     @classmethod
     def from_path(cls, path: Path) -> "Document":
@@ -83,14 +98,8 @@ class Document:
             links=links,
         )
 
-    def line_at(self, line_no: int) -> str:
-        """Return the raw line text for a given 1 based line number."""
-        if 1 <= line_no <= len(self.lines):
-            return self.lines[line_no - 1]
-        return ""
 
-
-def _split_front_matter(text: str) -> Tuple[Dict, str]:
+def _split_front_matter(text: str) -> Tuple[Dict[str, str], str]:
     """
     Split YAML front matter from the rest of the document.
 
@@ -98,26 +107,31 @@ def _split_front_matter(text: str) -> Tuple[Dict, str]:
     If no front matter is present, front_matter is {} and body is original
     text.
     """
-    lines = text.splitlines()
-    if not lines:
+
+    split = re.split(
+        RE_FRONT_MATTER_YAML_DELIM,
+        text,
+        maxsplit=2,
+        flags=re.MULTILINE
+    )
+
+    # If there isn't 3 parts, there is no valid front matter
+    if len(split) < 3:
         return {}, text
 
-    if not RE_FRONT_MATTER_DELIM.match(lines[0]):
+    # If the first part isn't empty, we encountered unexpected text beforehand
+    if len(split[0]) > 0:
         return {}, text
 
-    # Find the closing delimiter
-    for i in range(1, len(lines)):
-        if RE_FRONT_MATTER_DELIM.match(lines[i]):
-            yaml_block = "\n".join(lines[1:i])
-            body = "\n".join(lines[i + 1:])
-            data = yaml.safe_load(yaml_block) or {}
-            if not isinstance(data, dict):
-                # Defensive: malformed front matter should not crash parsing
-                data = {}
-            return data, body
+    # Try to parse the second part as YAML
+    yaml_block = None
+    try:
+        yaml_block = yaml.safe_load(split[1])
+    except yaml.YAMLError:
+        raise ValueError(f"Invalid YAML in frontmatter: {split[1]!r}")
 
-    # No closing delimiter, treat as no front matter
-    return {}, text
+    # If we made it here, we have valid front matter
+    return yaml_block, split[2]
 
 
 def _get_fenced_lines(text: str) -> set[int]:
@@ -127,33 +141,50 @@ def _get_fenced_lines(text: str) -> set[int]:
     Includes the fence lines themselves.
     """
     fenced: set[int] = set()
-    in_code = False
+    in_code: bool = False
+    delimiter: str = "```"
+
+    # Scan through all lines to find any that match the code fence regex
     for i, line in enumerate(text.splitlines(), start=1):
-        if RE_CODE_FENCE.match(line):
-            fenced.add(i)
-            in_code = not in_code
-            continue
+
+        # if we are already in a code block, mark this line
         if in_code:
             fenced.add(i)
+
+            # if this line is the matching delimiter, we exit code block
+            if line.startswith(delimiter):
+                in_code = not in_code
+            continue
+
+        # if this is the start of a codeblock, store the closing delimiter
+        if RE_CODE_FENCE.match(line):
+            in_code = not in_code
+            fenced.add(i)
+            delimiter = "`" * line.count("`")
+            continue
+
     return fenced
 
 
 def _extract_headings(text: str, fenced_lines: set[int]) -> List[Heading]:
     """Return all headings as Heading objects, ignoring fenced code blocks."""
+
     headings: List[Heading] = []
 
     for line_no, line in enumerate(text.splitlines(), start=1):
+
+        # Ignore headings that appear inside fenced code
         if line_no in fenced_lines:
-            # Ignore headings that appear inside fenced code
             continue
 
+        # Check if this line is a heading
         m = RE_HEADER.match(line)
         if not m:
             continue
 
+        # Extract level/title and save it to the results
         level = len(m.group("hashes"))
         title = m.group("title").strip()
-
         headings.append(Heading(level=level, title=title, line=line_no))
 
     return headings
@@ -165,13 +196,40 @@ def _split_table_row(line: str) -> List[str]:
 
     Keeps empty cells intact, strips outer pipes and whitespace.
     """
-    s = line.strip()
+    # Remove leading/trailing pipe if present
+    s = line.rstrip()
     if s.startswith("|"):
         s = s[1:]
     if s.endswith("|"):
         s = s[:-1]
-    return [cell.strip() for cell in s.split("|")]
 
+    cells: List[str] = []
+    cell = ""
+    escaped = False
+
+    # Parse the row character by character to handle escaped pipes
+    for i in s:
+
+        # Handle unescaped pipe as cell separator
+        if (not escaped) and (i == "|"):
+            cells.append(cell.strip())
+            cell = ""
+            continue
+
+        # Otherwise, add character to current cell
+        cell += i
+
+        # Handle escape character
+        if i == "\\":
+            escaped = True
+            continue
+
+        # Reset escape state
+        escaped = False
+
+    # Add the last cell
+    cells.append(cell.strip())
+    return cells
 
 def _extract_tables(text: str, fenced_lines: set[int]) -> List[Table]:
     """
@@ -180,6 +238,7 @@ def _extract_tables(text: str, fenced_lines: set[int]) -> List[Table]:
     Tables are contiguous blocks of lines that match RE_TABLE_ROW,
     excluding any lines inside fenced code blocks.
     """
+
     tables: List[Table] = []
     lines = text.splitlines()
     i = 0
@@ -192,33 +251,42 @@ def _extract_tables(text: str, fenced_lines: set[int]) -> List[Table]:
             i += 1
             continue
 
+        # Start collecting a table
         block: List[Tuple[int, str]] = []
 
         # Collect a contiguous block of table lines, all outside fenced code
         while i < len(lines):
             line_no = i + 1
+
+            # Stop if we hit fenced code or a non-table row
             if line_no in fenced_lines or not RE_TABLE_ROW.match(lines[i]):
                 break
+
+            # Ignore tables without a divider as second row
+            if len(block) == 1 and not RE_TABLE_DIV.match(lines[i]):
+                break
+
+            # Add this line to the current table block
             block.append((line_no, lines[i]))
             i += 1
 
+        # Ignore tables that are too short to be valid
         if len(block) < 2:
-            # Too small to be a valid table
             continue
 
+        # Parse the header row
         header_line_no, header_line = block[0]
         header = _split_table_row(header_line)
 
+        # Parse the body rows that come after the divider row
         body_rows: List[List[str]] = []
-        data_block = block[1:]
+        data_block = block[2:]
 
-        # Skip the separator row if present
-        if data_block and RE_TABLE_DIV.match(data_block[0][1].strip()):
-            data_block = data_block[1:]
-
+        # Parse each data row
         for _, row_text in data_block:
             body_rows.append(_split_table_row(row_text))
 
+        # Store the parsed table
         tables.append(
             Table(
                 header=header,
