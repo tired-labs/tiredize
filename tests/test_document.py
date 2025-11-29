@@ -1,7 +1,8 @@
 from pathlib import Path
-import tempfile
+from tempfile import NamedTemporaryFile
 from tiredize.document import Document, Table
 import pytest
+
 
 def test_frontmatter_good():
     test_markdown = r"""---
@@ -563,7 +564,7 @@ Some content.
 """
 
     # Create a temporary markdown file
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
+    with NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
         tmp.write(md)
         tmp_path = Path(tmp.name)
 
