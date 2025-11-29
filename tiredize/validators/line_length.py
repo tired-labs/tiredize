@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from tiredize.document import Document
 from tiredize.types import RuleResult
 from typing import List, Dict

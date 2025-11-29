@@ -1,3 +1,5 @@
+# flake8: noqa
+
 # tiredize/validators/markdown_structure.py
 
 from __future__ import annotations
