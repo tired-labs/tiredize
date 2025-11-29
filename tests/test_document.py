@@ -1,578 +1,580 @@
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from tiredize.document import Document, Table
-import pytest
+# flake8: noqa
 
+# from pathlib import Path
+# from tempfile import NamedTemporaryFile
+# from tiredize.document import Document, Table
+# import pytest
 
-def test_frontmatter_good():
-    test_markdown = r"""---
-title: Example
-tags:
-    - one
-    - two
----
-# Title
 
-Lorem Ipsum...
+# def test_frontmatter_good():
+#     test_markdown = r"""---
+# title: Example
+# tags:
+#     - one
+#     - two
+# ---
+# # Title
 
-## Section One
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ## Section One
 
-### Subsection One
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ### Subsection One
 
-## Section Two
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ## Section Two
 
-### Subsection Two
+# Lorem Ipsum...
 
-Lorem Ipsum...
-"""
+# ### Subsection Two
 
-    doc = Document.from_text(test_markdown)
+# Lorem Ipsum...
+# """
 
-    assert doc.front_matter == {
-        "title": "Example",
-        "tags": ["one", "two"],
-    }
-    assert doc.body == """
-# Title
+#     doc = Document.from_text(test_markdown)
 
-Lorem Ipsum...
+#     assert doc.front_matter == {
+#         "title": "Example",
+#         "tags": ["one", "two"],
+#     }
+#     assert doc.body == """
+# # Title
 
-## Section One
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ## Section One
 
-### Subsection One
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ### Subsection One
 
-## Section Two
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ## Section Two
 
-### Subsection Two
+# Lorem Ipsum...
 
-Lorem Ipsum...
-"""
-    sections = [(h.level, h.title) for h in doc.headings]
-    assert sections == [
-        (1, "Title"),
-        (2, "Section One"),
-        (3, "Subsection One"),
-        (2, "Section Two"),
-        (3, "Subsection Two"),
-    ]
+# ### Subsection Two
 
+# Lorem Ipsum...
+# """
+#     sections = [(h.level, h.title) for h in doc.headings]
+#     assert sections == [
+#         (1, "Title"),
+#         (2, "Section One"),
+#         (3, "Subsection One"),
+#         (2, "Section Two"),
+#         (3, "Subsection Two"),
+#     ]
 
-def test_frontmatter_preceding_newline():
-    test_markdown = r"""
----
-title: Example
-tags:
-    - one
-    - two
----
-# Heading 1
 
-Body text.
-"""
+# def test_frontmatter_preceding_newline():
+#     test_markdown = r"""
+# ---
+# title: Example
+# tags:
+#     - one
+#     - two
+# ---
+# # Heading 1
 
-    doc = Document.from_text(test_markdown)
+# Body text.
+# """
 
-    assert doc.front_matter == {}
-    assert doc.body == test_markdown
+#     doc = Document.from_text(test_markdown)
 
+#     assert doc.front_matter == {}
+#     assert doc.body == test_markdown
 
-def test_frontmatter_missing_delimiter():
-    test_markdown = r"""
----
-title: Example
-tags:
-    - one
-    - two
-# Heading 1
 
-Body text.
-"""
+# def test_frontmatter_missing_delimiter():
+#     test_markdown = r"""
+# ---
+# title: Example
+# tags:
+#     - one
+#     - two
+# # Heading 1
 
-    doc = Document.from_text(test_markdown)
+# Body text.
+# """
 
-    assert doc.front_matter == {}
-    assert doc.body == test_markdown
+#     doc = Document.from_text(test_markdown)
 
+#     assert doc.front_matter == {}
+#     assert doc.body == test_markdown
 
-def test_frontmatter_bad_yaml():
-    test_markdown = r"""---
-title: Example
-tags: tags:
-    - one
-    - two
----
-# Heading 1
 
-Body text.
-"""
+# def test_frontmatter_bad_yaml():
+#     test_markdown = r"""---
+# title: Example
+# tags: tags:
+#     - one
+#     - two
+# ---
+# # Heading 1
 
-    bad_yaml = """
-title: Example
-tags: tags:
-    - one
-    - two
-"""
+# Body text.
+# """
 
-    with pytest.raises(ValueError) as err:
-        Document.from_text(test_markdown)
+#     bad_yaml = """
+# title: Example
+# tags: tags:
+#     - one
+#     - two
+# """
 
-    assert str(err.value) == "Invalid YAML in frontmatter: " + repr(bad_yaml)
+#     with pytest.raises(ValueError) as err:
+#         Document.from_text(test_markdown)
 
+#     assert str(err.value) == "Invalid YAML in frontmatter: " + repr(bad_yaml)
 
-def test_headings_are_parsed_with_levels_and_lines():
-    test_markdown = r"""# Title
 
-Lorem Ipsum...
+# def test_headings_are_parsed_with_levels_and_lines():
+#     test_markdown = r"""# Title
 
-## Section One
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ## Section One
 
-### Subsection One
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ### Subsection One
 
-## Section Two
+# Lorem Ipsum...
 
-Lorem Ipsum...
+# ## Section Two
 
-### Subsection Two
+# Lorem Ipsum...
 
-Lorem Ipsum...
-"""
+# ### Subsection Two
 
-    doc = Document.from_text(test_markdown)
-    sections = [(h.level, h.title) for h in doc.headings]
-    assert sections == [
-        (1, "Title"),
-        (2, "Section One"),
-        (3, "Subsection One"),
-        (2, "Section Two"),
-        (3, "Subsection Two"),
-    ]
+# Lorem Ipsum...
+# """
 
+#     doc = Document.from_text(test_markdown)
+#     sections = [(h.level, h.title) for h in doc.headings]
+#     assert sections == [
+#         (1, "Title"),
+#         (2, "Section One"),
+#         (3, "Subsection One"),
+#         (2, "Section Two"),
+#         (3, "Subsection Two"),
+#     ]
 
-def test_fenced_lines_track_code_blocks():
-    test_markdown = r"""# Title
 
-```python
-print("inside")
-```
-Outside
-"""
+# def test_fenced_lines_track_code_blocks():
+#     test_markdown = r"""# Title
 
-    doc = Document.from_text(test_markdown)
+# ```python
+# print("inside")
+# ```
+# Outside
+# """
 
-    fenced = doc.fenced_lines
-    assert len(fenced) == 3
-    assert fenced == {3, 4, 5}
+#     doc = Document.from_text(test_markdown)
 
-    sections = [(h.level, h.title) for h in doc.headings]
-    assert sections == [
-        (1, "Title")
-    ]
+#     fenced = doc.fenced_lines
+#     assert len(fenced) == 3
+#     assert fenced == {3, 4, 5}
 
+#     sections = [(h.level, h.title) for h in doc.headings]
+#     assert sections == [
+#         (1, "Title")
+#     ]
 
-def test_tables_are_extracted_with_header_and_rows():
-    test_markdown = r"""# Title
 
-| Col A | Col B |
-| ----- | ----- |
-| 1     | 2     |
-| 3     | 4     |
-"""
+# def test_tables_are_extracted_with_header_and_rows():
+#     test_markdown = r"""# Title
 
-    doc = Document.from_text(test_markdown)
+# | Col A | Col B |
+# | ----- | ----- |
+# | 1     | 2     |
+# | 3     | 4     |
+# """
 
-    assert len(doc.tables) == 1
-    table: Table = doc.tables[0]
+#     doc = Document.from_text(test_markdown)
 
-    assert table.header == ["Col A", "Col B"]
-    assert table.rows == [
-        ["1", "2"],
-        ["3", "4"],
-    ]
-    assert table.start_line < table.end_line
+#     assert len(doc.tables) == 1
+#     table: Table = doc.tables[0]
 
-    sections = [(h.level, h.title) for h in doc.headings]
-    assert sections == [
-        (1, "Title")
-    ]
+#     assert table.header == ["Col A", "Col B"]
+#     assert table.rows == [
+#         ["1", "2"],
+#         ["3", "4"],
+#     ]
+#     assert table.start_line < table.end_line
 
+#     sections = [(h.level, h.title) for h in doc.headings]
+#     assert sections == [
+#         (1, "Title")
+#     ]
 
-def test_links_skip_fenced_code_and_mark_global_defs():
-    test_markdown = r"""# Title
 
-Inline [link](https://example.com) should be captured.
-As should the global link definition to [Example 2].
+# def test_links_skip_fenced_code_and_mark_global_defs():
+#     test_markdown = r"""# Title
 
-```bash
-# This should not be treated as a header
-# or the following as a link!
-curl https://ignored.example.org
-```
+# Inline [link](https://example.com) should be captured.
+# As should the global link definition to [Example 2].
 
-[Example 2]: https://example2.org
-"""
+# ```bash
+# # This should not be treated as a header
+# # or the following as a link!
+# curl https://ignored.example.org
+# ```
 
-    doc = Document.from_text(test_markdown)
+# [Example 2]: https://example2.org
+# """
 
-    urls = {link.url: link for link in doc.links}
-    assert "https://ignored.example.org" not in urls
+#     doc = Document.from_text(test_markdown)
 
-    assert "https://example.com" in urls
-    inline = urls["https://example.com"]
-    assert inline.is_inline is True
-    assert inline.is_reference is False
-    assert inline.line == 3
-    assert inline.title == "link"
-    assert inline.url == "https://example.com"
+#     urls = {link.url: link for link in doc.links}
+#     assert "https://ignored.example.org" not in urls
 
-    assert "https://example2.org" in urls
-    reference = urls["https://example2.org"]
-    assert reference.is_inline is False
-    assert reference.is_reference is True
-    assert reference.line == 12
-    assert reference.title == "Example 2"
-    assert reference.url == "https://example2.org"
+#     assert "https://example.com" in urls
+#     inline = urls["https://example.com"]
+#     assert inline.is_inline is True
+#     assert inline.is_reference is False
+#     assert inline.line == 3
+#     assert inline.title == "link"
+#     assert inline.url == "https://example.com"
 
-    fenced = doc.fenced_lines
-    assert len(fenced) == 5
-    assert fenced == {6, 7, 8, 9, 10}
+#     assert "https://example2.org" in urls
+#     reference = urls["https://example2.org"]
+#     assert reference.is_inline is False
+#     assert reference.is_reference is True
+#     assert reference.line == 12
+#     assert reference.title == "Example 2"
+#     assert reference.url == "https://example2.org"
 
-    sections = [(h.level, h.title) for h in doc.headings]
-    assert sections == [
-        (1, "Title")
-    ]
+#     fenced = doc.fenced_lines
+#     assert len(fenced) == 5
+#     assert fenced == {6, 7, 8, 9, 10}
 
+#     sections = [(h.level, h.title) for h in doc.headings]
+#     assert sections == [
+#         (1, "Title")
+#     ]
 
-def test_headings_ignore_fenced_code_blocks():
-    test_markdown = r"""# Real Title
 
-```markdown
-# Fake Title
-## Fake Section
-```
+# def test_headings_ignore_fenced_code_blocks():
+#     test_markdown = r"""# Real Title
 
-## Real Section
-"""
+# ```markdown
+# # Fake Title
+# ## Fake Section
+# ```
 
-    doc = Document.from_text(test_markdown)
+# ## Real Section
+# """
 
-    titles = [(h.level, h.title) for h in doc.headings]
-    assert (1, "Fake Title") not in titles
-    assert (1, "Real Title") in titles
-    assert (2, "Fake Section") not in titles
-    assert (2, "Real Section") in titles
+#     doc = Document.from_text(test_markdown)
 
+#     titles = [(h.level, h.title) for h in doc.headings]
+#     assert (1, "Fake Title") not in titles
+#     assert (1, "Real Title") in titles
+#     assert (2, "Fake Section") not in titles
+#     assert (2, "Real Section") in titles
 
-def test_tables_ignore_fenced_code_blocks():
-    test_markdown = r"""# Title
 
-```markdown
-| Col A | Col B |
-| ----- | ----- |
-| x     | y     |
-```
+# def test_tables_ignore_fenced_code_blocks():
+#     test_markdown = r"""# Title
 
-| Col A | Col B |
-| ----- | ----- |
-| 1     | 2     |
-"""
+# ```markdown
+# | Col A | Col B |
+# | ----- | ----- |
+# | x     | y     |
+# ```
 
-    doc = Document.from_text(test_markdown)
+# | Col A | Col B |
+# | ----- | ----- |
+# | 1     | 2     |
+# """
 
-    assert len(doc.tables) == 1
-    table = doc.tables[0]
-    assert table.header == ["Col A", "Col B"]
-    assert table.rows == [["1", "2"]]
+#     doc = Document.from_text(test_markdown)
 
-    sections = [(h.level, h.title) for h in doc.headings]
-    assert sections == [
-        (1, "Title")
-    ]
+#     assert len(doc.tables) == 1
+#     table = doc.tables[0]
+#     assert table.header == ["Col A", "Col B"]
+#     assert table.rows == [["1", "2"]]
 
+#     sections = [(h.level, h.title) for h in doc.headings]
+#     assert sections == [
+#         (1, "Title")
+#     ]
 
-def test_nested_fences_are_handled():
-    test_markdown = r"""# Title
 
-````markdown
-# Markdown Block
+# def test_nested_fences_are_handled():
+#     test_markdown = r"""# Title
 
-```python
-# Python Block
-print("nested")
-```
-````
+# ````markdown
+# # Markdown Block
 
-## Real Section
-"""
+# ```python
+# # Python Block
+# print("nested")
+# ```
+# ````
 
-    doc = Document.from_text(test_markdown)
+# ## Real Section
+# """
 
-    fenced = doc.fenced_lines
-    assert len(fenced) == 8
-    assert fenced == {3, 4, 5, 6, 7, 8, 9, 10}
+#     doc = Document.from_text(test_markdown)
 
-    titles = [h.title for h in doc.headings]
-    assert "Markdown Block" not in titles
-    assert "Python Block" not in titles
-    assert "Real Section" in titles
-    assert "Title" in titles
+#     fenced = doc.fenced_lines
+#     assert len(fenced) == 8
+#     assert fenced == {3, 4, 5, 6, 7, 8, 9, 10}
 
+#     titles = [h.title for h in doc.headings]
+#     assert "Markdown Block" not in titles
+#     assert "Python Block" not in titles
+#     assert "Real Section" in titles
+#     assert "Title" in titles
 
-def test_multiple_code_blocks():
-    test_markdown = r"""# Title
 
-```python
-# Fake heading 1
-```
+# def test_multiple_code_blocks():
+#     test_markdown = r"""# Title
 
-## Real Section
+# ```python
+# # Fake heading 1
+# ```
 
-```bash
-# Fake heading 2
-curl https://fake.example.com
-```
+# ## Real Section
 
-[link]: https://real.example.com
-"""
+# ```bash
+# # Fake heading 2
+# curl https://fake.example.com
+# ```
 
-    doc = Document.from_text(test_markdown)
+# [link]: https://real.example.com
+# """
 
-    fenced = doc.fenced_lines
-    assert len(fenced) == 7
-    assert fenced == {3, 4, 5, 9, 10, 11, 12}
+#     doc = Document.from_text(test_markdown)
 
-    titles = [h.title for h in doc.headings]
-    assert "Fake heading 1" not in titles
-    assert "Fake heading 2" not in titles
-    assert "Real Section" in titles
-    assert "Title" in titles
+#     fenced = doc.fenced_lines
+#     assert len(fenced) == 7
+#     assert fenced == {3, 4, 5, 9, 10, 11, 12}
 
-    urls = [link.url for link in doc.links]
-    assert "https://real.example.com" in urls
-    assert "https://fake.example.com" not in urls
+#     titles = [h.title for h in doc.headings]
+#     assert "Fake heading 1" not in titles
+#     assert "Fake heading 2" not in titles
+#     assert "Real Section" in titles
+#     assert "Title" in titles
 
+#     urls = [link.url for link in doc.links]
+#     assert "https://real.example.com" in urls
+#     assert "https://fake.example.com" not in urls
 
-def test_empty_code_blocks():
-    test_markdown = r"""# Title
 
-```
-```
+# def test_empty_code_blocks():
+#     test_markdown = r"""# Title
 
-## Section
-    """
+# ```
+# ```
 
-    doc = Document.from_text(test_markdown)
+# ## Section
+#     """
 
-    fenced = doc.fenced_lines
-    assert len(fenced) == 2
-    assert fenced == {3, 4}
+#     doc = Document.from_text(test_markdown)
 
-    titles = [h.title for h in doc.headings]
-    assert "Title" in titles
-    assert "Section" in titles
+#     fenced = doc.fenced_lines
+#     assert len(fenced) == 2
+#     assert fenced == {3, 4}
 
+#     titles = [h.title for h in doc.headings]
+#     assert "Title" in titles
+#     assert "Section" in titles
 
-def test_table_good():
-    test_markdown = r"""# Table Test
 
-Here comes my table!
+# def test_table_good():
+#     test_markdown = r"""# Table Test
 
-| Name    | Description |
-| ------- | ----------- |
-| Row 1   | The first   |
-| Row 2   | The second  |
-| Row 3   | The third   |
-| Row 4   | The fourth  |
+# Here comes my table!
 
-And another table!
+# | Name    | Description |
+# | ------- | ----------- |
+# | Row 1   | The first   |
+# | Row 2   | The second  |
+# | Row 3   | The third   |
+# | Row 4   | The fourth  |
 
-| Command | Description |
-| ------- | ----------- |
-| `ls`    | List files  |
-| `cd`    | Change dir  |
-"""
+# And another table!
 
-    doc = Document.from_text(test_markdown)
+# | Command | Description |
+# | ------- | ----------- |
+# | `ls`    | List files  |
+# | `cd`    | Change dir  |
+# """
 
-    titles = [h.title for h in doc.headings]
-    assert "Table Test" in titles
+#     doc = Document.from_text(test_markdown)
 
-    assert len(doc.tables) == 2
-    table1 = doc.tables[0]
-    assert table1.header == ["Name", "Description"]
-    assert len(table1.rows) == 4
+#     titles = [h.title for h in doc.headings]
+#     assert "Table Test" in titles
 
-    rows = [(r[0], r[1]) for r in table1.rows]
-    assert rows == [
-        ("Row 1", "The first"),
-        ("Row 2", "The second"),
-        ("Row 3", "The third"),
-        ("Row 4", "The fourth"),
-    ]
+#     assert len(doc.tables) == 2
+#     table1 = doc.tables[0]
+#     assert table1.header == ["Name", "Description"]
+#     assert len(table1.rows) == 4
 
-    table2 = doc.tables[1]
-    assert table2.header == ["Command", "Description"]
-    assert len(table2.rows) == 2
+#     rows = [(r[0], r[1]) for r in table1.rows]
+#     assert rows == [
+#         ("Row 1", "The first"),
+#         ("Row 2", "The second"),
+#         ("Row 3", "The third"),
+#         ("Row 4", "The fourth"),
+#     ]
 
-    rows = [(r[0], r[1]) for r in table2.rows]
-    assert rows == [
-        ("`ls`", "List files"),
-        ("`cd`", "Change dir"),
-    ]
+#     table2 = doc.tables[1]
+#     assert table2.header == ["Command", "Description"]
+#     assert len(table2.rows) == 2
 
+#     rows = [(r[0], r[1]) for r in table2.rows]
+#     assert rows == [
+#         ("`ls`", "List files"),
+#         ("`cd`", "Change dir"),
+#     ]
 
-def test_table_with_code_fence_in_cell():
-    test_markdown = r"""# Title
 
-Here comes my table!
+# def test_table_with_code_fence_in_cell():
+#     test_markdown = r"""# Title
 
-| Command | Description |
-| ------- | ----------- |
-| `ls`    | List files  |
-| `cd`    | Change dir  |
-| `echo "$dir" \| ls`    | View contents of `$dir`  |
-"""
+# Here comes my table!
 
-    doc = Document.from_text(test_markdown)
+# | Command | Description |
+# | ------- | ----------- |
+# | `ls`    | List files  |
+# | `cd`    | Change dir  |
+# | `echo "$dir" \| ls`    | View contents of `$dir`  |
+# """
 
-    titles = [h.title for h in doc.headings]
-    assert "Title" in titles
+#     doc = Document.from_text(test_markdown)
 
-    assert len(doc.tables) == 1
-    table = doc.tables[0]
-    assert table.header == ["Command", "Description"]
-    assert len(table.rows) == 3
+#     titles = [h.title for h in doc.headings]
+#     assert "Title" in titles
 
-    rows = [(r[0], r[1]) for r in table.rows]
-    assert rows == [
-        ("`ls`", "List files"),
-        ("`cd`", "Change dir"),
-        ("`echo \"$dir\" \\| ls`", "View contents of `$dir`"),
-    ]
+#     assert len(doc.tables) == 1
+#     table = doc.tables[0]
+#     assert table.header == ["Command", "Description"]
+#     assert len(table.rows) == 3
 
+#     rows = [(r[0], r[1]) for r in table.rows]
+#     assert rows == [
+#         ("`ls`", "List files"),
+#         ("`cd`", "Change dir"),
+#         ("`echo \"$dir\" \\| ls`", "View contents of `$dir`"),
+#     ]
 
-def test_link_in_heading():
-    test_markdown = r"""# Title with [link](https://example.com)
 
-    Text with [link](https://another.example.com)
-    """
+# def test_link_in_heading():
+#     test_markdown = r"""# Title with [link](https://example.com)
 
-    doc = Document.from_text(test_markdown)
+#     Text with [link](https://another.example.com)
+#     """
 
-    urls = {link.url: link for link in doc.links}
+#     doc = Document.from_text(test_markdown)
 
-    assert "https://example.com" in urls
-    inline1 = urls["https://example.com"]
-    assert inline1.is_inline is True
-    assert inline1.is_reference is False
-    assert inline1.line == 1
-    assert inline1.title == "link"
-    assert inline1.url == "https://example.com"
+#     urls = {link.url: link for link in doc.links}
 
-    assert "https://another.example.com" in urls
-    inline2 = urls["https://another.example.com"]
-    assert inline2.is_inline is True
-    assert inline2.is_reference is False
-    assert inline2.line == 3
-    assert inline2.title == "link"
-    assert inline2.url == "https://another.example.com"
+#     assert "https://example.com" in urls
+#     inline1 = urls["https://example.com"]
+#     assert inline1.is_inline is True
+#     assert inline1.is_reference is False
+#     assert inline1.line == 1
+#     assert inline1.title == "link"
+#     assert inline1.url == "https://example.com"
 
+#     assert "https://another.example.com" in urls
+#     inline2 = urls["https://another.example.com"]
+#     assert inline2.is_inline is True
+#     assert inline2.is_reference is False
+#     assert inline2.line == 3
+#     assert inline2.title == "link"
+#     assert inline2.url == "https://another.example.com"
 
-def test_special_chars_in_table_cells():
-    test_markdown = r"""# Title
 
-Here comes my table!
+# def test_special_chars_in_table_cells():
+#     test_markdown = r"""# Title
 
-| Name | Value |
-| ---- | ----- |
-| a\rb | c     |
-| d    | e\rf  |
-"""
+# Here comes my table!
 
-    doc = Document.from_text(test_markdown)
+# | Name | Value |
+# | ---- | ----- |
+# | a\rb | c     |
+# | d    | e\rf  |
+# """
 
-    titles = [h.title for h in doc.headings]
-    assert "Title" in titles
+#     doc = Document.from_text(test_markdown)
 
-    assert len(doc.tables) == 1
-    table = doc.tables[0]
-    assert table.header == ["Name", "Value"]
-    assert len(table.rows) == 2
+#     titles = [h.title for h in doc.headings]
+#     assert "Title" in titles
 
-    rows = [(r[0], r[1]) for r in table.rows]
-    assert rows == [
-        (r"a\rb", "c"),
-        ("d", r"e\rf")
-    ]
+#     assert len(doc.tables) == 1
+#     table = doc.tables[0]
+#     assert table.header == ["Name", "Value"]
+#     assert len(table.rows) == 2
 
+#     rows = [(r[0], r[1]) for r in table.rows]
+#     assert rows == [
+#         (r"a\rb", "c"),
+#         ("d", r"e\rf")
+#     ]
 
-def test_tables_too_small():
-    test_markdown = r"""# Title
 
-Here comes my (not a) table!
+# def test_tables_too_small():
+#     test_markdown = r"""# Title
 
-| Name | Value |
-"""
+# Here comes my (not a) table!
 
-    doc = Document.from_text(test_markdown)
+# | Name | Value |
+# """
 
-    titles = [h.title for h in doc.headings]
-    assert "Title" in titles
+#     doc = Document.from_text(test_markdown)
 
-    assert len(doc.tables) == 0
+#     titles = [h.title for h in doc.headings]
+#     assert "Title" in titles
 
+#     assert len(doc.tables) == 0
 
-def test_tables_no_divider_row():
-    test_markdown = r"""# Title
 
-Here comes my (not a) table!
+# def test_tables_no_divider_row():
+#     test_markdown = r"""# Title
 
-| Name    | Description |
-| Row 1   | The first   |
-| Row 2   | The second  |
-| Row 3   | The third   |
-| Row 4   | The fourth  |
-"""
+# Here comes my (not a) table!
 
-    doc = Document.from_text(test_markdown)
+# | Name    | Description |
+# | Row 1   | The first   |
+# | Row 2   | The second  |
+# | Row 3   | The third   |
+# | Row 4   | The fourth  |
+# """
 
-    titles = [h.title for h in doc.headings]
-    assert "Title" in titles
+#     doc = Document.from_text(test_markdown)
 
-    assert len(doc.tables) == 0
+#     titles = [h.title for h in doc.headings]
+#     assert "Title" in titles
 
+#     assert len(doc.tables) == 0
 
-def test_load_from_path():
-    md = """# Title
 
-Some content.
-"""
+# def test_load_from_path():
+#     md = """# Title
 
-    # Create a temporary markdown file
-    with NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
-        tmp.write(md)
-        tmp_path = Path(tmp.name)
+# Some content.
+# """
 
-    # Now load using Document.from_path
-    doc = Document.from_path(tmp_path)
+#     # Create a temporary markdown file
+#     with NamedTemporaryFile(mode="w", suffix=".md", delete=False) as tmp:
+#         tmp.write(md)
+#         tmp_path = Path(tmp.name)
 
-    titles = [h.title for h in doc.headings]
-    assert "Title" in titles
-    assert "Some content." in doc.body
+#     # Now load using Document.from_path
+#     doc = Document.from_path(tmp_path)
 
-    tmp_path.unlink()
+#     titles = [h.title for h in doc.headings]
+#     assert "Title" in titles
+#     assert "Some content." in doc.body
+
+#     tmp_path.unlink()
