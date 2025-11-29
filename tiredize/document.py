@@ -9,10 +9,28 @@ import yaml
 RE_FRONT_MATTER_YAML_DELIM = r"^---$"
 RE_HEADER = re.compile(
     r"^(?P<hashes>#{1,6})\s(?P<title>.+?)$",
-    re.MULTILINE,
+    re.MULTILINE
 )
 RE_CODE_FENCE = re.compile(r"^``[`]+.*$")
 RE_CODE_INLINE = re.compile(r"`[^`]*`")
+RE_LINK_INLINE = re.compile(
+    r"(?P<image>!?)"
+    r"\["
+    r"(?P<title>.*?)"
+    r"\]\("
+    r"(?P<url>\s*\S+)"
+    r"\s*?"
+    r"\)"
+)
+RE_LINK_REFERENCE = re.compile(
+    r"\["
+    r"(?P<title>[^^].*]?)"
+    r"\]: "
+    r"(?P<url>\s*\S*[\.\/]+\S*)"
+    r"[\s]*?"
+    r"(?P<desc>([\"\(\'].*[\"\'\)])*)",
+    re.MULTILINE
+)
 RE_TABLE_ROW = re.compile(r"^\s*\|.*\|\s*$")
 RE_TABLE_DIV = re.compile(r"^\s*\|(\s*:?-+:?\s*\|)+\s*$")
 RE_URL = re.compile(r"https?://\S+")
@@ -35,9 +53,11 @@ class Table:
 
 @dataclass(frozen=True)
 class Link:
-    url: str
+    is_inline: bool
+    is_reference: bool
     line: int
-    is_global: bool
+    url: str
+    title: Optional[str] = None
 
 
 @dataclass
@@ -84,7 +104,7 @@ class Document:
         fenced_lines = _get_fenced_lines(body)
         headings = _extract_headings(body, fenced_lines)
         tables = _extract_tables(body, fenced_lines)
-        links = _extract_links(body, fenced_lines)
+        links = _extract_links_and_images(body, fenced_lines)
 
         return cls(
             path=path,
@@ -299,7 +319,7 @@ def _extract_tables(text: str, fenced_lines: set[int]) -> List[Table]:
     return tables
 
 
-def _extract_links(text: str, fenced_lines: set[int]) -> List[Link]:
+def _extract_links_and_images(text: str, fenced_lines: set[int]) -> List[Link]:
     """
     Extract URLs from the document body, skipping fenced code.
 
@@ -312,23 +332,38 @@ def _extract_links(text: str, fenced_lines: set[int]) -> List[Link]:
     lines = text.splitlines()
 
     for i, line in enumerate(lines, start=1):
+
+        # Skip lines inside fenced code
         if i in fenced_lines:
             continue
 
+        # Remove inline code spans to avoid false positives
         search_line = RE_CODE_INLINE.sub("", line)
 
-        # Global link definition style
-        # For now reuse a simple heuristic: starts with '[' and contains ']:'
-        is_global_def = search_line.lstrip()
-        is_global_def = is_global_def.startswith("[") and "]: " in search_line
+        for m in RE_LINK_INLINE.findall(search_line):
+            if m[0] == "!":
+                # TODO: Store images as well
+                # print(f"IMAGE: [{m[1]}] ------------ {m[2]} at line {i}")
+                continue
+            else:
+                links.append(
+                    Link(
+                        is_inline=True,
+                        is_reference=False,
+                        url=m[2].strip(),
+                        title=m[1].strip(),
+                        line=i,
+                    )
+                )
 
-        for m in RE_URL.finditer(search_line):
-            url = m.group(0)
+        for m in RE_LINK_REFERENCE.findall(search_line):
             links.append(
                 Link(
-                    url=url,
+                    is_inline=False,
+                    is_reference=True,
+                    url=m[1].strip(),
+                    title=m[0].strip(),
                     line=i,
-                    is_global=is_global_def,
                 )
             )
 

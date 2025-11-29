@@ -214,7 +214,7 @@ def test_tables_are_extracted_with_header_and_rows():
 def test_links_skip_fenced_code_and_mark_global_defs():
     test_markdown = r"""# Title
 
-Inline link to https://example.com should be captured.
+Inline [link](https://example.com) should be captured.
 As should the global link definition to [Example 2].
 
 ```bash
@@ -233,11 +233,19 @@ curl https://ignored.example.org
 
     assert "https://example.com" in urls
     inline = urls["https://example.com"]
-    assert inline.is_global is False
+    assert inline.is_inline is True
+    assert inline.is_reference is False
+    assert inline.line == 3
+    assert inline.title == "link"
+    assert inline.url == "https://example.com"
 
     assert "https://example2.org" in urls
-    global_def = urls["https://example2.org"]
-    assert global_def.is_global is True
+    reference = urls["https://example2.org"]
+    assert reference.is_inline is False
+    assert reference.is_reference is True
+    assert reference.line == 12
+    assert reference.title == "Example 2"
+    assert reference.url == "https://example2.org"
 
     fenced = doc.fenced_lines
     assert len(fenced) == 5
@@ -458,17 +466,30 @@ Here comes my table!
 
 
 def test_link_in_heading():
-    test_markdown = r"""
-    # Title with https://example.com link
+    test_markdown = r"""# Title with [link](https://example.com)
 
-    Text with https://another.example.com
+    Text with [link](https://another.example.com)
     """
 
     doc = Document.from_text(test_markdown)
 
-    urls = [link.url for link in doc.links]
+    urls = {link.url: link for link in doc.links}
+
     assert "https://example.com" in urls
+    inline1 = urls["https://example.com"]
+    assert inline1.is_inline is True
+    assert inline1.is_reference is False
+    assert inline1.line == 1
+    assert inline1.title == "link"
+    assert inline1.url == "https://example.com"
+
     assert "https://another.example.com" in urls
+    inline2 = urls["https://another.example.com"]
+    assert inline2.is_inline is True
+    assert inline2.is_reference is False
+    assert inline2.line == 3
+    assert inline2.title == "link"
+    assert inline2.url == "https://another.example.com"
 
 
 def test_special_chars_in_table_cells():
