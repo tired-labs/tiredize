@@ -251,6 +251,7 @@ def _split_table_row(line: str) -> List[str]:
     cells.append(cell.strip())
     return cells
 
+
 def _extract_tables(text: str, fenced_lines: set[int]) -> List[Table]:
     """
     Extract simple GitHub style markdown tables.
