@@ -36,14 +36,14 @@ RE_TABLE_ROW = re.compile(r"^\s*\|.*\|\s*$")
 
 
 class Parser:
-    fenced_lines: set[int] = None
-    frontmatter_yaml: typing.Dict[str, str] = None
-    markdown_text: str = None
-    markdown_lines: typing.List[str] = None
-    sections: typing.List["Section"] = None
+    fenced_lines: set[int] = set()
+    frontmatter_yaml: typing.Dict[str, str] = {}
+    markdown_text: str = ""
+    markdown_lines: typing.List[str] = []
+    sections: typing.List["Section"] = []
     text: str
 
-    def __init__(self, text):
+    def __init__(self, text: str):
         self.text = text
 
     def parse(self):
@@ -51,14 +51,16 @@ class Parser:
         self._get_fenced_lines()
         self._extract_sections()
 
-    def from_path(path: Path):
+    @classmethod
+    def from_path(cls, path: Path) -> "Parser":
         text = path.read_text(encoding="utf-8")
-        return Parser.from_text(text=text, path=path)
+        return cls.from_text(text)
 
-    def from_text(text: str, path: typing.Optional[Path] = None):
-        parser = Parser(text)
+    @classmethod
+    def from_text(cls, text: str) -> "Parser":
+        parser = cls(text)
         parser.parse()
-        return Parser(text).parse()
+        return parser
 
     def _extract_frontmatter(self):
         """
@@ -139,8 +141,15 @@ class Parser:
         """
 
         self.sections = []
+        new_section = Section(
+            header_level=0,
+            header_title="",
+            content="",
+            line_start=0,
+            line_end=0,
+            subsections=[]
+        )
 
-        new_section = None
         for line_num, line in enumerate(self.markdown_lines, start=1):
 
             # Ignore headings that appear inside fenced code
@@ -189,5 +198,3 @@ class Parser:
                     section.subsections.append(curr)
                 else:
                     break
-
-        print(f"Extracted {len(self.sections)} sections")
