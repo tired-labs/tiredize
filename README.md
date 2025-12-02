@@ -21,12 +21,40 @@ schemas.
 
 Tiredize is early in development, but the initial goals include:
 
-- [ ] Schema validation of front matter fields and types.
-- [ ] Enforcement of required headings and section ordering.
-- [ ] Structural checks on tables, including header rows and column consistency.
-- [ ] Enforcement of list marker style and line length requirements.
-- [ ] Validation of link formatting and availability.
-- [ ] Configurable rule sets per document type, driven by YAML schemas.
+- [x] Frontmatter Content Extraction
+- [ ] Markdown Content Extraction
+  - [x] Sections
+    - [x] Headers
+    - [x] Links
+      - [x] Inline
+      - [x] Reference-style
+      - [x] Bracket Links
+      - [x] Bare
+    - [ ] References/Footnotes
+    - [x] Images
+      - [x] Inline
+      - [x] Reference-style
+    - [x] Code blocks
+      - [x] Inline
+      - [x] Fenced
+    - [x] Block quotes
+    - [ ] Lists
+      - [ ] Ordered
+      - [ ] Unordered
+    - [ ] Tables
+- [ ] Linter Rule Engine
+  - [ ] Frontmatter Schema
+  - [ ] Markdown Scheme
+  - [ ] Line Length
+  - [ ] Whitespace
+  - [ ] Link Validation
+  - [ ] Markdown styling
+    - [ ] Lists
+    - [ ] Links
+    - [ ] Headers
+    - [ ] Code Blocks
+    - [ ] Tables
+    - [ ] References/Footnotes
 
 Future releases will expand support for additional [TIRED Labs] document formats
 and deeper structural analysis.
@@ -42,7 +70,7 @@ validator set that supports one canonical document type.
 Once packaged, Tiredize will be installed via pip and run from the command line:
 
 ```bash
-tiredize --schema path/to/schema.yml path/to/document.md 
+tiredize --frontmatter frontmatter_schema.yml --markdown markdown_schema.yml --rules linter_rules.yml markdown_file.md 
 ```
 
 The command prints rule violations and returns a nonzero exit code when
