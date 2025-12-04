@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-import typing
 
 
 @dataclass(frozen=True)
-class List:
+class CodeBlock:
+    syntax: str
+    content: str
     end: int
-    items: typing.List[str]
     start: int

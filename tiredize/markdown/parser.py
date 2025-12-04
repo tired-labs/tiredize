@@ -15,17 +15,17 @@ import yaml
 
 
 _RE_BLOCKQUOTE = r"""
-    ^         # Must be at the start of a line
-    >         # Blockquote character
-    .*        # Anything after that
-    $         # Line ends here
+    ^                  # Must be at the start of a line
+    >                  # Blockquote character
+    (?P<quote>.*)      # Capture anything after that
+    $                  # Line ends here
 """
 
 _RE_CODE_FENCE = r"""
-    ^                  # Must be at the start of a line
-    ``[`]+             # Opening backticks (three or more)
-    (?P<syntax>.*)     # Capture the syntax if present
-    $                  # Line ends here
+    ^                     # Must be at the start of a line
+    (?P<delimiter>``[`]+) # Opening backticks (three or more)
+    (?P<syntax>.*)        # Capture the syntax if present
+    $                     # Line ends here
 """
 
 _RE_CODE_INLINE = r"""

@@ -3,7 +3,9 @@ import typing
 
 
 @dataclass(frozen=True)
-class List:
+class QuoteBlock:
+    content: str
     end: int
-    items: typing.List[str]
+    quoteblocks: typing.List["QuoteBlock"]
     start: int
+    syntax: str
