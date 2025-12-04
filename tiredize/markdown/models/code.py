@@ -7,3 +7,10 @@ class CodeBlock:
     content: str
     end: int
     start: int
+
+
+@dataclass(frozen=True)
+class CodeInline:
+    content: str
+    end: int
+    start: int

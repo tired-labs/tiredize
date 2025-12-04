@@ -1,13 +1,17 @@
 from pathlib import Path
+# from tiredize.markdown.models.code import CodeBlock
+# from tiredize.markdown.models.code import CodeInline
+from tiredize.markdown.models.header import Header
 from tiredize.markdown.models.image import InlineImage
 from tiredize.markdown.models.link import BareLink
 from tiredize.markdown.models.link import BracketLink
 from tiredize.markdown.models.link import InlineLink
-from tiredize.markdown.models.section import Section
-from tiredize.markdown.models.reference import ReferenceDefinition
+# from tiredize.markdown.models.list import List
+# from tiredize.markdown.models.quoteblock import QuoteBlock
 from tiredize.markdown.models.reference import ImageReference
 from tiredize.markdown.models.reference import LinkReference
-# from tiredize.markdown.models.list import List
+from tiredize.markdown.models.reference import ReferenceDefinition
+from tiredize.markdown.models.section import Section
 # from tiredize.markdown.models.table import Table
 import re
 import typing
@@ -393,25 +397,25 @@ class Parser:
         """
 
         self.sections = []
-        new_section = Section(
-            code_inline=[],
-            content_raw="",
-            content="",
-            header_level=0,
-            header_title="",
-            images_inline=[],
-            images_reference=[],
-            line_end=0,
-            line_start=0,
-            links_bare=[],
-            links_bracket=[],
-            links_inline=[],
-            links_reference=[],
-            lists=[],
-            reference_definitions=[],
-            subsections=[],
-            tables=[]
-        )
+        # new_section = Section(
+        #     code_inline=[],
+        #     content_raw="",
+        #     content="",
+        #     header_level=0,
+        #     header_title="",
+        #     images_inline=[],
+        #     images_reference=[],
+        #     line_end=0,
+        #     line_start=0,
+        #     links_bare=[],
+        #     links_bracket=[],
+        #     links_inline=[],
+        #     links_reference=[],
+        #     lists=[],
+        #     reference_definitions=[],
+        #     subsections=[],
+        #     tables=[]
+        # )
 
         for line_num, line in enumerate(self.markdown_lines, start=1):
 
@@ -419,17 +423,24 @@ class Parser:
             if line_num in self.fenced_lines:
                 continue
 
-            # Check if this line is a heading
-            m = re.match(_RE_HEADER, line, re.MULTILINE | re.VERBOSE)
-            if not m:
+            # Check if this line is a heading, indicating a new section
+            heading_match = _search_all_re(_RE_HEADER, line)
+            if (not heading_match) and (not len(heading_match) > 1):
                 continue
 
+            heading = heading_match[0]
+
             new_section = Section(
+                code_block=[],
                 code_inline=[],
                 content_raw="",
                 content="",
-                header_level=len(m.group("hashes")),
-                header_title=m.group("title"),
+                header=Header(
+                    level=len(heading["groupdict"]["hashes"]),
+                    title=heading["groupdict"]["title"],
+                    start=heading["start"],
+                    end=heading["end"]
+                ),
                 images_inline=[],
                 images_reference=[],
                 line_end=-1,
@@ -439,6 +450,7 @@ class Parser:
                 links_inline=[],
                 links_reference=[],
                 lists=[],
+                quoteblocks=[],
                 reference_definitions=[],
                 subsections=[],
                 tables=[]
@@ -481,7 +493,7 @@ class Parser:
             # Add the subsections to each section that has them
             for i in range(section_num + 1, len(self.sections)):
                 curr = self.sections[i]
-                if curr.header_level > section.header_level:
+                if curr.header.level > section.header.level:
                     section.subsections.append(curr)
                 else:
                     break

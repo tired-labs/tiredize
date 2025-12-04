@@ -1,4 +1,5 @@
 from pathlib import Path
+from tiredize.markdown.models.header import Header
 from tiredize.markdown.models.image import InlineImage
 from tiredize.markdown.models.link import BareLink
 from tiredize.markdown.models.link import InlineLink
@@ -42,8 +43,12 @@ def test_good_frontmatter_and_markdown():
 
     expected_sections: list[dict[typing.Any, typing.Any]] = [
         {
-            'title': 'H1 Title: Markdown Feature Coverage',
-            'level': 1,
+            "header": Header(
+                title='H1 Title: Markdown Feature Coverage',
+                level=1,
+                start=0,
+                end=37
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 1,
@@ -78,8 +83,12 @@ def test_good_frontmatter_and_markdown():
                 }
             ]
         }, {
-            'title': 'H2 Section: Lists and Images',
-            'level': 2,
+            "header": Header(
+                title='H2 Section: Lists and Images',
+                level=2,
+                start=0,
+                end=31
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 20,
@@ -89,8 +98,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'Unordered list',
-            'level': 3,
+            "header": Header(
+                title='Unordered list',
+                level=3,
+                start=0,
+                end=18
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 22,
@@ -114,8 +127,12 @@ def test_good_frontmatter_and_markdown():
                 }
             ]
         }, {
-            'title': 'Ordered list',
-            'level': 3,
+            "header": Header(
+                title='Ordered list',
+                level=3,
+                start=0,
+                end=16
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 28,
@@ -125,8 +142,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'Images',
-            'level': 3,
+            "header": Header(
+                title='Images',
+                level=3,
+                start=0,
+                end=10
+            ),
             'line_start': 36,
             'line_end': 48,
             'links_bare': [],
@@ -151,8 +172,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H2 Section: Blockquotes and Code',
-            'level': 2,
+            "header": Header(
+                title='H2 Section: Blockquotes and Code',
+                level=2,
+                start=0,
+                end=35
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 49,
@@ -162,8 +187,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H3 Subsection: Blockquote',
-            'level': 3,
+            "header": Header(
+                title='H3 Subsection: Blockquote',
+                level=3,
+                start=0,
+                end=29
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 51,
@@ -173,8 +202,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H3 Subsection: Fenced Code Blocks',
-            'level': 3,
+            "header": Header(
+                title='H3 Subsection: Fenced Code Blocks',
+                level=3,
+                start=0,
+                end=37
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 56,
@@ -184,8 +217,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H2 Section: Tables',
-            'level': 2,
+            "header": Header(
+                title='H2 Section: Tables',
+                level=2,
+                start=0,
+                end=21
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 84,
@@ -195,8 +232,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H3 Simple Table',
-            'level': 3,
+            "header": Header(
+                title='H3 Simple Table',
+                level=3,
+                start=0,
+                end=19
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 86,
@@ -206,8 +247,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H3 Table With Inline Code And Escaped Pipes',
-            'level': 3,
+            "header": Header(
+                title='H3 Table With Inline Code And Escaped Pipes',
+                level=3,
+                start=0,
+                end=47
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 93,
@@ -217,8 +262,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H3 Alignment Variants',
-            'level': 3,
+            "header": Header(
+                title='H3 Alignment Variants',
+                level=3,
+                start=0,
+                end=25
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 101,
@@ -228,8 +277,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H2 Section: Headings Up To Level 6',
-            'level': 2,
+            "header": Header(
+                title='H2 Section: Headings Up To Level 6',
+                level=2,
+                start=0,
+                end=37
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 110,
@@ -239,8 +292,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H3 Heading Level 3',
-            'level': 3,
+            "header": Header(
+                title='H3 Heading Level 3',
+                level=3,
+                start=0,
+                end=22
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 112,
@@ -250,8 +307,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H4 Heading Level 4',
-            'level': 4,
+            "header": Header(
+                title='H4 Heading Level 4',
+                level=4,
+                start=0,
+                end=23
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 116,
@@ -261,8 +322,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H5 Heading Level 5',
-            'level': 5,
+            "header": Header(
+                title='H5 Heading Level 5',
+                level=5,
+                start=0,
+                end=24
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 120,
@@ -272,8 +337,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H6 Heading Level 6',
-            'level': 6,
+            "header": Header(
+                title='H6 Heading Level 6',
+                level=6,
+                start=0,
+                end=25
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 124,
@@ -283,8 +352,12 @@ def test_good_frontmatter_and_markdown():
             'reference_definitions': [],
             'links_reference': []
         }, {
-            'title': 'H2 Section: Mixed Content',
-            'level': 2,
+            "header": Header(
+                title='H2 Section: Mixed Content',
+                level=2,
+                start=0,
+                end=28
+            ),
             'images_inline': [],
             'images_reference': [],
             'line_start': 130,
@@ -327,10 +400,7 @@ def test_good_frontmatter_and_markdown():
 
     for i, expected in enumerate(expected_sections, start=0):
         actual = parser.sections[i]
-        assert expected["title"] == actual.header_title
-        assert expected["level"] == actual.header_level
-        assert expected["line_start"] == actual.line_start
-        assert expected["line_end"] == actual.line_end
+        assert expected["header"] == actual.header
         assert expected["links_inline"] == actual.links_inline
 
         assert len(expected["reference_definitions"]) == \
