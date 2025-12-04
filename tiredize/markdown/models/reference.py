@@ -5,6 +5,7 @@ from dataclasses import dataclass
 @dataclass(frozen=False)
 class ReferenceDefinition:
     end: int
+    match: str
     start: int
     title: str
     url: str
@@ -16,6 +17,7 @@ class ReferenceDefinition:
 class LinkReference:
     definition: ReferenceDefinition
     end: int
+    match: str
     start: int
     text: str
 
@@ -24,5 +26,6 @@ class LinkReference:
 class ImageReference:
     definition: ReferenceDefinition
     end: int
+    match: str
     start: int
     text: typing.Optional[str]

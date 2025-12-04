@@ -6,5 +6,6 @@ from dataclasses import dataclass
 class Table:
     end: int
     header: typing.List[str]
+    match: str
     rows: typing.List[typing.List[str]]
     start: int

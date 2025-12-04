@@ -6,6 +6,7 @@ from dataclasses import dataclass
 class InlineImage:
     alt_text: str
     end: int
+    match: str
     start: int
     title_text: typing.Optional[str]
     url: str

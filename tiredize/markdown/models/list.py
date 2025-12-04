@@ -6,4 +6,6 @@ import typing
 class List:
     end: int
     items: typing.List[str]
+    match: str
     start: int
+    sublists: typing.List["List"]
