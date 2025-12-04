@@ -7,7 +7,7 @@ from tiredize.markdown.models.link import BareLink
 from tiredize.markdown.models.link import BracketLink
 from tiredize.markdown.models.link import InlineLink
 # from tiredize.markdown.models.list import List
-# from tiredize.markdown.models.quoteblock import QuoteBlock
+from tiredize.markdown.models.quoteblock import QuoteBlock
 from tiredize.markdown.models.reference import ImageReference
 from tiredize.markdown.models.reference import LinkReference
 from tiredize.markdown.models.reference import ReferenceDefinition
@@ -17,13 +17,6 @@ import re
 import typing
 import yaml
 
-
-_RE_BLOCKQUOTE = r"""
-    ^                  # Must be at the start of a line
-    >                  # Blockquote character
-    (?P<quote>.*)      # Capture anything after that
-    $                  # Line ends here
-"""
 
 _RE_CODE_FENCE = r"""
     ^                     # Must be at the start of a line
@@ -95,6 +88,13 @@ _RE_REFERENCE_USAGE = r"""
 # RE_TABLE_DIV = re.compile(r"^\s*\|(\s*:?-+:?\s*\|)+\s*$")
 # RE_TABLE_ROW = re.compile(r"^\s*\|.*\|\s*$")
 
+_RE_QUOTEBLOCK = r"""
+    ^                  # Must be at the start of a line
+    >                  # Blockquote character
+    (?P<quote>.*)      # Capture anything after that
+    $                  # Line ends here
+"""
+
 _RE_URL = r"""
     (?P<url>https+:\/\/\S+)  # Capture the URL
 """
@@ -149,7 +149,8 @@ class Parser:
         for i, line in enumerate(self.markdown_text.splitlines(), start=1):
 
             # Add the line if it is in a blockquote
-            if re.match(_RE_BLOCKQUOTE, line, re.MULTILINE | re.VERBOSE):
+            results = _search_all_re(_RE_QUOTEBLOCK, line)
+            if results:
                 self.blockquote_lines.add(i)
                 continue
 
@@ -177,7 +178,8 @@ class Parser:
                 continue
 
             # if this is the start of a codeblock, store the closing delimiter
-            if re.match(_RE_CODE_FENCE, line, re.VERBOSE):
+            matches = _search_all_re(_RE_CODE_FENCE, line)
+            if matches:
                 in_code = not in_code
                 self.fenced_lines.add(i)
                 delimiter = "`" * line.count("`")
@@ -397,26 +399,6 @@ class Parser:
         """
 
         self.sections = []
-        # new_section = Section(
-        #     code_inline=[],
-        #     content_raw="",
-        #     content="",
-        #     header_level=0,
-        #     header_title="",
-        #     images_inline=[],
-        #     images_reference=[],
-        #     line_end=0,
-        #     line_start=0,
-        #     links_bare=[],
-        #     links_bracket=[],
-        #     links_inline=[],
-        #     links_reference=[],
-        #     lists=[],
-        #     reference_definitions=[],
-        #     subsections=[],
-        #     tables=[]
-        # )
-
         for line_num, line in enumerate(self.markdown_lines, start=1):
 
             # Ignore headings that appear inside fenced code
