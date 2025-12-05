@@ -9,6 +9,7 @@ import typing
 class Header:
     level: int
     position: Position
+    string: str
     title: str
 
     _RE_HEADER = r"""
@@ -39,10 +40,11 @@ class Header:
                 Header(
                     level=level,
                     position=Position(
+                        length=length,
                         line=line_num,
-                        offset=offset,
-                        length=length
+                        offset=offset
                     ),
+                    string=match.group(),
                     title=match.group("title")
                 )
             )

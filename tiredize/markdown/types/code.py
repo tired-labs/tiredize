@@ -4,11 +4,11 @@ from tiredize.types import Position
 
 @dataclass(frozen=True)
 class CodeBlock:
-    content: str
+    code: str
     position: Position
     syntax: str
 
-    RE_CODEBLOCK = r"""
+    _RE_CODEBLOCK = r"""
         ^                     # Must be at the start of a line
         (?P<delimiter>``[`]+) # Opening backticks (three or more)
         (?P<syntax>.*)        # Capture the syntax if present
@@ -18,11 +18,10 @@ class CodeBlock:
 
 @dataclass(frozen=True)
 class CodeInline:
-    content: str
-    end: int
-    start: int
+    code: str
+    position: Position
 
-    RE_CODE_INLINE = r"""
+    _RE_CODE_INLINE = r"""
         [^\S\s^]?    # Exclude any characters before the backtick
         `            # Opening backtick
         [^\n`]+      # Capture anything except backtick or newline

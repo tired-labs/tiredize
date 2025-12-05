@@ -13,13 +13,13 @@ class FrontMatter:
     string: str
 
     _RE_FRONT_MATTER_YAML = r"""
-        ^
-        [-]{3}
-        \n
-        (?P<yaml>[\s\S]*?)
-        \n
-        [-]{3}
-        \n
+        ^                  # Must be at the start of a line
+        [-]{3}             # Three dashes represents YAML frontmatter
+        \n                 # Newline
+        (?P<yaml>[\s\S]*?) # Capture anything as YAML content
+        \n                 # Newline
+        [-]{3}             # Three dashes represents end of YAML frontmatter
+        \n                 # Newline
     """
 
     @staticmethod

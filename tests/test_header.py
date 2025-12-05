@@ -78,6 +78,7 @@ def test_single_header_level01():
     assert matches[0] == Header(
         level=level_01,
         position=positions[0],
+        string=header_01,
         title=text_01
     )
 
@@ -97,6 +98,7 @@ def test_single_header_level02():
     assert matches[0] == Header(
         level=level_02,
         position=positions[0],
+        string=header_02,
         title=text_02
     )
 
@@ -116,6 +118,7 @@ def test_single_header_level03():
     assert matches[0] == Header(
         level=level_03,
         position=positions[0],
+        string=header_03,
         title=text_03
     )
 
@@ -135,6 +138,7 @@ def test_single_header_level04():
     assert matches[0] == Header(
         level=level_04,
         position=positions[0],
+        string=header_04,
         title=text_04
     )
 
@@ -154,6 +158,7 @@ def test_single_header_level05():
     assert matches[0] == Header(
         level=level_05,
         position=positions[0],
+        string=header_05,
         title=text_05
     )
 
@@ -173,6 +178,7 @@ def test_single_header_level06():
     assert matches[0] == Header(
         level=level_06,
         position=positions[0],
+        string=header_06,
         title=text_06
     )
 
@@ -201,5 +207,6 @@ def test_six_headers_repeated():
     assert matches[0] == Header(
         level=level_01,
         position=positions[0],
+        string=header_01,
         title=text_01
     )
