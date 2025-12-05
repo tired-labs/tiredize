@@ -23,17 +23,17 @@ Tiredize is early in development, but the initial goals include:
 
 - [x] Frontmatter Content Extraction
 - [ ] Markdown Content Extraction
-  - [x] Sections
+  - [ ] Sections
     - [x] Headers
-    - [x] Links
-      - [x] Inline
-      - [x] Reference-style
-      - [x] Bracket Links
-      - [x] Bare
+    - [ ] Links
+      - [ ] Inline
+      - [ ] Reference-style
+      - [ ] Bracket Links
+      - [ ] Bare
     - [ ] References/Footnotes
     - [x] Images
       - [x] Inline
-      - [x] Reference-style
+      - [ ] Reference-style
     - [x] Code blocks
       - [x] Inline
       - [x] Fenced
@@ -41,7 +41,7 @@ Tiredize is early in development, but the initial goals include:
     - [ ] Lists
       - [ ] Ordered
       - [ ] Unordered
-    - [ ] Tables
+    - [x] Tables - Brutal!
 - [ ] Linter Rule Engine
   - [ ] Frontmatter Schema
   - [ ] Markdown Scheme

@@ -69,6 +69,17 @@ def test_no_tables():
 
 
 def test_single_table_normal():
+    actual_rows: typing.List[str] = [
+        "| Col 01  | Col 02  | Col 03  |",
+        "|---------|---------|---------|",
+        "| Data 01 | Data 02 | Data 03 |",
+        "| Data 11 | Data 12 | Data 13 |",
+        "| Data 21 | Data 22 | Data 23 |",
+        "| Data 31 | Data 32 | Data 33 |",
+        "| Data 41 | Data 42 | Data 43 |",
+        "| Data 51 | Data 52 | Data 53 |",
+    ]
+
     exp_divider: typing.List[str] = [
         "---------", "---------", "---------"
     ]
@@ -84,17 +95,6 @@ def test_single_table_normal():
         ["Data 31", "Data 32", "Data 33"],
         ["Data 41", "Data 42", "Data 43"],
         ["Data 51", "Data 52", "Data 53"]
-    ]
-
-    actual_rows: typing.List[str] = [
-        "| Col 01  | Col 02  | Col 03  |",
-        "|---------|---------|---------|",
-        "| Data 01 | Data 02 | Data 03 |",
-        "| Data 11 | Data 12 | Data 13 |",
-        "| Data 21 | Data 22 | Data 23 |",
-        "| Data 31 | Data 32 | Data 33 |",
-        "| Data 41 | Data 42 | Data 43 |",
-        "| Data 51 | Data 52 | Data 53 |",
     ]
 
     exp_string = '\n'.join(actual_rows) + '\n'
@@ -114,6 +114,17 @@ def test_single_table_normal():
 
 
 def test_five_tables_repeated():
+    actual_rows: typing.List[str] = [
+        "| Col 01  | Col 02  | Col 03  |",
+        "|---------|---------|---------|",
+        "| Data 01 | Data 02 | Data 03 |",
+        "| Data 11 | Data 12 | Data 13 |",
+        "| Data 21 | Data 22 | Data 23 |",
+        "| Data 31 | Data 32 | Data 33 |",
+        "| Data 41 | Data 42 | Data 43 |",
+        "| Data 51 | Data 52 | Data 53 |",
+    ]
+
     exp_divider: typing.List[str] = [
         "---------", "---------", "---------"
     ]
@@ -129,17 +140,6 @@ def test_five_tables_repeated():
         ["Data 31", "Data 32", "Data 33"],
         ["Data 41", "Data 42", "Data 43"],
         ["Data 51", "Data 52", "Data 53"]
-    ]
-
-    actual_rows: typing.List[str] = [
-        "| Col 01  | Col 02  | Col 03  |",
-        "|---------|---------|---------|",
-        "| Data 01 | Data 02 | Data 03 |",
-        "| Data 11 | Data 12 | Data 13 |",
-        "| Data 21 | Data 22 | Data 23 |",
-        "| Data 31 | Data 32 | Data 33 |",
-        "| Data 41 | Data 42 | Data 43 |",
-        "| Data 51 | Data 52 | Data 53 |",
     ]
 
     exp_string = '\n'.join(actual_rows) + '\n'

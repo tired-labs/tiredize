@@ -63,77 +63,87 @@ Line 58, Offset 00
 
 def test_no_codeblock():
     md_test = md_section
-    matches = CodeBlock.extract(md_test)
-    assert len(matches) == 0
+    regex_matches = CodeBlock.extract(md_test)
+    assert len(regex_matches) == 0
 
 
 def test_single_codeblock_normal():
-    code_01 = r'''
-_RE_CODEBLOCK = r"""
-(?<![^|\n])
-(?P<delimiter>``[`]+)
-(?P<language>.*)
-(?P<code>[\s\S]*?)
-\1
-"""
-    '''.strip()
-    language_01 = "python"
-    delim_len_01 = 3
-    delim = "`" * delim_len_01
-    string_01 = f"{delim}{language_01}\n{code_01}\n{delim}"
-    len_01 = len(string_01)
-    position_01 = Position(line=25, offset=0, length=len_01)
-    md_text = md_section.format("", string_01, "", "", "")
+    actual_code = '_RE_CODEBLOCK = r""""\n'
+    actual_code += r'(?<![^\\\\n' + '\n'
+    actual_code += '])\n'
+    actual_code += '(?P<delimiter>``[`]+)\n'
+    actual_code += '(?P<language>.*)\n'
+    actual_code += '(?P<code>[\\\\s\\\\S]*?)\n'
+    actual_code += '\\1"""'
 
-    matches = CodeBlock.extract(md_text)
-    assert len(matches) == 1
-    assert matches[0] == CodeBlock(
-        code=code_01,
-        delimiter=delim,
-        language=language_01,
-        position=position_01,
-        string=string_01
+    actual_language = "python"
+
+    actual_string = '```' + actual_language + '\n'
+    actual_string += actual_code + '\n'
+    actual_string += '```'
+
+    exp_code = actual_code
+    exp_delimiter = "```"
+    exp_language = actual_language
+    exp_string = actual_string
+    exp_position = Position(line=25, offset=0, length=len(exp_string))
+
+    md_text = md_section.format("", actual_string, "", "", "")
+    regex_matches = CodeBlock.extract(md_text)
+
+    assert len(regex_matches) == 1
+    assert regex_matches[0] == CodeBlock(
+        code=exp_code,
+        delimiter=exp_delimiter,
+        language=exp_language,
+        position=exp_position,
+        string=exp_string
     )
 
 
 def test_five_codeinlines_repeated():
-    code_01 = r'''
-_RE_CODEBLOCK = r"""
-(?<![^|\n])
-(?P<delimiter>``[`]+)
-(?P<language>.*)
-(?P<code>[\s\S]*?)
-\1
-"""
-    '''.strip()
-    language_01 = "python"
-    delim_len_01 = 3
-    delim = "`" * delim_len_01
-    string_01 = f"{delim}{language_01}\n{code_01}\n{delim}"
-    len_01 = len(string_01)
-    positions = [
-        Position(line=15, offset=0, length=len_01),
-        Position(line=33, offset=0, length=len_01),
-        Position(line=52, offset=0, length=len_01),
-        Position(line=71, offset=0, length=len_01),
-        Position(line=90, offset=0, length=len_01)
-    ]
+    actual_code = '_RE_CODEBLOCK = r""""\n'
+    actual_code += r'(?<![^\\\\n' + '\n'
+    actual_code += '])\n'
+    actual_code += '(?P<delimiter>``[`]+)\n'
+    actual_code += '(?P<language>.*)\n'
+    actual_code += '(?P<code>[\\\\s\\\\S]*?)\n'
+    actual_code += '\\1"""'
+
+    actual_language = "python"
+
+    actual_string = '```' + actual_language + '\n'
+    actual_string += actual_code + '\n'
+    actual_string += '```'
+
+    exp_code = actual_code
+    exp_delimiter = "```"
+    exp_language = actual_language
+    exp_string = actual_string
 
     md_text = md_section.format(
-        string_01,
-        string_01,
-        string_01,
-        string_01,
-        string_01
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string
     )
 
-    matches = CodeBlock.extract(md_text)
-    assert len(matches) == 5
-    for i, match in enumerate(matches):
+    positions = [
+        Position(line=15, offset=0, length=len(exp_string)),
+        Position(line=33, offset=0, length=len(exp_string)),
+        Position(line=52, offset=0, length=len(exp_string)),
+        Position(line=71, offset=0, length=len(exp_string)),
+        Position(line=90, offset=0, length=len(exp_string))
+    ]
+
+    regex_matches = CodeBlock.extract(md_text)
+    assert len(regex_matches) == 5
+    for i, match in enumerate(regex_matches):
         assert match == CodeBlock(
-            code=code_01,
-            delimiter=delim,
-            language=language_01,
+            code=exp_code,
+            delimiter=exp_delimiter,
+            language=exp_language,
             position=positions[i],
-            string=string_01
+            string=exp_string
         )
