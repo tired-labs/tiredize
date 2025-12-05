@@ -1,5 +1,4 @@
-# from tiredize.markdown.types.code import CodeBlock
-from tiredize.markdown.types.code import CodeInline
+from tiredize.markdown.types.code import CodeBlock
 from tiredize.types import Position
 
 md_section = """# Markdown Test Section - Lorem Ipsum
@@ -62,55 +61,79 @@ Line 58, Offset 00
 {}"""
 
 
-def test_no_codeinline():
+def test_no_codeblock():
     md_test = md_section
-    matches = CodeInline.extract(md_test)
+    matches = CodeBlock.extract(md_test)
     assert len(matches) == 0
 
 
-def test_single_codeinline_normal():
-    code_01 = "tiredize --help"
-    string_01 = f"`{code_01}`"
-    text_01 = f"You can run {string_01} to see available options."
+def test_single_codeblock_normal():
+    code_01 = r'''
+_RE_CODEBLOCK = r"""
+(?<![^|\n])
+(?P<delimiter>``[`]+)
+(?P<language>.*)
+(?P<code>[\s\S]*?)
+\1
+"""
+    '''.strip()
+    language_01 = "python"
+    delim_len_01 = 3
+    delim = "`" * delim_len_01
+    string_01 = f"{delim}{language_01}\n{code_01}\n{delim}"
     len_01 = len(string_01)
-    position_01 = Position(line=36, offset=12, length=len_01)
-    md_text = md_section.format("", "", text_01, "", "")
+    position_01 = Position(line=25, offset=0, length=len_01)
+    md_text = md_section.format("", string_01, "", "", "")
 
-    matches = CodeInline.extract(md_text)
+    matches = CodeBlock.extract(md_text)
     assert len(matches) == 1
-    assert matches[0] == CodeInline(
+    assert matches[0] == CodeBlock(
         code=code_01,
+        delimiter=delim,
+        language=language_01,
         position=position_01,
         string=string_01
     )
 
 
 def test_five_codeinlines_repeated():
-    code_01 = "tiredize --help"
-    string_01 = f"`{code_01}`"
-    text_01 = f"You can run {string_01} to see available options."
+    code_01 = r'''
+_RE_CODEBLOCK = r"""
+(?<![^|\n])
+(?P<delimiter>``[`]+)
+(?P<language>.*)
+(?P<code>[\s\S]*?)
+\1
+"""
+    '''.strip()
+    language_01 = "python"
+    delim_len_01 = 3
+    delim = "`" * delim_len_01
+    string_01 = f"{delim}{language_01}\n{code_01}\n{delim}"
     len_01 = len(string_01)
     positions = [
-        Position(line=15, offset=12, length=len_01),
-        Position(line=25, offset=12, length=len_01),
-        Position(line=36, offset=12, length=len_01),
-        Position(line=47, offset=12, length=len_01),
-        Position(line=58, offset=12, length=len_01)
+        Position(line=15, offset=0, length=len_01),
+        Position(line=33, offset=0, length=len_01),
+        Position(line=52, offset=0, length=len_01),
+        Position(line=71, offset=0, length=len_01),
+        Position(line=90, offset=0, length=len_01)
     ]
 
     md_text = md_section.format(
-        text_01,
-        text_01,
-        text_01,
-        text_01,
-        text_01
+        string_01,
+        string_01,
+        string_01,
+        string_01,
+        string_01
     )
 
-    matches = CodeInline.extract(md_text)
+    matches = CodeBlock.extract(md_text)
     assert len(matches) == 5
     for i, match in enumerate(matches):
-        assert match == CodeInline(
+        assert match == CodeBlock(
             code=code_01,
+            delimiter=delim,
+            language=language_01,
             position=positions[i],
             string=string_01
         )

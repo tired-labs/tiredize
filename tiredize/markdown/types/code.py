@@ -8,16 +8,49 @@ import typing
 @dataclass(frozen=True)
 class CodeBlock:
     code: str
+    delimiter: str
     language: str
     position: Position
     string: str
 
     _RE_CODEBLOCK = r"""
-        ^                     # Must be at the start of a line
-        (?P<delimiter>``[`]+) # Opening backticks (three or more)
-        (?P<language>.*)      # Capture the language if present
-        $                     # Line ends here
+        (?<![^|\n])
+        (?P<delimiter>``[`]+)
+        (?P<language>.*)
+        \n
+        (?P<code>[\s\S]*?)
+        \n
+        \1
     """
+
+    @staticmethod
+    def extract(text: str) -> typing.List["CodeBlock"]:
+        """
+        Extract fenced codeblocks from markdown text.
+        """
+        matches = search_all_re(
+            CodeBlock._RE_CODEBLOCK,
+            text
+        )
+
+        result: list[CodeBlock] = []
+        for match in matches:
+            line_num, offset, length = get_position_from_match(match, text)
+
+            result.append(
+                CodeBlock(
+                    code=match.group("code"),
+                    delimiter=match.group("delimiter"),
+                    language=match.group("language"),
+                    position=Position(
+                        length=length,
+                        line=line_num,
+                        offset=offset
+                    ),
+                    string=match.group()
+                )
+            )
+        return result
 
 
 @dataclass(frozen=True)
