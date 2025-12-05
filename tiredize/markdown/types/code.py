@@ -4,6 +4,7 @@ from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
 
+
 @dataclass(frozen=True)
 class CodeBlock:
     code: str
@@ -57,4 +58,3 @@ class CodeInline:
                 )
             )
         return result
- 
