@@ -13,13 +13,13 @@ class InlineImage:
     url: str
 
     _RE_IMAGE_INLINE = r"""
-        !\[                              # Opening (exclamation mark and bracket)
-        (?P<alttext>[^]]*)               # Capture the alt-text
-        \]\(                             # Closing bracket, opening paren
-        (?P<url>[\s]*[^\s\)]*)           # Capture the URL
-        \s*"*                            # Support for optional title
-        (?P<title>.*?)                   # Capture optional title text
-        "*?\s*?\)                        # Closing characters
+        !\[                       # Opening (exclamation mark and bracket)
+        (?P<alttext>[^]]*)        # Capture the alt-text
+        \]\(                      # Closing bracket, opening paren
+        (?P<url>[\s]*[^\s\)]*)    # Capture the URL
+        \s*"*                     # Support for optional title
+        (?P<title>.*?)            # Capture optional title text
+        "*?\s*?\)                 # Closing characters
     """
 
     @staticmethod
