@@ -70,7 +70,7 @@ validator set that supports one canonical document type.
 Once packaged, Tiredize will be installed via pip and run from the command line:
 
 ```bash
-tiredize --frontmatter frontmatter_schema.yml --markdown markdown_schema.yml --rules linter_rules.yml markdown_file.md 
+tiredize --frontmatter frontmatter_schema.yml --markdown markdown_schema.yml --rules linter_rules.yml markdown_file.md
 ```
 
 The command prints rule violations and returns a nonzero exit code when
