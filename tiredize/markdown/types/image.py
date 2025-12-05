@@ -34,9 +34,9 @@ class InlineImage:
 
         result: list[InlineImage] = []
         for match in matches:
-            string = match.group()
+            string = match.group().lstrip("\n").rstrip("\n")
             line_num = text[:match.start()].count("\n") + 1
-            offset = match.start() - text.rfind("\n", 0, match.start()) - 1
+            offset = text.split("\n")[line_num - 1].index(string)
             result.append(
                 InlineImage(
                     alt_text=match.group("alttext"),

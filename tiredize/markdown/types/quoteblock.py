@@ -12,11 +12,10 @@ class QuoteBlock:
     string: str
 
     _RE_QUOTEBLOCK = r"""
-        ^                  # Must be at the start of a line
+        (^|\n)             # Must be at the start of a line
         (?P<depth>[>]+)    # Capture the blockquote depth
         \s*                # Optional whitespace
-        (?P<quote>.*)      # Capture anything after that as the quote
-        $                  # Quotes end with the line ending
+        (?P<quote>[^\n]*)  # Capture anything after that as the quote
     """
 
     @staticmethod
@@ -31,9 +30,9 @@ class QuoteBlock:
 
         result: list[QuoteBlock] = []
         for match in matches:
-            string = match.group()
-            line_num = text[:match.start()].count("\n") + 1
-            offset = match.start() - text.rfind("\n", 0, match.start()) - 1
+            string = match.group().lstrip("\n").rstrip("\n")
+            line_num = text[:match.start()].count("\n") + 2
+            offset = text.split("\n")[line_num - 1].index(string)
             depth=len(match.group("depth"))
 
             if (len(result) > 0):
@@ -43,7 +42,7 @@ class QuoteBlock:
                     if (result[-1].depth == depth):
                         # Same level quote, append to last
                         result[-1].quote += "\n" + match.group("quote")
-                        result[-1].string += "\n" + match.group()
+                        result[-1].string += match.group()
                         result[-1].position.length = len(result[-1].string)
                         continue
 
