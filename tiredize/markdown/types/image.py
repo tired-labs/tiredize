@@ -36,7 +36,7 @@ class InlineImage:
         for match in matches:
             string = match.group()
             line_num = text[:match.start()].count("\n") + 1
-            offset = match.start() - text.rfind("\n", 0, match.start())
+            offset = match.start() - text.rfind("\n", 0, match.start()) - 1
             result.append(
                 InlineImage(
                     alt_text=match.group("alttext"),

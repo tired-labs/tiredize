@@ -8,7 +8,7 @@ class RuleResult:
     message: str
 
 
-@dataclass(frozen=True)
+@dataclass
 class Position:
     line: int
     offset: int
