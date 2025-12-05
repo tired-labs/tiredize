@@ -32,7 +32,7 @@ class QuoteBlock:
         result: list[QuoteBlock] = []
         for match in matches:
             line_num, offset, length = get_position_from_match(match, text)
-            depth=len(match.group("depth"))
+            depth = len(match.group("depth"))
 
             if (len(result) > 0):
                 line_count = result[-1].quote.count("\n") + 1

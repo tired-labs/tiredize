@@ -16,5 +16,6 @@ def get_position_from_match(
     if string.startswith("\n"):
         string = string.lstrip("\n")
         line_num += 1
-    offset = text.split("\n")[line_num - 1].index(string)
+    string_first_line = string.split("\n")[0]
+    offset = text.split("\n")[line_num - 1].index(string_first_line)
     return line_num, offset, len(string)

@@ -33,7 +33,7 @@ class Header:
         result: list[Header] = []
         for match in matches:
             line_num, offset, length = get_position_from_match(match, text)
-            level=len(match.group("hashes"))
+            level = len(match.group("hashes"))
 
             result.append(
                 Header(
