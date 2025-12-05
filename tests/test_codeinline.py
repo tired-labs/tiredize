@@ -68,48 +68,54 @@ def test_no_codeinline():
 
 
 def test_single_codeinline_normal():
-    code_01 = "tiredize --help"
-    string_01 = f"`{code_01}`"
-    text_01 = f"You can run {string_01} to see available options."
-    len_01 = len(string_01)
-    position_01 = Position(line=36, offset=12, length=len_01)
-    md_text = md_section.format("", "", text_01, "", "")
+    actual_code = 'tiredize --help'
+    actual_string = f"`{actual_code}`"
+    actual_line = f"You can run {actual_string} to see available options."
+
+    exp_code = actual_code
+    exp_string = actual_string
+    exp_position = Position(line=36, offset=12, length=len(exp_string))
+
+    md_text = md_section.format("", "", actual_line, "", "")
 
     matches = CodeInline.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == CodeInline(
-        code=code_01,
-        position=position_01,
-        string=string_01
+        code=exp_code,
+        position=exp_position,
+        string=exp_string
     )
 
 
 def test_five_codeinlines_repeated():
-    code_01 = "tiredize --help"
-    string_01 = f"`{code_01}`"
-    text_01 = f"You can run {string_01} to see available options."
-    len_01 = len(string_01)
-    positions = [
-        Position(line=15, offset=12, length=len_01),
-        Position(line=25, offset=12, length=len_01),
-        Position(line=36, offset=12, length=len_01),
-        Position(line=47, offset=12, length=len_01),
-        Position(line=58, offset=12, length=len_01)
-    ]
+    actual_code = 'tiredize --help'
+    actual_string = f"`{actual_code}`"
+    actual_line = f"You can run {actual_string} to see available options."
+
+    exp_code = actual_code
+    exp_string = actual_string
 
     md_text = md_section.format(
-        text_01,
-        text_01,
-        text_01,
-        text_01,
-        text_01
+        actual_line,
+        actual_line,
+        actual_line,
+        actual_line,
+        actual_line
     )
+
+    positions = [
+        Position(line=15, offset=12, length=len(exp_string)),
+        Position(line=25, offset=12, length=len(exp_string)),
+        Position(line=36, offset=12, length=len(exp_string)),
+        Position(line=47, offset=12, length=len(exp_string)),
+        Position(line=58, offset=12, length=len(exp_string))
+    ]
 
     matches = CodeInline.extract(md_text)
     assert len(matches) == 5
     for i, match in enumerate(matches):
         assert match == CodeInline(
-            code=code_01,
+            code=exp_code,
             position=positions[i],
-            string=string_01
+            string=exp_string
         )
