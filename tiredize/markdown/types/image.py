@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -34,18 +35,16 @@ class InlineImage:
 
         result: list[InlineImage] = []
         for match in matches:
-            string = match.group().lstrip("\n").rstrip("\n")
-            line_num = text[:match.start()].count("\n") + 1
-            offset = text.split("\n")[line_num - 1].index(string)
+            line_num, offset, length = get_position_from_match(match, text)
             result.append(
                 InlineImage(
                     alt_text=match.group("alttext"),
                     position=Position(
                         line=line_num,
                         offset=offset,
-                        length=len(string)
+                        length=length
                     ),
-                    string=string,
+                    string=match.group(),
                     title_text=match.group("title"),
                     url=match.group("url")
                 )

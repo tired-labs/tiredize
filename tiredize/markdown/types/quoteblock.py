@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -12,7 +13,7 @@ class QuoteBlock:
     string: str
 
     _RE_QUOTEBLOCK = r"""
-        (^|\n)             # Must be at the start of a line
+        (?:^|\n)           # Must be at the start of a line
         (?P<depth>[>]+)    # Capture the blockquote depth
         \s*                # Optional whitespace
         (?P<quote>[^\n]*)  # Capture anything after that as the quote
@@ -30,20 +31,19 @@ class QuoteBlock:
 
         result: list[QuoteBlock] = []
         for match in matches:
-            string = match.group().lstrip("\n").rstrip("\n")
-            line_num = text[:match.start()].count("\n") + 2
-            offset = text.split("\n")[line_num - 1].index(string)
+            line_num, offset, length = get_position_from_match(match, text)
             depth=len(match.group("depth"))
 
             if (len(result) > 0):
                 line_count = result[-1].quote.count("\n") + 1
                 line_end = result[-1].position.line + line_count
+
+                # Handle continued quotes
                 if (line_num == line_end):
                     if (result[-1].depth == depth):
-                        # Same level quote, append to last
                         result[-1].quote += "\n" + match.group("quote")
                         result[-1].string += match.group()
-                        result[-1].position.length = len(result[-1].string)
+                        result[-1].position.length += length + 1
                         continue
 
             result.append(
@@ -52,10 +52,10 @@ class QuoteBlock:
                     position=Position(
                         line=line_num,
                         offset=offset,
-                        length=len(string)
+                        length=length
                     ),
                     quote=match.group("quote"),
-                    string=string,
+                    string=match.group().lstrip("\n"),
                 )
             )
         return result
