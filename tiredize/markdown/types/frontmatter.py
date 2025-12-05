@@ -6,7 +6,7 @@ import typing
 import yaml
 
 
-@dataclass(frozen=True)
+@dataclass
 class FrontMatter:
     content: typing.Dict[typing.Any, typing.Any]
     position: Position

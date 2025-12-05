@@ -5,7 +5,7 @@ from tiredize.types import Position
 import typing
 
 
-@dataclass(frozen=True)
+@dataclass
 class Header:
     level: int
     position: Position

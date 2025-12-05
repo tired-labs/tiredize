@@ -5,7 +5,7 @@ from tiredize.types import Position
 import typing
 
 
-@dataclass(frozen=True)
+@dataclass
 class CodeBlock:
     code: str
     delimiter: str
@@ -53,7 +53,7 @@ class CodeBlock:
         return result
 
 
-@dataclass(frozen=True)
+@dataclass
 class CodeInline:
     code: str
     position: Position

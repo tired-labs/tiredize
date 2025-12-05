@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
+@dataclass
 class BareLink:
     end: int
     match: str
@@ -9,7 +9,7 @@ class BareLink:
     url: str
 
 
-@dataclass(frozen=True)
+@dataclass
 class BracketLink:
     end: int
     match: str
@@ -17,7 +17,7 @@ class BracketLink:
     url: str
 
 
-@dataclass(frozen=True)
+@dataclass
 class InlineLink:
     end: int
     match: str
@@ -42,5 +42,5 @@ RE_LINK_INLINE = r"""
 """
 
 RE_URL = r"""
-    (?P<url>https+:\/\/\S+)  # Capture the URL
+    (?P<url>(https+:\/\/|(./|\\))\S+)  # Capture the URL
 """
