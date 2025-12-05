@@ -3,6 +3,13 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RuleResult:
+    position: Position
     rule_id: str
-    line: int
     message: str
+
+
+@dataclass(frozen=True)
+class Position:
+    line: int
+    offset: int
+    length: int
