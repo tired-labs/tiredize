@@ -12,7 +12,7 @@ class InlineImage:
     title_text: typing.Optional[str]
     url: str
 
-    _RE_IMAGE_INLINE = r"""
+    _RE_INLINE_IMAGE = r"""
         !\[                       # Opening (exclamation mark and bracket)
         (?P<alttext>[^]]*)        # Capture the alt-text
         \]\(                      # Closing bracket, opening paren
@@ -28,7 +28,7 @@ class InlineImage:
         Extract markdown images from text.
         """
         matches = search_all_re(
-            InlineImage._RE_IMAGE_INLINE,
+            InlineImage._RE_INLINE_IMAGE,
             text
         )
 
