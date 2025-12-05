@@ -13,7 +13,7 @@ class QuoteBlock:
     string: str
 
     _RE_QUOTEBLOCK = r"""
-        (?:^|\n)           # Must be at the start of a line
+        (?<![^|\n])        # Start of line, but don't capture it
         (?P<depth>[>]+)    # Capture the blockquote depth
         \s*                # Optional whitespace
         (?P<quote>[^\n]*)  # Capture anything after that as the quote
@@ -34,15 +34,15 @@ class QuoteBlock:
             line_num, offset, length = get_position_from_match(match, text)
             depth = len(match.group("depth"))
 
+            # Handle continued quotes
             if (len(result) > 0):
                 line_count = result[-1].quote.count("\n") + 1
                 line_end = result[-1].position.line + line_count
 
-                # Handle continued quotes
                 if (line_num == line_end):
                     if (result[-1].depth == depth):
                         result[-1].quote += "\n" + match.group("quote")
-                        result[-1].string += match.group()
+                        result[-1].string += "\n" + match.group()
                         result[-1].position.length += length + 1
                         continue
 
@@ -55,7 +55,7 @@ class QuoteBlock:
                         length=length
                     ),
                     quote=match.group("quote"),
-                    string=match.group().lstrip("\n"),
+                    string=match.group(),
                 )
             )
         return result
