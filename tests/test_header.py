@@ -188,7 +188,6 @@ def test_six_headers_repeated():
     text_01 = "Header Test: Duplicate Headers"
     header_01 = f"{"#" * level_01} {text_01}"
     len_01 = len(header_01)
-    md_text = md_section.format(header_01, "", "", "", "", "")
     positions = [
         Position(line=1, offset=0, length=len_01),
     ]

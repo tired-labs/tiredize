@@ -1,6 +1,6 @@
 # from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
-# from tiredize.types import Position
+from tiredize.types import Position
 
 md_section = """# Markdown Test Section - Lorem Ipsum
 
@@ -68,75 +68,49 @@ def test_no_codeinline():
     assert len(matches) == 0
 
 
-# def test_single_quoteblock_normal():
-#     depth_01 = 1
-#     text_01 = "Four score and seven years ago...."
-#     quote_01 = f"{">" * depth_01} {text_01}"
-#     len_01 = len(quote_01)
-#     position_01 = Position(line=15, offset=0, length=len_01)
-#     md_text = md_section.format(quote_01, "", "", "", "")
+def test_single_codeinline_normal():
+    code_01 = "tiredize --help"
+    string_01 = f"`{code_01}`"
+    text_01 = f"You can run {string_01} to see available options."
+    len_01 = len(string_01)
+    position_01 = Position(line=36, offset=12, length=len_01)
+    md_text = md_section.format("", "", text_01, "", "")
 
-#     matches = QuoteBlock.extract(md_text)
-#     assert len(matches) == 1
-#     assert matches[0] == QuoteBlock(
-#         depth=depth_01,
-#         position=position_01,
-#         quote=text_01,
-#         string=quote_01
-#     )
-
-
-# def test_single_quoteblock_multiline():
-#     depth_01 = 1
-#     quote_lines = [
-#         "Four score and seven years ago....",
-#         "Our fathers brought forth on this continent, a new nation,",
-#         "conceived in Liberty, and dedicated to the proposition that",
-#         "all men are created equal."
-#     ]
-#     quote_multiline = "> " + "\n> ".join(quote_lines).lstrip("\n")
-#     len_multiline = len(quote_multiline)
-#     position_multiline = Position(line=15, offset=0, length=len_multiline)
-#     md_text = md_section.format(quote_multiline, "", "", "", "")
-
-#     matches = QuoteBlock.extract(md_text)
-#     assert len(matches) == 1
-#     assert matches[0] == QuoteBlock(
-#         depth=depth_01,
-#         position=position_multiline,
-#         quote="\n".join(quote_lines),
-#         string=quote_multiline
-#     )
+    matches = CodeInline.extract(md_text)
+    assert len(matches) == 1
+    assert matches[0] == CodeInline(
+        code=code_01,
+        position=position_01,
+        string=string_01
+    )
 
 
-# def test_five_images_repeated():
-#     depth_01 = 1
-#     text_01 = "Four score and seven years ago...."
-#     quote_01 = f"{">" * depth_01} {text_01}"
-#     len_01 = len(quote_01)
-#     md_text = md_section.format(quote_01, "", "", "", "")
-#     positions = [
-#         Position(line=15, offset=0, length=len_01),
-#         Position(line=25, offset=0, length=len_01),
-#         Position(line=36, offset=0, length=len_01),
-#         Position(line=47, offset=0, length=len_01),
-#         Position(line=58, offset=0, length=len_01)
-#     ]
+def test_five_codeinlines_repeated():
+    code_01 = "tiredize --help"
+    string_01 = f"`{code_01}`"
+    text_01 = f"You can run {string_01} to see available options."
+    len_01 = len(string_01)
+    positions = [
+        Position(line=15, offset=12, length=len_01),
+        Position(line=25, offset=12, length=len_01),
+        Position(line=36, offset=12, length=len_01),
+        Position(line=47, offset=12, length=len_01),
+        Position(line=58, offset=12, length=len_01)
+    ]
 
-#     md_text = md_section.format(
-#         quote_01,
-#         quote_01,
-#         quote_01,
-#         quote_01,
-#         quote_01
-#     )
+    md_text = md_section.format(
+        text_01,
+        text_01,
+        text_01,
+        text_01,
+        text_01
+    )
 
-#     matches = QuoteBlock.extract(md_text)
-#     assert len(matches) == 5
-#     for i, match in enumerate(matches):
-#         assert match == QuoteBlock(
-#             depth=depth_01,
-#             string=quote_01,
-#             position=positions[i],
-#             quote=text_01
-#         )
+    matches = CodeInline.extract(md_text)
+    assert len(matches) == 5
+    for i, match in enumerate(matches):
+        assert match == CodeInline(
+            code=code_01,
+            position=positions[i],
+            string=string_01
+        )

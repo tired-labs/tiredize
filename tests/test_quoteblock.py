@@ -113,7 +113,6 @@ def test_five_images_repeated():
     text_01 = "Four score and seven years ago...."
     quote_01 = f"{">" * depth_01} {text_01}"
     len_01 = len(quote_01)
-    md_text = md_section.format(quote_01, "", "", "", "")
     positions = [
         Position(line=15, offset=0, length=len_01),
         Position(line=25, offset=0, length=len_01),
