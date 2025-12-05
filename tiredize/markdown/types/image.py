@@ -24,7 +24,7 @@ class InlineImage:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List[InlineImage]:
+    def extract(text: str) -> typing.List["InlineImage"]:
         """
         Extract markdown images from text.
         """

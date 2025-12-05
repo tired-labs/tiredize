@@ -23,7 +23,7 @@ class FrontMatter:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.Optional[FrontMatter]:
+    def extract(text: str) -> typing.Optional["FrontMatter"]:
         """
         Extract frontmatter from text.
         """

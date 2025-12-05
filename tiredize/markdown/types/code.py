@@ -1,7 +1,5 @@
 from dataclasses import dataclass
-from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
-import typing
 
 
 @dataclass(frozen=True)
@@ -16,32 +14,6 @@ class CodeBlock:
         (?P<syntax>.*)        # Capture the syntax if present
         $                     # Line ends here
     """
-
-    @staticmethod
-    def extract(text: str) -> typing.List[CodeBlock]:
-        """
-        Extract markdown codeblocks from text.
-        """
-        codeblocks = search_all_re(
-            CodeBlock.RE_CODEBLOCK,
-            text
-        )
-
-        result: list[CodeBlock] = []
-        for codeblock in codeblocks:
-            result.append(
-                CodeBlock(
-                    content=codeblock["groupdict"]["code"],
-                    position=Position(
-                        line_start=codeblock["line_start"],
-                        line_end=codeblock["line_end"],
-                        char_start=codeblock["start"],
-                        char_end=codeblock["end"]
-                    ),
-                    syntax=""
-                )
-            )
-        return result
 
 
 @dataclass(frozen=True)

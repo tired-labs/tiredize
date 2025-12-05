@@ -19,7 +19,7 @@ class Header:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List[Header]:
+    def extract(text: str) -> typing.List["Header"]:
         """
         Extract markdown titles from a section.
         As we are expecting a section's text to be the input, this must be the

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RuleResult:
-    position: Position
+    position: "Position"
     rule_id: str
     message: str
 

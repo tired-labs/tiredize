@@ -20,7 +20,7 @@ class QuoteBlock:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List[QuoteBlock]:
+    def extract(text: str) -> typing.List["QuoteBlock"]:
         """
         Extract markdown quoteblocks from text.
         """
