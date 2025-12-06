@@ -67,55 +67,54 @@ def test_no_frontmatter():
 
 
 def test_single_frontmatter_normal():
-    example_data: typing.Dict[str, typing.Any] = {
+    actual_data: typing.Dict[str, typing.Any] = {
         'title': 'Markdown Frontmatter Example',
         'id': 4444,
         'publication_date': datetime.datetime.now(),
         'tags': ['YAML', 'Markdown', 'TIRED']
     }
-    yaml_01 = yaml.safe_dump(example_data)
-    frontmatter_01 = f"---\n{yaml_01}\n---\n"
-    len_01 = len(frontmatter_01)
-    position_01 = Position(line=1, offset=0, length=len_01)
-    md_text = md_section.format(frontmatter_01, "", "", "", "", "")
+    actual_yaml = yaml.safe_dump(actual_data)
+    actual_string = f"---\n{actual_yaml}\n---\n"
+    position = Position(line=1, offset=0, length=len(actual_string))
 
     expected = FrontMatter(
-        content=example_data,
-        string=frontmatter_01,
-        position=position_01
+        content=actual_data,
+        string=actual_string,
+        position=position
     )
 
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     frontmatter = FrontMatter.extract(md_text)
     assert frontmatter is not None
     assert frontmatter == expected
 
 
 def test_six_frontmatters_repeated():
-    example_data: typing.Dict[str, typing.Any] = {
+    actual_data: typing.Dict[str, typing.Any] = {
         'title': 'Markdown Frontmatter Example',
         'id': 4444,
         'publication_date': datetime.datetime.now(),
         'tags': ['YAML', 'Markdown', 'TIRED']
     }
-    yaml_01 = yaml.safe_dump(example_data)
-    frontmatter_01 = f"---\n{yaml_01}\n---\n"
-    len_01 = len(frontmatter_01)
-    position_01 = Position(line=1, offset=0, length=len_01)
-    md_text = md_section.format(
-        frontmatter_01,
-        frontmatter_01,
-        frontmatter_01,
-        frontmatter_01,
-        frontmatter_01,
-        frontmatter_01
-    )
+    actual_yaml = yaml.safe_dump(actual_data)
+    actual_string = f"---\n{actual_yaml}\n---\n"
+    position = Position(line=1, offset=0, length=len(actual_string))
 
     expected = FrontMatter(
-        content=example_data,
-        string=frontmatter_01,
-        position=position_01
+        content=actual_data,
+        string=actual_string,
+        position=position
     )
 
-    frontmatter = FrontMatter.extract(md_text)
-    assert frontmatter is not None
-    assert frontmatter == expected
+    md_text = md_section.format(
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string
+    )
+
+    regex_matches = FrontMatter.extract(md_text)
+    assert regex_matches is not None
+    assert regex_matches == expected
