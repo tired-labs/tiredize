@@ -64,127 +64,130 @@ def test_no_images():
 
 
 def test_single_image_normal():
-    alttext_01 = "Alt Text"
-    url_01 = "https://example.com/image1.png"
-    title_01 = "Image Title 1"
-    image_01 = f"![{alttext_01}]({url_01} \"{title_01}\")"
-    position_01 = Position(line=14, offset=19, length=59)
-    md_text = md_section.format(image_01, "", "", "", "")
+    actual_alttext = "Alt Text"
+    actual_url = "https://tired.labs/eye.svg"
+    actual_title = "Image Title"
+    actual_string = f"![{actual_alttext}]({actual_url} \"{actual_title}\")"
+    position = Position(line=14, offset=19, length=len(actual_string))
+    md_text = md_section.format(actual_string, "", "", "", "")
+
+    exp_string = '![Alt Text](https://tired.labs/eye.svg "Image Title")'
 
     matches = InlineImage.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == InlineImage(
-        alt_text=alttext_01,
-        string=image_01,
-        position=position_01,
-        title_text=title_01,
-        url=url_01
+        alt_text=actual_alttext,
+        string=exp_string,
+        position=position,
+        title=actual_title,
+        url=actual_url
     )
 
 
 def test_five_images_repeated():
-    alttext_01 = "Alt Text"
-    url_01 = "https://example.com/image1.png"
-    title_01 = "Image Title 1"
-    image_01 = f"![{alttext_01}]({url_01} \"{title_01}\")"
-    len_01 = len(image_01)
-    positions = [
-        Position(line=14, offset=19, length=len_01),
-        Position(line=24, offset=10, length=len_01),
-        Position(line=34, offset=29, length=len_01),
-        Position(line=44, offset=9, length=len_01),
-        Position(line=54, offset=15, length=len_01)
+    actual_alttext = "Alt Text"
+    actual_url = "https://tired.labs/eye.svg"
+    actual_title = "Image Title"
+    actual_string = f"![{actual_alttext}]({actual_url} \"{actual_title}\")"
+    md_text = md_section.format(actual_string, "", "", "", "")
+
+    exp_string = '![Alt Text](https://tired.labs/eye.svg "Image Title")'
+    exp_positions = [
+        Position(line=14, offset=19, length=len(actual_string)),
+        Position(line=24, offset=10, length=len(actual_string)),
+        Position(line=34, offset=29, length=len(actual_string)),
+        Position(line=44, offset=9, length=len(actual_string)),
+        Position(line=54, offset=15, length=len(actual_string))
     ]
 
     md_text = md_section.format(
-        image_01,
-        image_01,
-        image_01,
-        image_01,
-        image_01
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string
     )
-
     matches = InlineImage.extract(md_text)
     assert len(matches) == 5
     for i, match in enumerate(matches):
         assert match == InlineImage(
-            alt_text=alttext_01,
-            string=image_01,
-            position=positions[i],
-            title_text=title_01,
-            url=url_01
+            alt_text=actual_alttext,
+            string=exp_string,
+            position=exp_positions[i],
+            title=actual_title,
+            url=actual_url
         )
 
 
 def test_five_images_unique():
-    alttext_01 = "Image 01 Alt Text"
-    url_01 = "https://firstimage.com/image01.png"
-    title_01 = "Image 01 Title"
-    image_01 = f"![{alttext_01}]({url_01} \"{title_01}\")"
-    position_01 = Position(line=14, offset=19, length=len(image_01))
+    actual: list[str] = []
+    expected: list[InlineImage] = []
 
-    alttext_02 = "Second Alt Text"
-    url_02 = "https://secondvisual.com/2.jpg"
-    title_02 = "Title 2"
-    image_02 = f"![{alttext_02}]({url_02} \"{title_02}\")"
-    position_02 = Position(line=24, offset=10, length=len(image_02))
-
-    alttext_03 = "No Title for the 3rd Image"
-    url_03 = "https://3.com/3.png"
-    image_03 = f"![{alttext_03}]({url_03})"
-    position_03 = Position(line=34, offset=29, length=len(image_03))
-
-    alttext_04 = "Local Image for the Fourth Test"
-    url_04 = "./images/img4.svg"
-    title_04 = "4th"
-    image_04 = f"![{alttext_04}]({url_04} \"{title_04}\")"
-    position_04 = Position(line=44, offset=9, length=len(image_04))
-
-    alttext_05 = "Fifth Image With Alt Text"
-    url_05 = "https://example.com/image1.png"
-    image_05 = f"![{alttext_05}]({url_05})"
-    position_05 = Position(line=54, offset=15, length=len(image_05))
-
-    expected = [
-        InlineImage(
-            alt_text=alttext_01,
-            string=image_01,
-            position=position_01,
-            title_text=title_01,
-            url=url_01
-        ), InlineImage(
-            alt_text=alttext_02,
-            string=image_02,
-            position=position_02,
-            title_text=title_02,
-            url=url_02
-        ), InlineImage(
-            alt_text=alttext_03,
-            string=image_03,
-            position=position_03,
-            title_text="",
-            url=url_03
-        ), InlineImage(
-            alt_text=alttext_04,
-            string=image_04,
-            position=position_04,
-            title_text=title_04,
-            url=url_04
-        ), InlineImage(
-            alt_text=alttext_05,
-            string=image_05,
-            position=position_05,
-            title_text="",
-            url=url_05
-        )
+    alt_text_values = [
+        "Image 01 Alt Text",
+        "Second Alt Text",
+        "No Title for the 3rd Image",
+        "Local Image for the Fourth Test",
+        "Fifth Image With Alt Text",
+    ]
+    position_values = [
+        [14, 19],
+        [24, 10],
+        [34, 29],
+        [44, 9],
+        [54, 15]
+    ]
+    title_values = [
+        "Image 01 Title",
+        "Title 2",
+        "",
+        "",
+        "4th"
+    ]
+    url_values = [
+        "https://first.com/image01.png",
+        "https://secondvisual.com/2.jpg",
+        "https://3.com/3.png",
+        "./images/img4.svg",
+        "https://tired.labs/eye.svg"
+    ]
+    expected_strings = [
+        '![Image 01 Alt Text](https://first.com/image01.png "Image 01 Title")',
+        '![Second Alt Text](https://secondvisual.com/2.jpg "Title 2")',
+        '![No Title for the 3rd Image](https://3.com/3.png "")',
+        '![Local Image for the Fourth Test](./images/img4.svg "")',
+        '![Fifth Image With Alt Text](https://tired.labs/eye.svg "4th")'
     ]
 
+    for i in range(5):
+        actual_alttext = f"{alt_text_values[i]}"
+        actual_url = f"{url_values[i]}"
+        actual_title = ""
+        if len(title_values[i]) > 0:
+            actual_title = f"{title_values[i]}"
+        actual_string = f"![{actual_alttext}]({actual_url} \"{actual_title}\")"
+        actual.append(actual_string)
+
+        expected.append(
+            InlineImage(
+                alt_text=alt_text_values[i],
+                string=expected_strings[i],
+                position=Position(
+                    line=position_values[i][0],
+                    offset=position_values[i][1],
+                    length=len(actual_string)
+                ),
+                title=title_values[i],
+                url=url_values[i]
+            )
+        )
+
     md_text = md_section.format(
-        image_01,
-        image_02,
-        image_03,
-        image_04,
-        image_05
+        actual[0],
+        actual[1],
+        actual[2],
+        actual[3],
+        actual[4]
     )
 
     matches = InlineImage.extract(md_text)

@@ -10,7 +10,7 @@ class InlineImage:
     alt_text: str
     position: Position
     string: str
-    title_text: typing.Optional[str]
+    title: typing.Optional[str]
     url: str
 
     _RE_INLINE_IMAGE = r"""
@@ -45,7 +45,7 @@ class InlineImage:
                         length=length
                     ),
                     string=match.group(),
-                    title_text=match.group("title"),
+                    title=match.group("title"),
                     url=match.group("url")
                 )
             )
