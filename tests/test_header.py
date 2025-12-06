@@ -64,148 +64,140 @@ def test_no_headers():
 
 
 def test_single_header_level01():
-    level_01 = 1
-    text_01 = "Header Test: Level One"
-    header_01 = f"{"#" * level_01} {text_01}"
-    len_01 = len(header_01)
-    md_text = md_section.format(header_01, "", "", "", "", "")
-    positions = [
-        Position(line=1, offset=0, length=len_01),
-    ]
+    actual_level = 1
+    actual_text = "Header Test: Level One"
+    actual_string = f"{"#" * actual_level} {actual_text}"
 
+    exp_string = "# Header Test: Level One"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
+
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_01,
-        position=positions[0],
-        string=header_01,
-        title=text_01
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
 
 
 def test_single_header_level02():
-    level_02 = 2
-    text_02 = "Header Test: Level Two"
-    header_02 = f"{"#" * level_02} {text_02}"
-    len_02 = len(header_02)
-    md_text = md_section.format(header_02, "", "", "", "", "")
-    positions = [
-        Position(line=1, offset=0, length=len_02),
-    ]
+    actual_level = 2
+    actual_text = "Header Test: Level Two"
+    actual_string = f"{"#" * actual_level} {actual_text}"
 
+    exp_string = "## Header Test: Level Two"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
+
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_02,
-        position=positions[0],
-        string=header_02,
-        title=text_02
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
 
 
 def test_single_header_level03():
-    level_03 = 3
-    text_03 = "Header Test: Level Three"
-    header_03 = f"{"#" * level_03} {text_03}"
-    len_03 = len(header_03)
-    md_text = md_section.format(header_03, "", "", "", "", "")
-    positions = [
-        Position(line=1, offset=0, length=len_03),
-    ]
+    actual_level = 3
+    actual_text = "Header Test: Level Three"
+    actual_string = f"{"#" * actual_level} {actual_text}"
 
+    exp_string = "### Header Test: Level Three"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
+
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_03,
-        position=positions[0],
-        string=header_03,
-        title=text_03
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
 
 
 def test_single_header_level04():
-    level_04 = 4
-    text_04 = "Header Test: Level Four"
-    header_04 = f"{"#" * level_04} {text_04}"
-    len_04 = len(header_04)
-    md_text = md_section.format(header_04, "", "", "", "", "")
-    positions = [
-        Position(line=1, offset=0, length=len_04),
-    ]
+    actual_level = 4
+    actual_text = "Header Test: Level Four"
+    actual_string = f"{"#" * actual_level} {actual_text}"
 
+    exp_string = "#### Header Test: Level Four"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
+
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_04,
-        position=positions[0],
-        string=header_04,
-        title=text_04
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
 
 
 def test_single_header_level05():
-    level_05 = 5
-    text_05 = "Header Test: Level Five"
-    header_05 = f"{"#" * level_05} {text_05}"
-    len_05 = len(header_05)
-    md_text = md_section.format(header_05, "", "", "", "", "")
-    positions = [
-        Position(line=1, offset=0, length=len_05),
-    ]
+    actual_level = 5
+    actual_text = "Header Test: Level Five"
+    actual_string = f"{"#" * actual_level} {actual_text}"
 
+    exp_string = "##### Header Test: Level Five"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
+
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_05,
-        position=positions[0],
-        string=header_05,
-        title=text_05
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
 
 
 def test_single_header_level06():
-    level_06 = 6
-    text_06 = "Header Test: Level Six"
-    header_06 = f"{"#" * level_06} {text_06}"
-    len_06 = len(header_06)
-    md_text = md_section.format(header_06, "", "", "", "", "")
-    positions = [
-        Position(line=1, offset=0, length=len_06),
-    ]
+    actual_level = 6
+    actual_text = "Header Test: Level Six"
+    actual_string = f"{"#" * actual_level} {actual_text}"
 
+    exp_string = "###### Header Test: Level Six"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
+
+    md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_06,
-        position=positions[0],
-        string=header_06,
-        title=text_06
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
 
 
 def test_six_headers_repeated():
-    level_01 = 1
-    text_01 = "Header Test: Duplicate Headers"
-    header_01 = f"{"#" * level_01} {text_01}"
-    len_01 = len(header_01)
-    positions = [
-        Position(line=1, offset=0, length=len_01),
-    ]
+    actual_level = 1
+    actual_text = "Header Test: Duplicate Level One"
+    actual_string = f"{"#" * actual_level} {actual_text}"
+
+    exp_string = "# Header Test: Duplicate Level One"
+    exp_position = Position(line=1, offset=0, length=len(actual_string))
 
     md_text = md_section.format(
-        header_01,
-        header_01,
-        header_01,
-        header_01,
-        header_01,
-        header_01
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string,
+        actual_string
     )
-
     matches = Header.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == Header(
-        level=level_01,
-        position=positions[0],
-        string=header_01,
-        title=text_01
+        level=actual_level,
+        position=exp_position,
+        string=exp_string,
+        title=actual_text
     )
