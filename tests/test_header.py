@@ -14,7 +14,8 @@ vulputate metus imperdiet, rhoncus odio eu, dapibus justo. Fusce porta magna in
 efficitur tincidunt. Vestibulum efficitur ex porttitor neque suscipit pulvinar.
 Nulla mauris libero, semper in ultricies eu, interdum eget justo.
 
-Line 14, Offset 00 {}
+Line 15, Offset 00
+{}
 
 Donec quis erat non diam sollicitudin faucibus quis quis arcu. In posuere vel
 dolor vitae aliquet. Maecenas ultrices dignissim orci, id aliquet arcu
@@ -23,7 +24,8 @@ enim pretium rhoncus. Etiam at lorem vel diam viverra malesuada vel ut erat.
 Mauris vehicula condimentum consequat. Phasellus fermentum rhoncus enim nec
 volutpat.
 
-Line 23, Offset 00 {}
+Line 25, Offset 00
+{}
 
 Nulla facilisi. Vestibulum ut turpis ut ipsum euismod varius. Integer et
 egestas leo. Etiam et porttitor turpis, et dignissim diam. Suspendisse nec
@@ -33,7 +35,8 @@ volutpat nibh aliquam in. Maecenas vestibulum nulla a efficitur vestibulum.
 Nulla vulputate pulvinar diam, non sollicitudin leo. Suspendisse id porta orci,
 a fringilla ex. In hac habitasse platea dictumst.
 
-Line 33, Offset 00 {}
+Line 36, Offset 00
+{}
 
 Cras venenatis semper justo, eget feugiat turpis mollis non. Suspendisse risus
 lacus, pulvinar ut ipsum nec, pharetra blandit leo. Vivamus ullamcorper magna
@@ -43,7 +46,8 @@ risus ex, malesuada fermentum sem in, molestie viverra sem. Ut odio massa,
 luctus egestas maximus non, venenatis id justo. Suspendisse eleifend est id
 arcu porta tempus.
 
-Line 43, Offset 00 {}
+Line 47, Offset 00
+{}
 
 Curabitur id nulla sit amet felis porta tempus. Morbi placerat malesuada dolor,
 pulvinar tempor enim laoreet eget. Nullam consequat, magna ac dapibus bibendum,
@@ -53,7 +57,7 @@ pellentesque et metus. Donec placerat et sem ut auctor. Suspendisse molestie,
 quam ac pretium varius, libero enim placerat dolor, eget sagittis urna sapien
 eu tortor.
 
-Line 53, Offset 00
+Line 58, Offset 00
 {}"""
 
 
@@ -183,7 +187,14 @@ def test_six_headers_repeated():
     actual_string = f"{"#" * actual_level} {actual_text}"
 
     exp_string = "# Header Test: Duplicate Level One"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_positions = [
+        Position(line=1, offset=0, length=len(actual_string)),
+        Position(line=15, offset=0, length=len(actual_string)),
+        Position(line=25, offset=0, length=len(actual_string)),
+        Position(line=36, offset=0, length=len(actual_string)),
+        Position(line=47, offset=0, length=len(actual_string)),
+        Position(line=58, offset=0, length=len(actual_string))
+    ]
 
     md_text = md_section.format(
         actual_string,
@@ -194,10 +205,11 @@ def test_six_headers_repeated():
         actual_string
     )
     matches = Header.extract(md_text)
-    assert len(matches) == 1
-    assert matches[0] == Header(
-        level=actual_level,
-        position=exp_position,
-        string=exp_string,
-        title=actual_text
-    )
+    assert len(matches) == 6
+    for i, match in enumerate(matches):
+        assert match == Header(
+            level=actual_level,
+            position=exp_positions[i],
+            string=exp_string,
+            title=actual_text
+        )

@@ -13,7 +13,7 @@ class Header:
     title: str
 
     _RE_HEADER = r"""
-        ^                     # Must be at the start of a line
+        (?<![^|\n])           # Start of line, but don't capture it
         (?P<hashes>\#{1,6})   # One to six hash characters
         \s+                   # Whitespace
         (?P<title>[^\n]+)     # Capture anything after that as the title
