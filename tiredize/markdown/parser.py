@@ -1,6 +1,6 @@
 # from pathlib import Path
 # from tiredize.markdown.types.code import CodeBlock
-# # from tiredize.markdown.types.code import CodeInline
+# from tiredize.markdown.types.code import CodeInline
 # from tiredize.markdown.types.document import Document
 # from tiredize.markdown.types.header import Header
 # from tiredize.markdown.types.image import InlineImage
@@ -8,41 +8,18 @@
 # from tiredize.markdown.types.link import BracketLink
 # from tiredize.markdown.types.link import InlineLink
 # from tiredize.markdown.types.frontmatter import FrontMatter
-# # from tiredize.markdown.types.list import List
+# from tiredize.markdown.types.list import List
 # from tiredize.markdown.types.quoteblock import QuoteBlock
 # from tiredize.markdown.types.reference import ImageReference
 # from tiredize.markdown.types.reference import LinkReference
 # from tiredize.markdown.types.reference import ReferenceDefinition
 # from tiredize.markdown.types.section import Section
-# # from tiredize.markdown.types.table import Table
+# from tiredize.markdown.types.table import Table
 # import typing
-# import yaml
 
 
 # class Parser:
-#     document: Document
-#     blockquotes: set[int] = set()
-#     codeblocks: typing.List[CodeBlock] = []
-#     frontmatter_yaml: typing.Dict[str, str] = {}
-#     markdown_lines: typing.List[str] = []
-#     markdown_text: str = ""
-#     reference_definitions: typing.Dict[str, ReferenceDefinition] = {}
-#     sections: typing.List["Section"] = []
-#     text: str
 
-#     def __init__(self, text: str):
-#         self.text = text
-
-#     @classmethod
-#     def from_path(cls, path: Path) -> "Parser":
-#         text = path.read_text(encoding="utf-8")
-#         return cls.from_text(text)
-
-#     @classmethod
-#     def from_text(cls, text: str) -> "Parser":
-#         parser = cls(text)
-#         parser.parse()
-#         return parser
 
 #     def parse(self) -> Document:
 #         result = Document(
@@ -83,335 +60,250 @@
 #         self._map_reference_usages()
 #         return result
 
-#     def _extract_frontmatter(self):
-#         """
-#         If there is frontmatter, we split the document into two parts
-#         representing the frontmatter and the actual markdown content.
+# def _extract_links(self, section: Section):
+#     """
+#     Extract links from a section's content.
+#     Ignoring anything in a code fence.
+#     """
 
-#         Returns (frontmatter_dict, markdown_text)
+#     links_bare = _search_all_re(RE_URL, section.content)
 
-#         If no front matter is present:
-#             frontmatter_dict is {}
-#             markdown_text is original text
-#         """
-
-#         if not self.text.startswith("---"):
-#             self.frontmatter_yaml = {}
-#             self.markdown_text = self.text
-#             self.markdown_lines = self.markdown_text.splitlines()
-#             return
-
-#         split = re.split(
-#             RE_FRONT_MATTER_YAML,
-#             self.text,
-#             maxsplit=2,
-#             flags=re.MULTILINE
-#         )
-
-#         # We expect three parts: empty, yaml, markdown
-#         if len(split) < 3:
-#             self.frontmatter_yaml = {}
-#             self.markdown_text = self.text
-
-#         # If the first part isn't empty, we have unexpected text beforehand.
-#         # We treat this as content, not front matter.
-#         if len(split[0]) > 0:
-#             self.frontmatter_yaml = {}
-#             self.markdown_text = self.text
-
-#         # If we got this far, then we have something that looks like front
-#         # matter. We will try to parse it as YAML.
-#         frontmatter_dict = None
-#         try:
-#             frontmatter_dict = yaml.safe_load(split[1])
-#         except yaml.YAMLError:
-#             raise ValueError(f"Invalid YAML in frontmatter: {split[1]!r}")
-
-#         self.frontmatter_yaml = frontmatter_dict
-#         self.markdown_text = split[2].lstrip("\n")
-#         self.markdown_lines = self.markdown_text.splitlines()
-
-#     def _extract_images(self, section: Section):
-#         """
-#         Extract images from a section's content.
-#         Ignoring anything in a code fence.
-#         """
-#         images = _search_all_re(
-#             RE_IMAGE_INLINE,
-#             section.content.replace("\n", " ")
-#         )
-
-#         for image in images:
-#             section.images_inline.append(
-#                 InlineImage(
-#                     alt_text=image["groupdict"]["alttext"],
-#                     end=image["end"],
-#                     match=image["match"],
-#                     start=image["start"],
-#                     title_text=image["groupdict"]["title"],
-#                     url=image["groupdict"]["url"]
-#                 )
+#     # Inline links
+#     links_inline: list[dict[typing.Any, typing.Any]] = _search_all_re(
+#         RE_LINK_INLINE,
+#         section.content.replace("\n", " ")
+#     )
+#     for inline in links_inline:
+#         section.links_inline.append(
+#             InlineLink(
+#                 end=inline["end"],
+#                 start=inline["start"],
+#                 title=inline["groupdict"]["title"],
+#                 url=inline["groupdict"]["url"]
 #             )
-
-#     def _extract_inline_code(self, section: Section):
-#         """
-#         Extract inline code from a section's content.
-#         Ignoring anything in a code fence.
-#         """
-#         codes = _search_all_re(
-#             RE_CODE_INLINE,
-#             section.content.replace("\n", " ")
 #         )
-
-#         for code in codes:
-#             section.code_inline.append(
-#                 code["match"]
-#             )
-
-#     def _extract_links(self, section: Section):
-#         """
-#         Extract links from a section's content.
-#         Ignoring anything in a code fence.
-#         """
-
-#         links_bare = _search_all_re(RE_URL, section.content)
-
-#         # Inline links
-#         links_inline: list[dict[typing.Any, typing.Any]] = _search_all_re(
-#             RE_LINK_INLINE,
-#             section.content.replace("\n", " ")
-#         )
-#         for inline in links_inline:
-#             section.links_inline.append(
-#                 InlineLink(
-#                     end=inline["end"],
-#                     start=inline["start"],
-#                     title=inline["groupdict"]["title"],
-#                     url=inline["groupdict"]["url"]
-#                 )
-#             )
-#             for bare in links_bare:
-#                 if bare["start"] >= inline["start"]:
-#                    bare_end = bare["start"] + len(inline["groupdict"]["url"])
-#                     if bare_end <= inline["end"]:
-#                         links_bare.remove(bare)
-
-#         # Bracket links
-#         links_bracket: list[dict[typing.Any, typing.Any]] = _search_all_re(
-#             RE_LINK_BRACKET,
-#             section.content.replace("\n", " ")
-#         )
-#         for bracket in links_bracket:
-#             section.links_bracket.append(
-#                 BracketLink(
-#                     end=bracket["end"],
-#                     start=bracket["start"],
-#                     url=bracket["groupdict"]["url"]
-#                 )
-#             )
-#             for bare in links_bare:
-#                 if bare["start"] >= bracket["start"]:
-#                   bare_end = bare["start"] + len(bracket["groupdict"]["url"])
-#                     if bare_end <= bracket["end"]:
-#                         links_bare.remove(bare)
-
-#         # Remove any bare links that were already captured as images
-#         for image in section.images_inline:
-#             for bare in links_bare:
-#                 if bare["start"] >= image.start:
-#                     if bare["end"] <= image.end:
-#                         links_bare.remove(bare)
-
-#         # Remove any bare links that were already captured as reference defs
-#         for reference_definition in section.reference_definitions:
-#             for bare in links_bare:
-#                 if bare["start"] >= reference_definition.start:
-#                     if bare["end"] <= reference_definition.end:
-#                         links_bare.remove(bare)
-
 #         for bare in links_bare:
-#             section.links_bare.append(
-#                 BareLink(
-#                     end=bare["end"],
-#                     start=bare["start"],
-#                     url=bare["groupdict"]["url"]
+#             if bare["start"] >= inline["start"]:
+#                bare_end = bare["start"] + len(inline["groupdict"]["url"])
+#                 if bare_end <= inline["end"]:
+#                     links_bare.remove(bare)
+
+#     # Bracket links
+#     links_bracket: list[dict[typing.Any, typing.Any]] = _search_all_re(
+#         RE_LINK_BRACKET,
+#         section.content.replace("\n", " ")
+#     )
+#     for bracket in links_bracket:
+#         section.links_bracket.append(
+#             BracketLink(
+#                 end=bracket["end"],
+#                 start=bracket["start"],
+#                 url=bracket["groupdict"]["url"]
+#             )
+#         )
+#         for bare in links_bare:
+#             if bare["start"] >= bracket["start"]:
+#               bare_end = bare["start"] + len(bracket["groupdict"]["url"])
+#                 if bare_end <= bracket["end"]:
+#                     links_bare.remove(bare)
+
+#     # Remove any bare links that were already captured as images
+#     for image in section.images_inline:
+#         for bare in links_bare:
+#             if bare["start"] >= image.start:
+#                 if bare["end"] <= image.end:
+#                     links_bare.remove(bare)
+
+#     # Remove any bare links that were already captured as reference defs
+#     for reference_definition in section.reference_definitions:
+#         for bare in links_bare:
+#             if bare["start"] >= reference_definition.start:
+#                 if bare["end"] <= reference_definition.end:
+#                     links_bare.remove(bare)
+
+#     for bare in links_bare:
+#         section.links_bare.append(
+#             BareLink(
+#                 end=bare["end"],
+#                 start=bare["start"],
+#                 url=bare["groupdict"]["url"]
+#             )
+#         )
+
+# def _extract_reference_usages(self, section: Section):
+#     """
+#     Extract reference usages from a section's content.
+#     Ignoring anything in a code fence.
+#     """
+
+#     ref_usages = _search_all_re(
+#         RE_REFERENCE_USAGE,
+#         section.content.replace("\n", " ")
+#     )
+
+#     for ref_usage in ref_usages:
+#         if ref_usage["groupdict"]["image"] == "!":
+#             section.images_reference.append(
+#                 ImageReference(
+#                     definition=ref_usage["groupdict"]["reference"],
+#                     end=ref_usage["end"],
+#                     start=ref_usage["start"],
+#                     text=ref_usage["groupdict"]["text"]
+#                 )
+#             )
+#         else:
+#             section.links_reference.append(
+#                 LinkReference(
+#                     definition=ref_usage["groupdict"]["reference"],
+#                     end=ref_usage["end"],
+#                     start=ref_usage["start"],
+#                     text=ref_usage["groupdict"]["text"]
 #                 )
 #             )
 
-#     def _extract_reference_usages(self, section: Section):
-#         """
-#         Extract reference usages from a section's content.
-#         Ignoring anything in a code fence.
-#         """
+# def _extract_reference_definitions(self, section: Section):
+#     """
+#     Extract reference definitions from a section's content.
+#     Ignoring anything in a code fence.
+#     """
+#     # Reference definitions
+#     reference_definitions = _search_all_re(
+#         RE_REFERENCE_DEFINITION,
+#         section.content
+#     )
+#     for link in reference_definitions:
+#         new_ref_def = ReferenceDefinition(
+#             end=link["end"],
+#             start=link["start"],
+#             title=link["groupdict"]["title"],
+#             url=link["groupdict"]["url"],
+#             usage_images=[],
+#             usage_links=[]
+#         )
+#         section.reference_definitions.append(new_ref_def)
+#         self.reference_definitions[new_ref_def.title] = new_ref_def
 
-#         ref_usages = _search_all_re(
-#             RE_REFERENCE_USAGE,
-#             section.content.replace("\n", " ")
+# def _extract_sections(self):
+#     """
+#     Identify all sections in the document, skipping those inside fenced
+#     code.
+#     """
+
+#     self.sections = []
+#     # new_section = Section(
+#     #     code_inline=[],
+#     #     content_raw="",
+#     #     content="",
+#     #     header_level=0,
+#     #     header_title="",
+#     #     images_inline=[],
+#     #     images_reference=[],
+#     #     line_end=0,
+#     #     line_start=0,
+#     #     links_bare=[],
+#     #     links_bracket=[],
+#     #     links_inline=[],
+#     #     links_reference=[],
+#     #     lists=[],
+#     #     reference_definitions=[],
+#     #     subsections=[],
+#     #     tables=[]
+#     # )
+
+#     for line_num, line in enumerate(self.markdown_lines, start=1):
+
+#         # Ignore headings that appear inside fenced code
+#         if line_num in self.fenced_lines:
+#             continue
+
+#         # Check if this line is a heading, indicating a new section
+#         heading_match = _search_all_re(RE_HEADER, line)
+#         if (not heading_match) and (not len(heading_match) > 1):
+#             continue
+
+#         heading = heading_match[0]
+
+#         new_section = Section(
+#             code_block=[],
+#             code_inline=[],
+#             content_raw="",
+#             content="",
+#             header=Header(
+#                 level=len(heading["groupdict"]["hashes"]),
+#                 title=heading["groupdict"]["title"],
+#                 start=heading["start"],
+#                 end=heading["end"]
+#             ),
+#             images_inline=[],
+#             images_reference=[],
+#             line_end=-1,
+#             line_start=line_num,
+#             links_bare=[],
+#             links_bracket=[],
+#             links_inline=[],
+#             links_reference=[],
+#             lists=[],
+#             quoteblocks=[],
+#             reference_definitions=[],
+#             subsections=[],
+#             tables=[]
 #         )
 
-#         for ref_usage in ref_usages:
-#             if ref_usage["groupdict"]["image"] == "!":
-#                 section.images_reference.append(
-#                     ImageReference(
-#                         definition=ref_usage["groupdict"]["reference"],
-#                         end=ref_usage["end"],
-#                         start=ref_usage["start"],
-#                         text=ref_usage["groupdict"]["text"]
-#                     )
-#                 )
-#             else:
-#                 section.links_reference.append(
-#                     LinkReference(
-#                         definition=ref_usage["groupdict"]["reference"],
-#                         end=ref_usage["end"],
-#                         start=ref_usage["start"],
-#                         text=ref_usage["groupdict"]["text"]
-#                     )
-#                 )
+#         if len(self.sections) > 0:
+#             section_start = self.sections[-1].line_start
+#             section_end = line_num - 1
+#             self.sections[-1].line_end = section_end
+#             self.sections[-1].content_raw = "\n".join(
+#                 self.markdown_lines[
+#                     section_start-1:section_end
+#                 ]
+#             ).strip()
 
-#     def _extract_reference_definitions(self, section: Section):
-#         """
-#         Extract reference definitions from a section's content.
-#         Ignoring anything in a code fence.
-#         """
-#         # Reference definitions
-#         reference_definitions = _search_all_re(
-#             RE_REFERENCE_DEFINITION,
-#             section.content
-#         )
-#         for link in reference_definitions:
-#             new_ref_def = ReferenceDefinition(
-#                 end=link["end"],
-#                 start=link["start"],
-#                 title=link["groupdict"]["title"],
-#                 url=link["groupdict"]["url"],
-#                 usage_images=[],
-#                 usage_links=[]
-#             )
-#             section.reference_definitions.append(new_ref_def)
-#             self.reference_definitions[new_ref_def.title] = new_ref_def
+#         self.sections.append(new_section)
 
-#     def _extract_sections(self):
-#         """
-#         Identify all sections in the document, skipping those inside fenced
-#         code.
-#         """
+#     section_start = self.sections[-1].line_start
+#     section_end = len(self.markdown_lines)
+#     new_section.line_end = section_end
+#     new_section.content_raw = "\n".join(
+#         self.markdown_lines[
+#             section_start-1:section_end
+#         ]
+#     ).strip()
 
-#         self.sections = []
-#         # new_section = Section(
-#         #     code_inline=[],
-#         #     content_raw="",
-#         #     content="",
-#         #     header_level=0,
-#         #     header_title="",
-#         #     images_inline=[],
-#         #     images_reference=[],
-#         #     line_end=0,
-#         #     line_start=0,
-#         #     links_bare=[],
-#         #     links_bracket=[],
-#         #     links_inline=[],
-#         #     links_reference=[],
-#         #     lists=[],
-#         #     reference_definitions=[],
-#         #     subsections=[],
-#         #     tables=[]
-#         # )
+#     # Housekeeping on all the sections we found
+#     for section_num, section in enumerate(self.sections):
 
-#         for line_num, line in enumerate(self.markdown_lines, start=1):
-
-#             # Ignore headings that appear inside fenced code
+#       # Extract "sanitized" content blockquotes or fenced in code blocks
+#         content_lines: list[str] = []
+#         for line_num in range(section.line_start, section.line_end + 1):
 #             if line_num in self.fenced_lines:
 #                 continue
-
-#             # Check if this line is a heading, indicating a new section
-#             heading_match = _search_all_re(RE_HEADER, line)
-#             if (not heading_match) and (not len(heading_match) > 1):
+#             if line_num in self.blockquote_lines:
 #                 continue
+#             content_lines.append(self.markdown_lines[line_num - 1])
+#         section.content = "\n".join(content_lines).strip()
 
-#             heading = heading_match[0]
+#         # Add the subsections to each section that has them
+#         for i in range(section_num + 1, len(self.sections)):
+#             curr = self.sections[i]
+#             if curr.header.level > section.header.level:
+#                 section.subsections.append(curr)
+#             else:
+#                 break
 
-#             new_section = Section(
-#                 code_block=[],
-#                 code_inline=[],
-#                 content_raw="",
-#                 content="",
-#                 header=Header(
-#                     level=len(heading["groupdict"]["hashes"]),
-#                     title=heading["groupdict"]["title"],
-#                     start=heading["start"],
-#                     end=heading["end"]
-#                 ),
-#                 images_inline=[],
-#                 images_reference=[],
-#                 line_end=-1,
-#                 line_start=line_num,
-#                 links_bare=[],
-#                 links_bracket=[],
-#                 links_inline=[],
-#                 links_reference=[],
-#                 lists=[],
-#                 quoteblocks=[],
-#                 reference_definitions=[],
-#                 subsections=[],
-#                 tables=[]
-#             )
-
-#             if len(self.sections) > 0:
-#                 section_start = self.sections[-1].line_start
-#                 section_end = line_num - 1
-#                 self.sections[-1].line_end = section_end
-#                 self.sections[-1].content_raw = "\n".join(
-#                     self.markdown_lines[
-#                         section_start-1:section_end
-#                     ]
-#                 ).strip()
-
-#             self.sections.append(new_section)
-
-#         section_start = self.sections[-1].line_start
-#         section_end = len(self.markdown_lines)
-#         new_section.line_end = section_end
-#         new_section.content_raw = "\n".join(
-#             self.markdown_lines[
-#                 section_start-1:section_end
-#             ]
-#         ).strip()
-
-#         # Housekeeping on all the sections we found
-#         for section_num, section in enumerate(self.sections):
-
-#           # Extract "sanitized" content blockquotes or fenced in code blocks
-#             content_lines: list[str] = []
-#             for line_num in range(section.line_start, section.line_end + 1):
-#                 if line_num in self.fenced_lines:
-#                     continue
-#                 if line_num in self.blockquote_lines:
-#                     continue
-#                 content_lines.append(self.markdown_lines[line_num - 1])
-#             section.content = "\n".join(content_lines).strip()
-
-#             # Add the subsections to each section that has them
-#             for i in range(section_num + 1, len(self.sections)):
-#                 curr = self.sections[i]
-#                 if curr.header.level > section.header.level:
-#                     section.subsections.append(curr)
-#                 else:
-#                     break
-
-#     def _map_reference_usages(self):
-#         """
-#         For every ReferenceDefinition, find all usages in links and images
-#         and map them back to the definition.
-#         """
-#         for section in self.sections:
-#             for link_ref in section.links_reference:
-#                 ref_def = self.reference_definitions.get(link_ref.definition)
-#                 link_ref.definition = ref_def
-#                 if ref_def:
-#                     ref_def.usage_links.append(link_ref)
-#             for img_ref in section.images_reference:
-#                 ref_def = self.reference_definitions.get(img_ref.definition)
-#                 img_ref.definition = ref_def
-#                 if ref_def:
-#                     ref_def.usage_images.append(img_ref)
+# def _map_reference_usages(self):
+#     """
+#     For every ReferenceDefinition, find all usages in links and images
+#     and map them back to the definition.
+#     """
+#     for section in self.sections:
+#         for link_ref in section.links_reference:
+#             ref_def = self.reference_definitions.get(link_ref.definition)
+#             link_ref.definition = ref_def
+#             if ref_def:
+#                 ref_def.usage_links.append(link_ref)
+#         for img_ref in section.images_reference:
+#             ref_def = self.reference_definitions.get(img_ref.definition)
+#             img_ref.definition = ref_def
+#             if ref_def:
+#                 ref_def.usage_images.append(img_ref)
