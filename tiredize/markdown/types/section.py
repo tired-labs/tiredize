@@ -12,6 +12,7 @@ from tiredize.markdown.types.reference import ImageReference
 from tiredize.markdown.types.reference import LinkReference
 from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.types.table import Table
+from tiredize.markdown.utils import get_offset_from_position
 from tiredize.types import Position
 import typing
 
@@ -36,34 +37,55 @@ class Section:
     subsections: typing.List["Section"]
     tables: typing.List["Table"]
 
+    @staticmethod
     def extract(text: str) -> typing.List["Section"]:
         """
         Extract sections from markdown.
         """
         result: typing.List[Section] = []
 
-        # md_sanitized = CodeBlock.sanitize(text)
-        # headers = Header.extract(md_sanitized)
-        # if len(headers) == 0:
-        #     return result
+        md_sanitized = CodeBlock.sanitize(text)
+        headers = Header.extract(md_sanitized)
+        if len(headers) == 0:
+            return result
 
-        # text_lines = text.splitlines()
-        # for i, header in enumerate(headers, start=0):
-        #     line_num = header.position.line - 1
-        #     new_text_lines = "\n".join(text_lines[line_num:])
-        #     if  i + 1 == len(headers):
-        #         new_text_end = headers[i+1].line
-        #         line_num = header.position.line - 1
+        for i, header in enumerate(headers, start=0):
+            offset_start: int = 0
+            offset_end: int = 0
+            offset_start = get_offset_from_position(header.position, text)
+            if i + 1 < len(headers):
+                offset_end = get_offset_from_position(
+                    headers[i + 1].position,
+                    text
+                )
+            else:
+                offset_end = len(text)
+            section_text = text[offset_start:offset_end]
 
-        #         next_line_num = next_header.position.line - 1
-        #         new_text_lines = "\n".join(
-        #             text_lines[line_num:next_line_num]
-        #         )
-
-        # md_sanitized_start = md_sanitized.split("\n", maxsplit=line_num)
-        # if len(md_sanitized_start) > 1:
-        #     md_sanitized = "\n".join(md_sanitized_start[1:])
-        # else:
-        #     md_sanitized = md_sanitized[0]
+            new_section = Section(
+                code_block=CodeBlock.extract(section_text),
+                code_inline=CodeInline.extract(section_text),
+                header=header,
+                images_inline=InlineImage.extract(section_text),
+                images_reference=ImageReference.extract(section_text),
+                links_bare=BareLink.extract(section_text),
+                links_bracket=BracketLink.extract(section_text),
+                links_inline=InlineLink.extract(section_text),
+                links_reference=LinkReference.extract(section_text),
+                lists=List.extract(section_text),
+                position=Position(
+                    line=header.position.line,
+                    offset=header.position.offset,
+                    length=len(section_text),
+                ),
+                quoteblocks=QuoteBlock.extract(section_text),
+                reference_definitions=ReferenceDefinition.extract(
+                    section_text),
+                string=section_text,
+                string_safe=CodeBlock.sanitize(section_text),
+                subsections=[],
+                tables=Table.extract(section_text),
+            )
+            result.append(new_section)
 
         return result
