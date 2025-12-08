@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from tiredize.markdown.utils import get_position_from_match
+from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -57,25 +58,7 @@ class CodeBlock:
         """
         Replace any codeblocks with whitespace to preserve line/col positioning
         """
-        result: str = ""
-
-        matches = search_all_re(
-            CodeBlock._RE_CODEBLOCK,
-            text
-        )
-
-        last_end = 0
-        for match in matches:
-            result += text[last_end:match.start()]
-            last_end = match.end()
-            old_lines = match.group().splitlines()
-            new_lines: list[str] = []
-            for old_line in old_lines:
-                new_lines.append(" " * len(old_line))
-            result += "\n".join(new_lines)
-        result += text[last_end:]
-
-        return result
+        return sanitize_text(CodeBlock._RE_CODEBLOCK, text)
 
 
 @dataclass
@@ -116,3 +99,10 @@ class CodeInline:
                 )
             )
         return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any codeblocks with whitespace to preserve line/col positioning
+        """
+        return sanitize_text(CodeInline._RE_CODE_INLINE, text)

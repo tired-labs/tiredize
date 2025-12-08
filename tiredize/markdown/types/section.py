@@ -44,48 +44,63 @@ class Section:
         """
         result: typing.List[Section] = []
 
-        md_sanitized = CodeBlock.sanitize(text)
-        headers = Header.extract(md_sanitized)
-        if len(headers) == 0:
-            return result
-
-        for i, header in enumerate(headers, start=0):
-            offset_start: int = 0
-            offset_end: int = 0
-            offset_start = get_offset_from_position(header.position, text)
-            if i + 1 < len(headers):
+        headers = Header.extract(text)
+        for i, position in enumerate([header.position for header in headers]):
+            offset_start = get_offset_from_position(position, text)
+            if i + 1 == len(headers):
+                offset_end = len(text)
+            else:
                 offset_end = get_offset_from_position(
                     headers[i + 1].position,
                     text
                 )
-            else:
-                offset_end = len(text)
-            section_text = text[offset_start:offset_end]
-
-            new_section = Section(
-                code_block=CodeBlock.extract(section_text),
-                code_inline=CodeInline.extract(section_text),
-                header=header,
-                images_inline=InlineImage.extract(section_text),
-                images_reference=ImageReference.extract(section_text),
-                links_bare=BareLink.extract(section_text),
-                links_bracket=BracketLink.extract(section_text),
-                links_inline=InlineLink.extract(section_text),
-                links_reference=LinkReference.extract(section_text),
-                lists=List.extract(section_text),
-                position=Position(
-                    line=header.position.line,
-                    offset=header.position.offset,
-                    length=len(section_text),
-                ),
-                quoteblocks=QuoteBlock.extract(section_text),
-                reference_definitions=ReferenceDefinition.extract(
-                    section_text),
-                string=section_text,
-                string_safe=CodeBlock.sanitize(section_text),
-                subsections=[],
-                tables=Table.extract(section_text),
+            position = Position(
+                line=position.line,
+                offset=0,
+                length=offset_end - offset_start
             )
-            result.append(new_section)
-
+            section = Section._extract(text[offset_start:offset_end], position)
+            result.append(section)
+        Section._map_subsections(result)
         return result
+
+    @staticmethod
+    def _extract(string: str, position: Position) -> Section:
+        section = Section(
+            code_block=CodeBlock.extract(string),
+            code_inline=CodeInline.extract(string),
+            header=Header.extract(string)[0],
+            images_inline=InlineImage.extract(string),
+            images_reference=ImageReference.extract(string),
+            links_bare=BareLink.extract(string),
+            links_bracket=BracketLink.extract(string),
+            links_inline=InlineLink.extract(string),
+            links_reference=LinkReference.extract(string),
+            lists=List.extract(string),
+            position=position,
+            quoteblocks=QuoteBlock.extract(string),
+            reference_definitions=ReferenceDefinition.extract(
+                string
+            ),
+            string=string,
+            string_safe=CodeBlock.sanitize(
+                CodeInline.sanitize(string)
+            ),
+            subsections=[],
+            tables=Table.extract(string)
+        )
+        return section
+
+    @staticmethod
+    def _map_subsections(sections: typing.List[Section]) -> None:
+        i = 0
+        next = i + 1
+        while len(sections) > i:
+            while len(sections) > next:
+                if sections[i].header.level < sections[next].header.level:
+                    sections[i].subsections.append(sections[next])
+                    next += 1
+                else:
+                    break
+            i += 1
+            next = i + 1

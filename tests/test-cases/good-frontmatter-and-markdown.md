@@ -110,7 +110,7 @@ def tiredize(path: str) -> None:
 
 | Command              | Description                |
 |----------------------|----------------------------|
-| `echo "home" \| ls` | List files in the home dir |
+| `echo "home" \| ls`  | List files in the home dir |
 | `cd`                 | Change directory           |
 | `ls -la`             | List with details          |
 

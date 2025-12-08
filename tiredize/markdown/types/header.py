@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import search_all_re
+from tiredize.markdown.types.code import CodeBlock
 from tiredize.types import Position
 import typing
 
@@ -28,7 +29,7 @@ class Header:
         """
         matches = search_all_re(
             Header._RE_HEADER,
-            text
+            CodeBlock.sanitize(text)
         )
 
         result: list[Header] = []

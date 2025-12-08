@@ -21,6 +21,28 @@ def get_position_from_match(
 def get_offset_from_position(position: Position, text: str) -> int:
     lines = text.split("\n")
     line = position.line
+    if line == 1:
+        return position.offset
+
     column = position.offset
-    offset = len("\n".join(lines[0:line - 1])) + column
+    offset = len("\n".join(lines[0:line-1]) + "\n") + column
     return offset
+
+
+def sanitize_text(pattern: str, text: str) -> str:
+    """
+    Replace any matches of pattern with whitespace to preserve positioning
+    """
+    result: str = ""
+    matches = search_all_re(pattern, text)
+    last_end = 0
+    for match in matches:
+        result += text[last_end:match.start()]
+        last_end = match.end()
+        old_lines = match.group().splitlines()
+        new_lines: list[str] = []
+        for old_line in old_lines:
+            new_lines.append(" " * len(old_line))
+        result += "\n".join(new_lines)
+    result += text[last_end:]
+    return result
