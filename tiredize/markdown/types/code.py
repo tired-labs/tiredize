@@ -52,6 +52,31 @@ class CodeBlock:
             )
         return result
 
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any codeblocks with whitespace to preserve line/col positioning
+        """
+        result: str = ""
+
+        matches = search_all_re(
+            CodeBlock._RE_CODEBLOCK,
+            text
+        )
+
+        last_end = 0
+        for match in matches:
+            result += text[last_end:match.start()]
+            last_end = match.end()
+            old_lines = match.group().splitlines()
+            new_lines: list[str] = []
+            for old_line in old_lines:
+                new_lines.append(" " * len(old_line))
+            result += "\n".join(new_lines)
+        result += text[last_end:]
+
+        return result
+
 
 @dataclass
 class CodeInline:
