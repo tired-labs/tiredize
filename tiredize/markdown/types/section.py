@@ -65,7 +65,7 @@ class Section:
         return result
 
     @staticmethod
-    def _extract(string: str, position: Position) -> Section:
+    def _extract(string: str, position: Position) -> "Section":
         section = Section(
             code_block=CodeBlock.extract(string),
             code_inline=CodeInline.extract(string),
@@ -92,7 +92,7 @@ class Section:
         return section
 
     @staticmethod
-    def _map_subsections(sections: typing.List[Section]) -> None:
+    def _map_subsections(sections: typing.List["Section"]) -> None:
         i = 0
         next = i + 1
         while len(sections) > i:
