@@ -54,7 +54,7 @@ def test_document_load_from_path():
     assert document.frontmatter.position == expected_pos
 
     assert len(document.sections) == 18
-    expected_sections: typing.List[Position] = [
+    expected_section: typing.List[Position] = [
         Position(line=1, offset=0, length=636),
         Position(line=20, offset=0, length=33),
         Position(line=22, offset=0, length=209),
@@ -75,7 +75,7 @@ def test_document_load_from_path():
         Position(line=130, offset=0, length=401)
     ]
 
-    expected_headers: typing.List[Position] = [
+    expected_header: typing.List[Position] = [
         Position(line=1, offset=0, length=37),
         Position(line=1, offset=0, length=31),
         Position(line=1, offset=0, length=18),
@@ -96,6 +96,116 @@ def test_document_load_from_path():
         Position(line=1, offset=0, length=28)
     ]
 
+    expected_code_block: typing.List[typing.List[Position]]
+    expected_code_block = [[] for _ in range(18)]
+    expected_code_block[7] = [
+        Position(line=5, offset=0, length=142),
+        Position(line=15, offset=0, length=229)
+    ]
+
+    expected_code_inline: typing.List[typing.List[Position]]
+    expected_code_inline = [[] for _ in range(18)]
+    expected_code_inline[0] = [Position(line=16, offset=53, length=13)]
+    expected_code_inline[2] = [Position(line=4, offset=28, length=22)]
+    expected_code_inline[3] = [Position(line=6, offset=28, length=6)]
+    expected_code_inline[10] = [
+        Position(line=5, offset=2, length=19),
+        Position(line=6, offset=2, length=4),
+        Position(line=7, offset=2, length=8)
+    ]
+    expected_code_inline[17] = [Position(line=7, offset=72, length=20)]
+
+    expected_link_bare: typing.List[typing.List[Position]]
+    expected_link_bare = [[] for _ in range(18)]
+    expected_link_bare[0] = [Position(line=12, offset=0, length=33)]
+    expected_link_bare[0] = [Position(line=12, offset=0, length=33)]
+
+    expected_link_bracket: typing.List[typing.List[Position]]
+    expected_link_bracket = [[] for _ in range(18)]
+    expected_link_bracket[0] = [Position(line=14, offset=32, length=32)]
+
+    expected_link_inline: typing.List[typing.List[Position]]
+    expected_link_inline = [[] for _ in range(18)]
+    expected_link_inline[0] = [Position(line=7, offset=43, length=44)]
+    expected_link_inline[2] = [Position(line=3, offset=34, length=28)]
+
+    expected_link_reference: typing.List[typing.List[Position]]
+    expected_link_reference = [[] for _ in range(18)]
+    expected_link_reference[0] = [
+        Position(line=5, offset=52, length=12),
+        Position(line=8, offset=55, length=35)
+    ]
+    expected_link_reference[2] = [Position(line=5, offset=43, length=27)]
+    expected_link_reference[17] = [Position(line=5, offset=16, length=40)]
+
+    expected_image_inline: typing.List[typing.List[Position]]
+    expected_image_inline = [[] for _ in range(18)]
+    expected_image_inline[4] = [Position(line=5, offset=0, length=86)]
+
+    expected_image_reference: typing.List[typing.List[Position]]
+    expected_image_reference = [[] for _ in range(18)]
+    expected_image_reference[4] = [
+        Position(line=5, offset=0, length=22),
+        Position(line=10, offset=0, length=41)
+    ]
+
+    expected_table: typing.List[typing.List[Position]]
+    expected_table = [[] for _ in range(18)]
+    expected_table[9] = [Position(line=3, offset=0, length=96)]
+    expected_table[10] = [Position(line=3, offset=0, length=270)]
+    expected_table[11] = [Position(line=3, offset=0, length=176)]
+
+    expected_reference_definition: typing.List[typing.List[Position]]
+    expected_reference_definition = [[] for _ in range(18)]
+    expected_reference_definition[17] = [
+        Position(line=13, offset=0, length=17),
+        Position(line=14, offset=0, length=61),
+        Position(line=15, offset=0, length=31),
+        Position(line=16, offset=0, length=45)
+    ]
+
     for i, section in enumerate(document.sections):
-        assert section.position == expected_sections[i]
-        assert section.header.position == expected_headers[i]
+        assert section.position == expected_section[i]
+        assert section.header.position == expected_header[i]
+
+        assert len(section.code_block) == len(expected_code_block[i])
+        for j, code in enumerate(section.code_block):
+            assert code.position == expected_code_block[i][j]
+
+        assert len(section.code_inline) == len(expected_code_inline[i])
+        for j, code in enumerate(section.code_inline):
+            assert code.position == expected_code_inline[i][j]
+
+        assert len(section.images_inline) == len(expected_image_inline[i])
+        for j, image in enumerate(section.images_inline):
+            assert image.position == expected_image_inline[i][j]
+
+        assert len(section.images_reference) == len(
+            expected_image_reference[i])
+        for j, image in enumerate(section.images_reference):
+            assert image.position == expected_image_reference[i][j]
+
+        assert len(section.links_bare) == len(expected_link_bare[i])
+        for j, link in enumerate(section.links_bare):
+            assert link.position == expected_link_bare[i][j]
+
+        assert len(section.links_bracket) == len(expected_link_bracket[i])
+        for j, link in enumerate(section.links_bracket):
+            assert link.position == expected_link_bracket[i][j]
+
+        assert len(section.links_inline) == len(expected_link_inline[i])
+        for j, link in enumerate(section.links_inline):
+            assert link.position == expected_link_inline[i][j]
+
+        assert len(section.links_reference) == len(expected_link_reference[i])
+        for j, link in enumerate(section.links_reference):
+            assert link.position == expected_link_reference[i][j]
+
+        assert len(section.reference_definitions) == len(
+            expected_reference_definition[i])
+        for j, reference in enumerate(section.reference_definitions):
+            assert reference.position == expected_reference_definition[i][j]
+
+        assert len(section.tables) == len(expected_table[i])
+        for j, table in enumerate(section.tables):
+            assert table.position == expected_table[i][j]

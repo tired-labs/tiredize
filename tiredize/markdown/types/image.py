@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from tiredize.markdown.utils import get_position_from_match
+from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -7,20 +8,22 @@ import typing
 
 @dataclass
 class InlineImage:
-    alt_text: str
+    text: str
     position: Position
     string: str
     title: typing.Optional[str]
     url: str
 
     _RE_INLINE_IMAGE = r"""
-        !\[                       # Opening (exclamation mark and bracket)
-        (?P<alttext>[^]]*)        # Capture the alt-text
-        \]\(                      # Closing bracket, opening paren
-        (?P<url>[\s]*[^\s\)]*)    # Capture the URL
-        \s*"*                     # Support for optional title
-        (?P<title>.*?)            # Capture optional title text
-        "*?\s*?\)                 # Closing characters
+        !\[                           # Opening (exclamation mark and bracket)
+        \s*                           # Optional whitespace
+        (?P<text>[^]]*?)              # Capture the title
+        \s*                           # Optional whitespace
+        \]\(                          # Closing bracket, opening parenthesis
+        \s*                           # Optional whitespace
+        (?P<url>\S+)                  # Capture the URL
+        (\s*?\"(?P<title>[^"]*?)\")?  # Capture optional title
+        \s*\)                         # Closing parenthesis
     """
 
     @staticmethod
@@ -38,15 +41,22 @@ class InlineImage:
             line_num, offset, length = get_position_from_match(match, text)
             result.append(
                 InlineImage(
-                    alt_text=match.group("alttext"),
                     position=Position(
                         line=line_num,
                         offset=offset,
                         length=length
                     ),
                     string=match.group(),
+                    text=match.group("text"),
                     title=match.group("title"),
                     url=match.group("url")
                 )
             )
         return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any inline images with whitespace
+        """
+        return sanitize_text(InlineImage._RE_INLINE_IMAGE, text)

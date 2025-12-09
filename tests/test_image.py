@@ -76,9 +76,9 @@ def test_single_image_normal():
     matches = InlineImage.extract(md_text)
     assert len(matches) == 1
     assert matches[0] == InlineImage(
-        alt_text=actual_alttext,
-        string=exp_string,
         position=position,
+        string=exp_string,
+        text=actual_alttext,
         title=actual_title,
         url=actual_url
     )
@@ -111,9 +111,9 @@ def test_five_images_repeated():
     assert len(matches) == 5
     for i, match in enumerate(matches):
         assert match == InlineImage(
-            alt_text=actual_alttext,
-            string=exp_string,
             position=exp_positions[i],
+            string=exp_string,
+            text=actual_alttext,
             title=actual_title,
             url=actual_url
         )
@@ -170,13 +170,13 @@ def test_five_images_unique():
 
         expected.append(
             InlineImage(
-                alt_text=alt_text_values[i],
-                string=expected_strings[i],
                 position=Position(
                     line=position_values[i][0],
                     offset=position_values[i][1],
                     length=len(actual_string)
                 ),
+                string=expected_strings[i],
+                text=alt_text_values[i],
                 title=title_values[i],
                 url=url_values[i]
             )

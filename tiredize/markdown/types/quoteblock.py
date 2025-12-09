@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.utils import get_position_from_match
+from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -24,9 +26,10 @@ class QuoteBlock:
         """
         Extract markdown quoteblocks from text.
         """
+        text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             QuoteBlock._RE_QUOTEBLOCK,
-            text
+            text_sanitized
         )
 
         result: list[QuoteBlock] = []
@@ -59,3 +62,10 @@ class QuoteBlock:
                 )
             )
         return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any codeblocks with whitespace to preserve line/col positioning
+        """
+        return sanitize_text(QuoteBlock._RE_QUOTEBLOCK, text)
