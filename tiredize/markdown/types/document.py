@@ -5,11 +5,18 @@ import typing
 
 
 class Document:
-    _path: typing.Optional[Path] = None
-    frontmatter: typing.Optional[FrontMatter] = None
-    sections: typing.List[Section] = []
-    string: str = ""
-    string_markdown: str = ""
+    _path: typing.Optional[Path]
+    frontmatter: typing.Optional[FrontMatter]
+    sections: typing.List[Section]
+    string: str
+    string_markdown: str
+
+    def __init__(self):
+        self._path = None
+        self.frontmatter = None
+        self.sections: typing.List[Section] = []
+        self.string = ""
+        self.string_markdown = ""
 
     def load(self, path: Path = Path(), text: str = ""):
         if path != Path() and len(text):

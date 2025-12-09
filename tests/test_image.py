@@ -89,7 +89,6 @@ def test_five_images_repeated():
     actual_url = "https://tired.labs/eye.svg"
     actual_title = "Image Title"
     actual_string = f"![{actual_alttext}]({actual_url} \"{actual_title}\")"
-    md_text = md_section.format(actual_string, "", "", "", "")
 
     exp_string = '![Alt Text](https://tired.labs/eye.svg "Image Title")'
     exp_positions = [

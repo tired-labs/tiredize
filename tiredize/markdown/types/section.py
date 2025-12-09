@@ -21,7 +21,7 @@ import typing
 class Section:
     code_block: typing.List["CodeBlock"]
     code_inline: typing.List["CodeInline"]
-    header: "Header"
+    header: typing.Optional["Header"]
     images_inline: typing.List["InlineImage"]
     images_reference: typing.List["ImageReference"]
     links_bare: typing.List["BareLink"]
@@ -66,10 +66,15 @@ class Section:
 
     @staticmethod
     def _extract(string: str, position: Position) -> "Section":
+        headers = Header.extract(string)
+        header = None
+        if len(headers) == 1:
+            header = headers[0]
+
         section = Section(
             code_block=CodeBlock.extract(string),
             code_inline=CodeInline.extract(string),
-            header=Header.extract(string)[0],
+            header=header,
             images_inline=InlineImage.extract(string),
             images_reference=ImageReference.extract(string),
             links_bare=BareLink.extract(string),
@@ -94,13 +99,15 @@ class Section:
     @staticmethod
     def _map_subsections(sections: typing.List["Section"]) -> None:
         i = 0
-        next = i + 1
+        next_i = i + 1
         while len(sections) > i:
-            while len(sections) > next:
-                if sections[i].header.level < sections[next].header.level:
-                    sections[i].subsections.append(sections[next])
-                    next += 1
+            while len(sections) > next_i:
+                if sections[i].header is None:
+                    break
+                if sections[i].header.level < sections[next_i].header.level:
+                    sections[i].subsections.append(sections[next_i])
+                    next_i += 1
                 else:
                     break
             i += 1
-            next = i + 1
+            next_i = i + 1

@@ -101,7 +101,7 @@ def test_single_codeblock_normal():
     )
 
 
-def test_five_codeinlines_repeated():
+def test_five_codeblocks_repeated():
     actual_code = '_RE_CODEBLOCK = r""""\n'
     actual_code += r'(?<![^\\\\n' + '\n'
     actual_code += '])\n'

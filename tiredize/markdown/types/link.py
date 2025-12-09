@@ -18,7 +18,7 @@ class BareLink:
     url: str
 
     RE_URL = r"""
-        (?P<url>(https+:\/\/|(./|\\))\S+)  # Capture the URL
+        (?P<url>(https?:\/\/|(./|\\))\S+)  # Capture the URL
     """
 
     @staticmethod

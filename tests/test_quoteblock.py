@@ -108,7 +108,7 @@ def test_single_quoteblock_multiline():
     )
 
 
-def test_five_images_repeated():
+def test_five_quoteblocks_repeated():
     depth_01 = 1
     text_01 = "Four score and seven years ago...."
     quote_01 = f"{">" * depth_01} {text_01}"
