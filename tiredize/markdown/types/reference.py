@@ -73,7 +73,7 @@ class LinkReference:
         (?P<reference>[^\]]+)           # Capture the URL
         \s*
         \](?!:)
-        (?!\()                          # Negative lookahead to avoid links
+        (?!\()                          # Negative lookahead to avoid inline
     """
 
     @staticmethod
@@ -124,6 +124,7 @@ class ImageReference:
         (?P<reference>[^\]]+)             # Capture the URL
         \s*
         \](?!:)
+        (?!\()                          # Negative lookahead to avoid inline
     """
 
     @staticmethod

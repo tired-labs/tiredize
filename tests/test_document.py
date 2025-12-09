@@ -118,7 +118,6 @@ def test_document_load_from_path():
     expected_link_bare: typing.List[typing.List[Position]]
     expected_link_bare = [[] for _ in range(18)]
     expected_link_bare[0] = [Position(line=12, offset=0, length=33)]
-    expected_link_bare[0] = [Position(line=12, offset=0, length=33)]
 
     expected_link_bracket: typing.List[typing.List[Position]]
     expected_link_bracket = [[] for _ in range(18)]
@@ -144,10 +143,7 @@ def test_document_load_from_path():
 
     expected_image_reference: typing.List[typing.List[Position]]
     expected_image_reference = [[] for _ in range(18)]
-    expected_image_reference[4] = [
-        Position(line=5, offset=0, length=22),
-        Position(line=10, offset=0, length=41)
-    ]
+    expected_image_reference[4] = [Position(line=10, offset=0, length=41)]
 
     expected_table: typing.List[typing.List[Position]]
     expected_table = [[] for _ in range(18)]

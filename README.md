@@ -25,15 +25,15 @@ Tiredize is early in development, but the initial goals include:
 - [ ] Markdown Content Extraction
   - [ ] Sections
     - [x] Headers
-    - [ ] Links
-      - [ ] Inline
-      - [ ] Reference-style
-      - [ ] Bracket Links
-      - [ ] Bare
+    - [x] Links
+      - [x] Inline
+      - [x] Reference-style
+      - [x] Bracket Links
+      - [x] Bare
     - [ ] References/Footnotes
     - [x] Images
       - [x] Inline
-      - [ ] Reference-style
+      - [x] Reference-style
     - [x] Code blocks
       - [x] Inline
       - [x] Fenced
