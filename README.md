@@ -23,7 +23,7 @@ Tiredize is early in development, but the initial goals include:
 
 - [x] Frontmatter Content Extraction
 - [ ] Markdown Content Extraction
-  - [x] Sections
+  - [ ] Sections
     - [x] Headers
     - [x] Links
       - [x] Inline
@@ -41,7 +41,7 @@ Tiredize is early in development, but the initial goals include:
     - [ ] Lists
       - [ ] Ordered
       - [ ] Unordered
-    - [ ] Tables
+    - [x] Tables - Brutal!
 - [ ] Linter Rule Engine
   - [ ] Frontmatter Schema
   - [ ] Markdown Scheme
@@ -70,7 +70,7 @@ validator set that supports one canonical document type.
 Once packaged, Tiredize will be installed via pip and run from the command line:
 
 ```bash
-tiredize --frontmatter frontmatter_schema.yml --markdown markdown_schema.yml --rules linter_rules.yml markdown_file.md 
+tiredize --frontmatter frontmatter_schema.yml --markdown markdown_schema.yml --rules linter_rules.yml markdown_file.md
 ```
 
 The command prints rule violations and returns a nonzero exit code when

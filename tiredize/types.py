@@ -1,8 +1,15 @@
 from dataclasses import dataclass
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class RuleResult:
+    position: "Position"
     rule_id: str
-    line: int
     message: str
+
+
+@dataclass(frozen=False)
+class Position:
+    line: int
+    offset: int
+    length: int

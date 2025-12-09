@@ -1,16 +1,16 @@
 ---
 id: MD-001
-description: "Valid Markdown document for parser testing."
+description: Valid Markdown document for parser testing.
 elements:
-    - frontmatter
-    - lists
-    - markdown
-    - sections
-    - tables
+- frontmatter
+- lists
+- markdown
+- sections
+- tables
 tags:
-  - markdown
-  - testing
-  - tiredize
+- markdown
+- testing
+- tiredize
 pub_date: 1970-01-01
 ---
 
@@ -110,7 +110,7 @@ def tiredize(path: str) -> None:
 
 | Command              | Description                |
 |----------------------|----------------------------|
-| `echo "home" \| ls` | List files in the home dir |
+| `echo "home" \| ls`  | List files in the home dir |
 | `cd`                 | Change directory           |
 | `ls -la`             | List with details          |
 
