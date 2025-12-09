@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import typing
 
 
-@dataclass
+@dataclass(frozen=False)
 class List:
     end: int
     items: typing.List[str]

@@ -6,7 +6,7 @@ from tiredize.types import Position
 import typing
 
 
-@dataclass
+@dataclass(frozen=False)
 class CodeBlock:
     code: str
     delimiter: str
@@ -61,7 +61,7 @@ class CodeBlock:
         return sanitize_text(CodeBlock.RE_CODEBLOCK, text)
 
 
-@dataclass
+@dataclass(frozen=False)
 class CodeInline:
     code: str
     position: Position

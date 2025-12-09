@@ -6,7 +6,7 @@ from tiredize.types import Position
 import typing
 
 
-@dataclass
+@dataclass(frozen=False)
 class InlineImage:
     text: str
     position: Position

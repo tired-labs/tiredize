@@ -11,7 +11,7 @@ from tiredize.types import Position
 import typing
 
 
-@dataclass
+@dataclass(frozen=False)
 class BareLink:
     position: Position
     string: str
@@ -59,7 +59,7 @@ class BareLink:
         return sanitize_text(BareLink.RE_URL, text)
 
 
-@dataclass
+@dataclass(frozen=False)
 class BracketLink:
     position: Position
     string: str
@@ -105,7 +105,7 @@ class BracketLink:
         return sanitize_text(BracketLink.RE_LINK_BRACKET, text)
 
 
-@dataclass
+@dataclass(frozen=False)
 class InlineLink:
     position: Position
     string: str

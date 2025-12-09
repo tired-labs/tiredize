@@ -6,7 +6,7 @@ from tiredize.types import Position
 import typing
 
 
-@dataclass
+@dataclass(frozen=False)
 class Table:
     divider: typing.List[str]
     header: typing.List[str]
