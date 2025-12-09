@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from tiredize.markdown.utils import get_position_from_match
+from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -13,7 +14,7 @@ class Table:
     rows: typing.List[typing.List[str]]
     string: str
 
-    _RE_TABLE = r"""
+    RE_TABLE = r"""
         (?P<header>
             [|]?
             ([^\n|]*[|])*
@@ -37,7 +38,7 @@ class Table:
         Extract table from markdown text.
         """
         matches = search_all_re(
-            Table._RE_TABLE,
+            Table.RE_TABLE,
             text
         )
 
@@ -83,3 +84,10 @@ class Table:
                 )
             )
         return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any Tables with whitespace
+        """
+        return sanitize_text(Table.RE_TABLE, text)

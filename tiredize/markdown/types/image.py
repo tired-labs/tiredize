@@ -14,7 +14,7 @@ class InlineImage:
     title: typing.Optional[str]
     url: str
 
-    _RE_INLINE_IMAGE = r"""
+    RE_INLINE_IMAGE = r"""
         !\[                           # Opening (exclamation mark and bracket)
         \s*                           # Optional whitespace
         (?P<text>[^]]*?)              # Capture the title
@@ -32,7 +32,7 @@ class InlineImage:
         Extract markdown images from text.
         """
         matches = search_all_re(
-            InlineImage._RE_INLINE_IMAGE,
+            InlineImage.RE_INLINE_IMAGE,
             text
         )
 
@@ -57,6 +57,6 @@ class InlineImage:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any inline images with whitespace
+        Replace any Inline Images with whitespace
         """
-        return sanitize_text(InlineImage._RE_INLINE_IMAGE, text)
+        return sanitize_text(InlineImage.RE_INLINE_IMAGE, text)

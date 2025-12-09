@@ -14,7 +14,7 @@ class QuoteBlock:
     quote: str
     string: str
 
-    _RE_QUOTEBLOCK = r"""
+    RE_QUOTEBLOCK = r"""
         (?<![^|\n])        # Start of line, but don't capture it
         (?P<depth>[>]+)    # Capture the blockquote depth
         \s*                # Optional whitespace
@@ -28,7 +28,7 @@ class QuoteBlock:
         """
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
-            QuoteBlock._RE_QUOTEBLOCK,
+            QuoteBlock.RE_QUOTEBLOCK,
             text_sanitized
         )
 
@@ -66,6 +66,6 @@ class QuoteBlock:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any codeblocks with whitespace to preserve line/col positioning
+        Replace any QuoteBlocks with whitespace
         """
-        return sanitize_text(QuoteBlock._RE_QUOTEBLOCK, text)
+        return sanitize_text(QuoteBlock.RE_QUOTEBLOCK, text)

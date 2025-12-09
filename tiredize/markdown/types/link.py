@@ -54,7 +54,7 @@ class BareLink:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any codeblocks with whitespace to preserve line/col positioning
+        Replace any Bare Links with whitespace
         """
         return sanitize_text(BareLink.RE_URL, text)
 
@@ -100,7 +100,7 @@ class BracketLink:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any codeblocks with whitespace to preserve line/col positioning
+        Replace any Bracket Links with whitespace
         """
         return sanitize_text(BracketLink.RE_LINK_BRACKET, text)
 
@@ -154,6 +154,6 @@ class InlineLink:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any codeblocks with whitespace to preserve line/col positioning
+        Replace any Inline Links with whitespace
         """
         return sanitize_text(InlineLink.RE_LINK_INLINE, text)

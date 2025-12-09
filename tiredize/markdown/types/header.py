@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from tiredize.markdown.utils import get_position_from_match
+from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.types import Position
@@ -13,7 +14,7 @@ class Header:
     string: str
     title: str
 
-    _RE_HEADER = r"""
+    RE_HEADER = r"""
         (?<![^|\n])           # Start of line, but don't capture it
         (?P<hashes>\#{1,6})   # One to six hash characters
         \s+                   # Whitespace
@@ -28,7 +29,7 @@ class Header:
         first thing appearing in the text provided.
         """
         matches = search_all_re(
-            Header._RE_HEADER,
+            Header.RE_HEADER,
             CodeBlock.sanitize(text)
         )
 
@@ -50,3 +51,10 @@ class Header:
                 )
             )
         return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any Headers with whitespace
+        """
+        return sanitize_text(Header.RE_HEADER, text)

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from tiredize.markdown.utils import get_position_from_match
+from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.types import Position
 import typing
@@ -12,7 +13,7 @@ class FrontMatter:
     position: Position
     string: str
 
-    _RE_FRONT_MATTER_YAML = r"""
+    RE_FRONT_MATTER_YAML = r"""
         ^                  # Must be at the start of a line
         [-]{3}             # Three dashes represents YAML frontmatter
         \n                 # Newline
@@ -28,7 +29,7 @@ class FrontMatter:
         Extract frontmatter from text.
         """
         matches = search_all_re(
-            FrontMatter._RE_FRONT_MATTER_YAML,
+            FrontMatter.RE_FRONT_MATTER_YAML,
             text
         )
         match = matches[0] if matches else None
@@ -51,3 +52,10 @@ class FrontMatter:
             string=match.group(),
         )
         return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any FrontMatter with whitespace
+        """
+        return sanitize_text(FrontMatter.RE_FRONT_MATTER_YAML, text)

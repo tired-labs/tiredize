@@ -14,7 +14,7 @@ class CodeBlock:
     position: Position
     string: str
 
-    _RE_CODEBLOCK = r"""
+    RE_CODEBLOCK = r"""
         (?<![^|\n])
         (?P<delimiter>``[`]+)
         (?P<language>.*)
@@ -30,7 +30,7 @@ class CodeBlock:
         Extract fenced codeblocks from markdown text.
         """
         matches = search_all_re(
-            CodeBlock._RE_CODEBLOCK,
+            CodeBlock.RE_CODEBLOCK,
             text
         )
 
@@ -56,9 +56,9 @@ class CodeBlock:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any codeblocks with whitespace to preserve line/col positioning
+        Replace any Code Blocks with whitespace
         """
-        return sanitize_text(CodeBlock._RE_CODEBLOCK, text)
+        return sanitize_text(CodeBlock.RE_CODEBLOCK, text)
 
 
 @dataclass
@@ -67,7 +67,7 @@ class CodeInline:
     position: Position
     string: str
 
-    _RE_CODE_INLINE = r"""
+    RE_CODE_INLINE = r"""
         `                  # Opening backtick
         (?P<code>[^\n`]+)  # Capture anything except backtick or newline
         `                  # Closing backtick
@@ -79,7 +79,7 @@ class CodeInline:
         Extract inline code from markdown text.
         """
         matches = search_all_re(
-            CodeInline._RE_CODE_INLINE,
+            CodeInline.RE_CODE_INLINE,
             text
         )
 
@@ -103,6 +103,6 @@ class CodeInline:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any codeblocks with whitespace to preserve line/col positioning
+        Replace any Code Inlines with whitespace
         """
-        return sanitize_text(CodeInline._RE_CODE_INLINE, text)
+        return sanitize_text(CodeInline.RE_CODE_INLINE, text)
