@@ -141,6 +141,10 @@ def test_document_load_from_path():
     expected_image_inline = [[] for _ in range(18)]
     expected_image_inline[4] = [Position(line=5, offset=0, length=86)]
 
+    expected_quoteblock: typing.List[typing.List[Position]]
+    expected_quoteblock = [[] for _ in range(18)]
+    expected_quoteblock[6] = [Position(line=3, offset=0, length=119)]
+
     expected_image_reference: typing.List[typing.List[Position]]
     expected_image_reference = [[] for _ in range(18)]
     expected_image_reference[4] = [Position(line=10, offset=0, length=41)]
@@ -196,6 +200,10 @@ def test_document_load_from_path():
         assert len(section.links_reference) == len(expected_link_reference[i])
         for j, link in enumerate(section.links_reference):
             assert link.position == expected_link_reference[i][j]
+
+        assert len(section.quoteblocks) == len(expected_quoteblock[i])
+        for j, quoteblock in enumerate(section.quoteblocks):
+            assert quoteblock.position == expected_quoteblock[i][j]
 
         assert len(section.reference_definitions) == len(
             expected_reference_definition[i])
