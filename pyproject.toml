@@ -13,7 +13,7 @@ name = "tiredize"
 readme = "README.md"
 repository = "https://github.com/tired-labs/tiredize"
 requires-python = ">=3.10"
-version = "0.0.1"
+version = "0.0.2"
 
 dependencies = [
   "PyYAML>=6.0",
