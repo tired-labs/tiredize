@@ -3,15 +3,17 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tiredize"
-version = "0.0.1"
-description = "Schema driven markdown validation for TIRED Labs documentation."
-readme = "README.md"
-requires-python = ">=3.10"
 authors = [
-  { name = "Your Name" }
+  { name = "Adam Przybyszewski" }
 ]
-license = { text = "MIT" }  # or point to a LICENSE file
+description = "Configurable schema/linter validation for markdown docs"
+homepage = "https://www.tired-labs.org/"
+license = { file = "LICENSE" }
+name = "tiredize"
+readme = "README.md"
+repository = "https://github.com/tired-labs/tiredize"
+requires-python = ">=3.10"
+version = "0.0.1"
 
 dependencies = [
   "PyYAML>=6.0",
