@@ -69,7 +69,8 @@ def _run_markdown_schema(doc: Document, schema_path: Path) -> List[RuleResult]:
 
 
 def _run_frontmatter_schema(
-        doc: Document, schema_path: Path) -> List[RuleResult]:
+        doc: Document,
+        schema_path: Path) -> List[RuleResult]:
     # Placeholder for now. Eventually this will:
     #   - load the frontmatter schema
     #   - compare Document.frontmatter to provided schema
