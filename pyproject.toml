@@ -1,13 +1,24 @@
 [build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "tiredize"
 version = "0.0.1"
 description = "Schema driven markdown validation for TIRED Labs documentation."
+readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+authors = [
+  { name = "Your Name" }
+]
+license = { text = "MIT" }  # or point to a LICENSE file
 
-[tool.setuptools]
+dependencies = [
+  "PyYAML>=6.0",
+]
+
+[tool.hatch.build.targets.wheel]
 packages = ["tiredize"]
+
+[project.scripts]
+tiredize = "tiredize.cli:main"
