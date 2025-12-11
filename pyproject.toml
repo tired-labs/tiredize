@@ -11,7 +11,7 @@ license = { file = "LICENSE" }
 name = "tiredize"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.0.2"
+version = "0.0.3"
 
 [project.urls]
 homepage = "https://www.tired-labs.org/"
