@@ -7,17 +7,19 @@ authors = [
   { name = "Adam Przybyszewski" }
 ]
 description = "Configurable schema/linter validation for markdown docs"
-homepage = "https://www.tired-labs.org/"
 license = { file = "LICENSE" }
 name = "tiredize"
 readme = "README.md"
-repository = "https://github.com/tired-labs/tiredize"
 requires-python = ">=3.10"
-version = "0.0.2"
-
+version = "0.0.3"
 dependencies = [
   "PyYAML>=6.0",
 ]
+
+[project.urls]
+homepage = "https://www.tired-labs.org/"
+repository = "https://github.com/tired-labs/tiredize"
+
 
 [tool.hatch.build.targets.wheel]
 packages = ["tiredize"]

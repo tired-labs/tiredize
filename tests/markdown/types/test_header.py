@@ -70,7 +70,7 @@ def test_no_headers():
 def test_single_header_level01():
     actual_level = 1
     actual_text = "Header Test: Level One"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "# Header Test: Level One"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
@@ -89,7 +89,7 @@ def test_single_header_level01():
 def test_single_header_level02():
     actual_level = 2
     actual_text = "Header Test: Level Two"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "## Header Test: Level Two"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
@@ -108,7 +108,7 @@ def test_single_header_level02():
 def test_single_header_level03():
     actual_level = 3
     actual_text = "Header Test: Level Three"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "### Header Test: Level Three"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
@@ -127,7 +127,7 @@ def test_single_header_level03():
 def test_single_header_level04():
     actual_level = 4
     actual_text = "Header Test: Level Four"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "#### Header Test: Level Four"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
@@ -146,7 +146,7 @@ def test_single_header_level04():
 def test_single_header_level05():
     actual_level = 5
     actual_text = "Header Test: Level Five"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "##### Header Test: Level Five"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
@@ -165,7 +165,7 @@ def test_single_header_level05():
 def test_single_header_level06():
     actual_level = 6
     actual_text = "Header Test: Level Six"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "###### Header Test: Level Six"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
@@ -184,7 +184,7 @@ def test_single_header_level06():
 def test_six_headers_repeated():
     actual_level = 1
     actual_text = "Header Test: Duplicate Level One"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "# Header Test: Duplicate Level One"
     exp_positions = [
