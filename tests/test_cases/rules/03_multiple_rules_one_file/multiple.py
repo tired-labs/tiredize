@@ -40,5 +40,3 @@ def validate_second(
         rule_id="multiple.second"
     )
     return [result]
-
-

@@ -69,8 +69,7 @@ def _rule_id(module_name: str, func_name: str) -> str:
         result = 'whitespace.validate_newline_at_eof'
     """
     short_module = module_name.rsplit(".", 1)[-1]
-    short_module = short_module.lstrip("rules_")
-    short_func_name = func_name.lstrip("validate_")
+    short_func_name = func_name.removeprefix("validate_")
     return f"{short_module}.{short_func_name}"
 
 

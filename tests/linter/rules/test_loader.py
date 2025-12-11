@@ -79,5 +79,3 @@ def test_discover_rules_multiple_rules_one_file():
         rule_id="multiple.second"
     )
     assert result[0] == expected_result
-
-
