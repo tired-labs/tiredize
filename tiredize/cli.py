@@ -105,18 +105,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.rules_path:
             all_results.extend(
                 _run_rules(
-                    doc, Path(
-                        args.rules_path
-                    )
+                    doc, Path(args.rules_path)
                 )
             )
 
         if args.markdown_schema_path:
             all_results.extend(
                 _run_markdown_schema(
-                    doc, Path(
-                        args.markdown_schema_path
-                    )
+                    doc, Path(args.markdown_schema_path)
                 )
             )
 
