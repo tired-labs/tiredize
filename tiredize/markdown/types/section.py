@@ -21,7 +21,7 @@ import typing
 class Section:
     code_block: typing.List["CodeBlock"]
     code_inline: typing.List["CodeInline"]
-    header: typing.Optional["Header"]
+    header: "Header"
     images_inline: typing.List["InlineImage"]
     images_reference: typing.List["ImageReference"]
     links_bare: typing.List["BareLink"]
@@ -68,8 +68,15 @@ class Section:
     def _extract(string: str, position: Position) -> "Section":
         headers = Header.extract(string)
         header = None
-        if len(headers) == 1:
+        if len(headers) >= 1:
             header = headers[0]
+        else:
+            header = Header(
+                level=0,
+                position=Position(line=0, offset=0, length=0),
+                string="",
+                title=""
+            )
 
         section = Section(
             code_block=CodeBlock.extract(string),
@@ -102,7 +109,7 @@ class Section:
         next_i = i + 1
         while len(sections) > i:
             while len(sections) > next_i:
-                if sections[i].header is None:
+                if sections[i].header.level == 0:
                     break
                 if sections[i].header.level < sections[next_i].header.level:
                     sections[i].subsections.append(sections[next_i])

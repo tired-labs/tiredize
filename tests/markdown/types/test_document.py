@@ -36,7 +36,7 @@ def test_document_load_from_string():
 
 def test_document_load_from_path():
     document = Document()
-    test_path = r"./tests/test-cases/good-frontmatter-and-markdown.md"
+    test_path = r"./tests/test_cases/markdown/good-frontmatter-and-markdown.md"
     document.load(Path(test_path))
 
     assert document.frontmatter is not None
