@@ -45,7 +45,7 @@ Tiredize is early in development, but the initial goals include:
 - [ ] Linter Rule Engine
   - [ ] Frontmatter Schema
   - [ ] Markdown Scheme
-  - [ ] Line Length
+  - [x] Line Length
   - [ ] Whitespace
   - [ ] Link Validation
   - [ ] Markdown styling

@@ -5,14 +5,14 @@ import typing
 
 
 class Document:
-    _path: typing.Optional[Path]
+    path: typing.Optional[Path]
     frontmatter: typing.Optional[FrontMatter]
     sections: typing.List[Section]
     string: str
     string_markdown: str
 
     def __init__(self):
-        self._path = None
+        self.path = None
         self.frontmatter = None
         self.sections: typing.List[Section] = []
         self.string = ""
@@ -24,7 +24,7 @@ class Document:
         if path == Path() and len(text) == 0:
             raise ValueError("Provide either 'path' or 'text'.")
         if path.is_file():
-            self._path = path
+            self.path = path
             with open(Path(path), "r", encoding="utf-8") as f:
                 self.string = f.read()
         if len(text):
