@@ -12,14 +12,14 @@ name = "tiredize"
 readme = "README.md"
 requires-python = ">=3.10"
 version = "0.0.3"
+dependencies = [
+  "PyYAML>=6.0",
+]
 
 [project.urls]
 homepage = "https://www.tired-labs.org/"
 repository = "https://github.com/tired-labs/tiredize"
 
-dependencies = [
-  "PyYAML>=6.0",
-]
 
 [tool.hatch.build.targets.wheel]
 packages = ["tiredize"]
