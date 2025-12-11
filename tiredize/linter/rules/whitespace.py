@@ -26,13 +26,13 @@ def validate_line_length(
             max_len = int(raw_value)
         except ValueError:
             raise ValueError(
-                "Invalid or missing 'max_line_length' configuration for "
-                "validate_max_line_length rule."
+                "Invalid or missing 'max_length' configuration for "
+                "validate_line_length rule."
             )
     else:
         raise ValueError(
-            "Invalid or missing 'max_line_length' configuration for "
-            "validate_max_line_length rule."
+            "Invalid or missing 'max_length' configuration for "
+            "validate_line_length rule."
         )
 
     results: List[RuleResult] = []
