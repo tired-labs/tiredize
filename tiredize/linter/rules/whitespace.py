@@ -1,10 +1,11 @@
 from __future__ import annotations
-
-from typing import Any, Dict, List
-
-from tiredize.markdown.types.document import Document
 from tiredize.linter.types import RuleResult
+from tiredize.markdown.types.document import Document
 from tiredize.types import Position
+from typing import Any
+from typing import Dict
+from typing import List
+
 
 def validate_line_length(
     document: Document,
