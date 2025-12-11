@@ -122,9 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.frontmatter_schema_path:
             all_results.extend(
                 _run_frontmatter_schema(
-                    doc, Path(
-                        args.frontmatter_schema_path
-                    )
+                    doc, Path(args.frontmatter_schema_path)
                 )
             )
 
