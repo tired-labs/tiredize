@@ -70,7 +70,7 @@ def test_no_quoteblocks():
 def test_single_quoteblock_normal():
     depth_01 = 1
     text_01 = "Four score and seven years ago...."
-    quote_01 = f"{">" * depth_01} {text_01}"
+    quote_01 = f"{'>' * depth_01} {text_01}"
     len_01 = len(quote_01)
     position_01 = Position(line=15, offset=0, length=len_01)
     md_text = md_section.format(quote_01, "", "", "", "")

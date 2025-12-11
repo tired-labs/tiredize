@@ -70,7 +70,7 @@ def test_no_headers():
 def test_single_header_level01():
     actual_level = 1
     actual_text = "Header Test: Level One"
-    actual_string = f"{"#" * actual_level} {actual_text}"
+    actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "# Header Test: Level One"
     exp_position = Position(line=1, offset=0, length=len(actual_string))
