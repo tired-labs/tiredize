@@ -45,6 +45,15 @@ class Section:
         result: typing.List[Section] = []
 
         headers = Header.extract(text)
+        if len(headers) == 0:
+            position = Position(
+                line=1,
+                offset=0,
+                length=len(text)
+            )
+            section = Section._extract(text, position)
+            return [section]
+
         for i, position in enumerate([header.position for header in headers]):
             offset_start = get_offset_from_position(position, text)
             if i + 1 == len(headers):
