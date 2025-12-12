@@ -22,7 +22,7 @@ def _select_rules(
     if rules_config is None:
         return dict()
 
-    enabled_set: Dict[str, Dict[str, Rule | Dict[str, Any]]] = dict()
+    enabled_set: Dict[str, Dict[str, Dict[str, Any] | Rule]] = dict()
     for module_name in rules_config.keys():
         module_dict = rules_config[module_name]
         for rule_name in rules_config[module_name].keys():
@@ -30,8 +30,11 @@ def _select_rules(
             rule_id = f"{module_name}.{rule_name}"
             if rule_id not in enabled_set:
                 enabled_set[rule_id] = dict()
+            if rule_id not in all_rules:
+                raise ValueError(f"Unknown rule id: {rule_id}")
             enabled_set[rule_id]["rule"] = all_rules[rule_id]
-            enabled_set[rule_id]["config"] = rule_config
+            enabled_set[rule_id]["config"] = dict()
+            enabled_set[rule_id]["config"][rule_name] = rule_config
 
     return enabled_set
 
@@ -46,9 +49,11 @@ def run_linter(
     - document: the parsed Document to lint.
     - rule_configs: mapping of rule_id to config dict, for example:
         {
-            "whitespace.validate_max_line_length": {"max_line_length": 120},
+            "whitespace":
+                "max_line_length": 120
         }
-      Rules without an entry are disabled.
+
+    Rules without an entry are disabled.
     """
     discovered = discover_rules()
     active_rules = _select_rules(discovered, rules_config)

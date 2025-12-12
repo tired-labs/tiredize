@@ -1,10 +1,11 @@
+import pytest
 from tiredize.linter.engine import run_linter
 from tiredize.linter.types import RuleResult
 from tiredize.markdown.types.document import Document
+import typing
 
 
 def test_run_linter_no_violations():
-    # Build a simple document. Adjust ctor to match your real Document API.
     markdown = """# Line Length Test (Passing)
 
     We have no issues here.
@@ -13,28 +14,42 @@ def test_run_linter_no_violations():
     doc = Document()
     doc.load(text=markdown)
 
-    # Config in the flat form the engine expects:
-    # rule_id -> config dict
-    rules_config = {
+    rules_config: dict[str, typing.Any] = {
         "whitespace": {
-            "line_length": {
-                "max_length": 80,
-            }
+            "max_line_length": 80
         }
     }
 
-    # Run only this one rule, using the real rules package.
     results = run_linter(
         document=doc,
         rules_config=rules_config
     )
 
-    # No violations.
     assert len(results) == 0
 
 
+def test_run_linter_undefined_rule():
+    markdown = """# Nothing matters."""
+    doc = Document()
+    doc.load(text=markdown)
+
+    rules_config: dict[str, typing.Any] = {
+        "whitespace": {
+            "undefined_rule_for_testing": True
+        }
+    }
+
+    with pytest.raises(ValueError) as e:
+        run_linter(
+            document=doc,
+            rules_config=rules_config
+        )
+
+    expected_err = 'Unknown rule id: whitespace.undefined_rule_for_testing'
+    assert e.match(expected_err)
+
+
 def test_run_linter_one_violation():
-    # Build a simple document. Adjust ctor to match your real Document API.
     markdown = """# Line Length Test (Fail)
 
 This line is absolutely, positively too long!
@@ -42,27 +57,21 @@ This line is absolutely, positively too long!
     doc = Document()
     doc.load(text=markdown)
 
-    # Config in the flat form the engine expects:
-    # rule_id -> config dict
-    rules_config = {
+    rules_config: dict[str, typing.Any] = {
         "whitespace": {
-            "line_length": {
-                "max_length": 25,
-            }
+            "max_line_length": 25
         }
     }
 
-    # Run only this one rule, using the real rules package.
     results = run_linter(
         document=doc,
         rules_config=rules_config
     )
 
-    # One violation: the second line.
     assert len(results) == 1
 
     res: RuleResult = results[0]
-    assert res.rule_id == "whitespace.line_length"
+    assert res.rule_id == "whitespace.max_line_length"
     assert "exceeds maximum length" in res.message
     assert res.position.line == 3
     assert res.position.offset == 25
@@ -70,7 +79,6 @@ This line is absolutely, positively too long!
 
 
 def test_run_linter_two_violations():
-    # Build a simple document. Adjust ctor to match your real Document API.
     markdown = """# Line Length Test (Fail)
 
 This line is absolutely, positively too long!
@@ -81,34 +89,28 @@ Another overly long line is right here! What gives?!
     doc = Document()
     doc.load(text=markdown)
 
-    # Config in the flat form the engine expects:
-    # rule_id -> config dict
-    rules_config = {
+    rules_config: dict[str, typing.Any] = {
         "whitespace": {
-            "line_length": {
-                "max_length": 25,
-            }
+            "max_line_length": 25
         }
     }
 
-    # Run only this one rule, using the real rules package.
     results = run_linter(
         document=doc,
         rules_config=rules_config
     )
 
-    # One violation: the second line.
     assert len(results) == 2
 
     res: RuleResult = results[0]
-    assert res.rule_id == "whitespace.line_length"
+    assert res.rule_id == "whitespace.max_line_length"
     assert "exceeds maximum length" in res.message
     assert res.position.line == 3
     assert res.position.offset == 25
     assert res.position.length == 20
 
     res = results[1]
-    assert res.rule_id == "whitespace.line_length"
+    assert res.rule_id == "whitespace.max_line_length"
     assert "exceeds maximum length" in res.message
     assert res.position.line == 6
     assert res.position.offset == 25

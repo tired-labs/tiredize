@@ -5,5 +5,5 @@ from tiredize.types import Position
 @dataclass(frozen=False)
 class RuleResult:
     position: "Position"
-    rule_id: str
+    rule_id: str | None
     message: str

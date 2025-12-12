@@ -7,7 +7,7 @@ from typing import Dict
 from typing import List
 
 
-def validate_line_length(
+def validate_max_line_length(
     document: Document,
     config: Dict[str, Any],
 ) -> List[RuleResult]:
@@ -15,9 +15,9 @@ def validate_line_length(
     Flag lines that exceed a configured maximum length.
 
     Configuration:
-        max_length: int - The maximum allowed line length.
+        max_line_length: int - The maximum allowed line length.
     """
-    raw_value = config.get("max_length")
+    raw_value = config.get("max_line_length")
 
     if isinstance(raw_value, int):
         max_len = raw_value
@@ -26,12 +26,12 @@ def validate_line_length(
             max_len = int(raw_value)
         except ValueError:
             raise ValueError(
-                "Invalid or missing 'max_length' configuration for "
+                "Invalid or missing 'max_line_length' configuration for "
                 "validate_line_length rule."
             )
     else:
         raise ValueError(
-            "Invalid or missing 'max_length' configuration for "
+            "Invalid or missing 'max_line_length' configuration for "
             "validate_line_length rule."
         )
 
@@ -57,7 +57,7 @@ def validate_line_length(
                     f"{max_len} characters ({line_length} found)."
                 ),
                 position=position,
-                rule_id="line_length.max_line_length",
+                rule_id=None
             )
         )
 
