@@ -28,7 +28,6 @@ def _select_rules(
             raise ValueError(f"Unknown rule id: {rule_id}")
         if rule_id not in enabled_set:
             enabled_set[rule_id] = dict()
-        rule = rules[rule_id]
         rule_config = rule_configs[rule_id]
         enabled_set[rule_id]["rule"] = rules[rule_id]
         enabled_set[rule_id]["config"] = rule_config

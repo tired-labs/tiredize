@@ -1,8 +1,8 @@
 from __future__ import annotations
 from tiredize.linter.types import RuleResult
 from tiredize.linter.utils import get_config_int
-from tiredize.linter.utils import get_config_bool
-from tiredize.linter.utils import get_config_list
+# from tiredize.linter.utils import get_config_bool
+# from tiredize.linter.utils import get_config_list
 from tiredize.markdown.types.document import Document
 from tiredize.types import Position
 from typing import Any
@@ -23,10 +23,10 @@ def validate(
     maximum_length = get_config_int(config, "maximum_length")
     if maximum_length <= 0:
         return []
-    ignore_code_blocks = get_config_bool(config, "ignore_code_blocks")
-    ignore_frontmatter = get_config_bool(config, "ignore_frontmatter")
-    ignore_sections_list = get_config_list(config, "ignore_sections")
-    
+    # ignore_code_blocks = get_config_bool(config, "ignore_code_blocks")
+    # ignore_frontmatter = get_config_bool(config, "ignore_frontmatter")
+    # ignore_sections_list = get_config_list(config, "ignore_sections")
+
     results: List[RuleResult] = []
 
     lines = document.string_markdown.splitlines()

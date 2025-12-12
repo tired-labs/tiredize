@@ -1,4 +1,3 @@
-import pytest
 from tiredize.linter.engine import run_linter
 from tiredize.linter.types import RuleResult
 from tiredize.markdown.types.document import Document
@@ -44,7 +43,6 @@ def test_run_linter_undefined_rule():
         rule_configs=rule_configs
     )
     assert len(results) == 0
-
 
 
 def test_run_linter_one_violation():
