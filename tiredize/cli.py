@@ -54,7 +54,7 @@ def _run_rules(
 
     results: List[RuleResult] = run_linter(
         document=doc,
-        rules_config=raw_config
+        rule_configs=raw_config
     )
     return results
 

@@ -6,7 +6,7 @@ from typing import Dict
 from typing import List
 
 
-def validate_simple(
+def validate(
     document: Document,
     config: Dict[str, Any],
 ) -> List[RuleResult]:
@@ -20,6 +20,6 @@ def validate_simple(
             offset=50,
             length=15
         ),
-        rule_id="test.simple"
+        rule_id="simple_rule"
     )
     return [result]

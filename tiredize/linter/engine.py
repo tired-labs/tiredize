@@ -11,37 +11,34 @@ from tiredize.linter.types import RuleResult
 
 
 def _select_rules(
-    all_rules: Dict[str, Rule],
-    rules_config: Dict[str, Dict[str, Dict[str, Any]]] | None,
+    rules: Dict[str, Rule],
+    rule_configs: Dict[str, Dict[str, Dict[str, Any]]] | None,
 ) -> Dict[str, Dict[str, Rule | Dict[str, Any]]]:
     """
     Filter rules by id.
 
-    If rules_config is None, no rules are returned.
+    If rule_configs is None, no rules are returned.
     """
-    if rules_config is None:
+    if rule_configs is None:
         return dict()
 
     enabled_set: Dict[str, Dict[str, Dict[str, Any] | Rule]] = dict()
-    for module_name in rules_config.keys():
-        module_dict = rules_config[module_name]
-        for rule_name in rules_config[module_name].keys():
-            rule_config = module_dict[rule_name]
-            rule_id = f"{module_name}.{rule_name}"
-            if rule_id not in enabled_set:
-                enabled_set[rule_id] = dict()
-            if rule_id not in all_rules:
-                raise ValueError(f"Unknown rule id: {rule_id}")
-            enabled_set[rule_id]["rule"] = all_rules[rule_id]
-            enabled_set[rule_id]["config"] = dict()
-            enabled_set[rule_id]["config"][rule_name] = rule_config
+    for rule_id in rule_configs.keys():
+        if rule_id not in rules:
+            raise ValueError(f"Unknown rule id: {rule_id}")
+        if rule_id not in enabled_set:
+            enabled_set[rule_id] = dict()
+        rule = rules[rule_id]
+        rule_config = rule_configs[rule_id]
+        enabled_set[rule_id]["rule"] = rules[rule_id]
+        enabled_set[rule_id]["config"] = rule_config
 
     return enabled_set
 
 
 def run_linter(
     document: Document,
-    rules_config: Dict[str, Dict[str, Dict[str, Any]]] | None = None
+    rule_configs: Dict[str, Dict[str, Dict[str, Any]]] | None = None
 ) -> List[RuleResult]:
     """
     Run lint rules against a document and return normalized results.
@@ -55,8 +52,8 @@ def run_linter(
 
     Rules without an entry are disabled.
     """
-    discovered = discover_rules()
-    active_rules = _select_rules(discovered, rules_config)
+    all_rules = discover_rules()
+    active_rules = _select_rules(all_rules, rule_configs)
 
     all_results: List[RuleResult] = []
     for rule_id in active_rules.keys():

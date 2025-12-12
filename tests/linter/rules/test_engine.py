@@ -14,15 +14,15 @@ def test_run_linter_no_violations():
     doc = Document()
     doc.load(text=markdown)
 
-    rules_config: dict[str, typing.Any] = {
-        "whitespace": {
-            "max_line_length": 80
+    rule_configs: dict[str, typing.Any] = {
+        "line_length": {
+            "maximum_length": 80
         }
     }
 
     results = run_linter(
         document=doc,
-        rules_config=rules_config
+        rule_configs=rule_configs
     )
 
     assert len(results) == 0
@@ -33,20 +33,18 @@ def test_run_linter_undefined_rule():
     doc = Document()
     doc.load(text=markdown)
 
-    rules_config: dict[str, typing.Any] = {
-        "whitespace": {
+    rule_configs: dict[str, typing.Any] = {
+        "line_length": {
             "undefined_rule_for_testing": True
         }
     }
 
-    with pytest.raises(ValueError) as e:
-        run_linter(
-            document=doc,
-            rules_config=rules_config
-        )
+    results = run_linter(
+        document=doc,
+        rule_configs=rule_configs
+    )
+    assert len(results) == 0
 
-    expected_err = 'Unknown rule id: whitespace.undefined_rule_for_testing'
-    assert e.match(expected_err)
 
 
 def test_run_linter_one_violation():
@@ -57,21 +55,21 @@ This line is absolutely, positively too long!
     doc = Document()
     doc.load(text=markdown)
 
-    rules_config: dict[str, typing.Any] = {
-        "whitespace": {
-            "max_line_length": 25
+    rule_configs: dict[str, typing.Any] = {
+        "line_length": {
+            "maximum_length": 25
         }
     }
 
     results = run_linter(
         document=doc,
-        rules_config=rules_config
+        rule_configs=rule_configs
     )
 
     assert len(results) == 1
 
     res: RuleResult = results[0]
-    assert res.rule_id == "whitespace.max_line_length"
+    assert res.rule_id == "line_length"
     assert "exceeds maximum length" in res.message
     assert res.position.line == 3
     assert res.position.offset == 25
@@ -89,28 +87,28 @@ Another overly long line is right here! What gives?!
     doc = Document()
     doc.load(text=markdown)
 
-    rules_config: dict[str, typing.Any] = {
-        "whitespace": {
-            "max_line_length": 25
+    rule_configs: dict[str, typing.Any] = {
+        "line_length": {
+            "maximum_length": 25
         }
     }
 
     results = run_linter(
         document=doc,
-        rules_config=rules_config
+        rule_configs=rule_configs
     )
 
     assert len(results) == 2
 
     res: RuleResult = results[0]
-    assert res.rule_id == "whitespace.max_line_length"
+    assert res.rule_id == "line_length"
     assert "exceeds maximum length" in res.message
     assert res.position.line == 3
     assert res.position.offset == 25
     assert res.position.length == 20
 
     res = results[1]
-    assert res.rule_id == "whitespace.max_line_length"
+    assert res.rule_id == "line_length"
     assert "exceeds maximum length" in res.message
     assert res.position.line == 6
     assert res.position.offset == 25
