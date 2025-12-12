@@ -5,29 +5,27 @@ from tiredize.linter.utils import get_config_int
 # from tiredize.linter.utils import get_config_list
 from tiredize.markdown.types.document import Document
 from tiredize.types import Position
-from typing import Any
-from typing import Dict
-from typing import List
+import typing
 
 
 def validate(
     document: Document,
-    config: Dict[str, Any],
-) -> List[RuleResult]:
+    config: typing.Dict[str, typing.Any],
+) -> typing.List[RuleResult]:
     """
-    Flag lines that exceed a configured maximum length.
+    Validate document meets line length requirements.
 
     Configuration:
         maximum_length: int - The maximum allowed line length.
     """
     maximum_length = get_config_int(config, "maximum_length")
-    if maximum_length <= 0:
+    if maximum_length is None:
         return []
     # ignore_code_blocks = get_config_bool(config, "ignore_code_blocks")
     # ignore_frontmatter = get_config_bool(config, "ignore_frontmatter")
     # ignore_sections_list = get_config_list(config, "ignore_sections")
 
-    results: List[RuleResult] = []
+    results: typing.List[RuleResult] = []
 
     lines = document.string_markdown.splitlines()
     for line_number, line in enumerate(lines, start=1):
