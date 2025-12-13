@@ -47,7 +47,7 @@ Tiredize is early in development, but the initial goals include:
   - [ ] Markdown Scheme
   - [x] Line Length
   - [x] Whitespace
-  - [ ] Link Validation
+  - [x] Link Validation
   - [ ] Markdown styling
     - [ ] Lists
     - [ ] Links
