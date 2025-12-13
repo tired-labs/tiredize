@@ -2,6 +2,7 @@ from __future__ import annotations
 from tiredize.linter.types import RuleResult
 from tiredize.linter.utils import check_url_valid
 from tiredize.linter.utils import get_config_bool
+from tiredize.linter.utils import get_config_int
 from tiredize.markdown.types.document import Document
 import typing
 
@@ -14,18 +15,24 @@ def validate(
     Validate document meets link requirements.
 
     Configuration:
-        maximum_length: int - The maximum allowed line length.
+        validate: bool - Enable link validation
+        ignore_domains: list[str] - Domains to ignore during validation
+        ignore_status_codes: list[int] - HTTP status codes to ignore
+        timeout: int - Timeout for link validation requests
     """
-    validate = get_config_bool(config, "validate")
-    if not validate:
+    cfg_validate = get_config_bool(config, "validate")
+    if not cfg_validate:
         return []
+
+    cfg_timeout = get_config_int(config, "timeout")
 
     results: typing.List[RuleResult] = []
     for section in document.sections:
         for link in section.links_inline:
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
-                url=link.url
+                url=link.url,
+                timeout=cfg_timeout
             )
             if not is_valid:
                 position = link.position

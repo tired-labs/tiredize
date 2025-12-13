@@ -5,9 +5,9 @@ import typing
 
 
 def get_config_int(
-        config: typing.Dict[str, typing.Any],
-        key: str
-        ) -> int | None:
+    config: typing.Dict[str, typing.Any],
+    key: str
+) -> int | None:
     """
     Retrieve an integer configuration value.
     """
@@ -18,9 +18,9 @@ def get_config_int(
 
 
 def get_config_str(
-        config: typing.Dict[str, typing.Any],
-        key: str
-        ) -> str | None:
+    config: typing.Dict[str, typing.Any],
+    key: str
+) -> str | None:
     """
     Retrieve an string configuration value.
     """
@@ -31,9 +31,9 @@ def get_config_str(
 
 
 def get_config_bool(
-        config: typing.Dict[str, typing.Any],
-        key: str
-        ) -> bool | None:
+    config: typing.Dict[str, typing.Any],
+    key: str
+) -> bool | None:
     """
     Retrieve an boolean configuration value.
     """
@@ -44,9 +44,9 @@ def get_config_bool(
 
 
 def get_config_dict(
-        config: typing.Dict[str, typing.Any],
-        key: str
-        ) -> typing.Dict[str, typing.Any] | None:
+    config: typing.Dict[str, typing.Any],
+    key: str
+) -> typing.Dict[str, typing.Any] | None:
     """
     Retrieve an dictionary configuration value.
     """
@@ -57,9 +57,9 @@ def get_config_dict(
 
 
 def get_config_list(
-        config: typing.Dict[str, typing.Any],
-        key: str
-        ) -> typing.List[str] | None:
+    config: typing.Dict[str, typing.Any],
+    key: str
+) -> typing.List[str] | None:
     """
     Retrieve an list configuration value.
     """
@@ -72,10 +72,10 @@ def get_config_list(
 def check_url_valid(
     document: Document,
     url: str,
-    timeout: float = 5.0,
-    headers: typing.Optional[typing.Dict[str, str]] = None,
-    allow_redirects: bool = True,
-    verify_ssl: bool = True
+    timeout: float | None,
+    headers: typing.Optional[typing.Dict[str, str]] | None,
+    allow_redirects: bool | None,
+    verify_ssl: bool | None
 ) -> tuple[bool, int | None, str | None]:
     """
     Perform a lightweight check to determine if a URL is reachable.
@@ -112,8 +112,11 @@ def check_url_valid(
     req_headers = headers or {
         "User-Agent": "tiredize-link-checker/1.0"
     }
-    print(f"Checking URL: {url}")
+
     try:
+        if allow_redirects is None:
+            allow_redirects = True
+
         response = requests.get(
             url=url,
             headers=req_headers,
