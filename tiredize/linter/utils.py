@@ -1,3 +1,5 @@
+from tiredize.markdown.types.document import Document
+import requests
 import typing
 
 
@@ -64,3 +66,58 @@ def get_config_list(
     if not isinstance(raw_value, list):
         return None
     return raw_value
+
+
+def check_url_valid(
+    document: Document,
+    url: str,
+    timeout: float = 5.0,
+    headers: typing.Optional[typing.Dict[str, str]] = None,
+    allow_redirects: bool = True,
+    verify_ssl: bool = True
+) -> tuple[bool, int | None, str | None]:
+    """
+    Perform a lightweight check to determine if a URL is reachable.
+
+    Returns a tuple:
+        (is_valid, status_code, error_message)
+
+    is_valid:
+        True if the request completed with a 2xx or 3xx status code.
+    status_code:
+        The HTTP response code if one was returned. Otherwise None.
+    error_message:
+        A string describing any failure such as timeout or connection error.
+
+    This helper does not raise exceptions. All failures are returned
+    in the tuple so callers do not need try/except logic.
+    """
+    if url.startswith("#"):
+        for section in document.sections:
+            if section.header.slug == url:
+                return True, None, None
+        return False, None, "anchor not found in document"
+
+    req_headers = headers or {
+        "User-Agent": "tiredize-link-checker/1.0"
+    }
+    print(f"Checking URL: {url}")
+    try:
+        response = requests.get(
+            url=url,
+            headers=req_headers,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+            verify=verify_ssl,
+        )
+        # Treat 2xx and 3xx as valid. You can change this policy later.
+        if 200 <= response.status_code < 400:
+            return True, response.status_code, None
+        return False, response.status_code, None
+
+    except requests.exceptions.Timeout:
+        return False, None, "timeout"
+
+    # Covers DNS errors, connection failures, SSL issues, invalid URLs, etc.
+    except requests.exceptions.RequestException as exc:
+        return False, None, str(exc)

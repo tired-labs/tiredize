@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 from tiredize.markdown.types.frontmatter import FrontMatter
 from tiredize.markdown.types.section import Section
@@ -39,3 +40,13 @@ class Document:
             md = self.string[self.frontmatter.position.length + 1:]
         self.string_markdown = md
         self.sections = Section.extract(md)
+
+        header_titles: list[str] = []
+        for section in self.sections:
+            header = section.header
+            header_titles.append(header.title)
+            slug = header.slugify_header(
+                header.title,
+                existing=header_titles[:-1]
+            )
+            header = replace(header, slug=slug)

@@ -1,13 +1,9 @@
-# tiredize/linter/engine.py
-
 from __future__ import annotations
-
 from dataclasses import replace
-from typing import Any, Dict, List
-
-from tiredize.markdown.types.document import Document
 from tiredize.linter.rules import Rule, discover_rules
 from tiredize.linter.types import RuleResult
+from tiredize.markdown.types.document import Document
+from typing import Any, Dict, List
 
 
 def _select_rules(
@@ -43,13 +39,9 @@ def run_linter(
     Run lint rules against a document and return normalized results.
 
     - document: the parsed Document to lint.
-    - rule_configs: mapping of rule_id to config dict, for example:
-        {
-            "whitespace":
-                "max_line_length": 120
-        }
+    - rule_configs: mapping of rule_id to configuration dictionary
 
-    Rules without an entry are disabled.
+    Note: Rules without an entry are disabled.
     """
     all_rules = discover_rules()
     active_rules = _select_rules(all_rules, rule_configs)
@@ -70,7 +62,6 @@ def run_linter(
 
         raw_results = rule.func(document, rule_config)
         for res in raw_results:
-            # Always normalize rule_id to the canonical id from discovery.
             normalized = replace(res, rule_id=rule_id)
             all_results.append(normalized)
 

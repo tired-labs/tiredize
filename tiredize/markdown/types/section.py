@@ -83,6 +83,7 @@ class Section:
             header = Header(
                 level=0,
                 position=Position(line=0, offset=0, length=0),
+                slug="",
                 string="",
                 title=""
             )

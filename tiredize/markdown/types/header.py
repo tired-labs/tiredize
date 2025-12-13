@@ -4,6 +4,7 @@ from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.types import Position
+import re
 import typing
 
 
@@ -11,6 +12,7 @@ import typing
 class Header:
     level: int
     position: Position
+    slug: str
     string: str
     title: str
 
@@ -34,10 +36,12 @@ class Header:
         )
 
         result: list[Header] = []
+        header_titles: list[str] = []
         for match in matches:
             line_num, offset, length = get_position_from_match(match, text)
             level = len(match.group("hashes"))
-
+            title = match.group("title")
+            header_titles.append(title)
             result.append(
                 Header(
                     level=level,
@@ -46,8 +50,12 @@ class Header:
                         line=line_num,
                         offset=offset
                     ),
+                    slug=Header.slugify_header(
+                        title,
+                        existing=header_titles[:-1]
+                    ),
                     string=match.group(),
-                    title=match.group("title")
+                    title=title
                 )
             )
         return result
@@ -58,3 +66,49 @@ class Header:
         Replace any Headers with whitespace
         """
         return sanitize_text(Header.RE_HEADER, text)
+
+    @staticmethod
+    def slugify_header(
+            title: str,
+            existing: list[str] = []
+            ) -> str:
+        """
+        Generate GitHub-Flavored Markdown (GFM) anchor slugs for all headings.
+
+        Steps followed:
+        1. Lowercase the text.
+        2. Remove punctuation characters except hyphens and spaces.
+        3. Convert spaces to hyphens.
+        4. Collapse multiple hyphens.
+        5. Strip leading/trailing hyphens.
+        6. If the slug already exists, append "-1", "-2", etc.
+
+        Parameters:
+        title: The raw heading text, e.g. "Section One: Good Stuff".
+        existing: Optional list tracking previously-seen titles.
+
+        Returns:
+        A list of unique slugs corresponding to the input headings.
+        """
+        if title == "":
+            slug = "section"
+
+        slug = title.lower()
+        slug = re.sub(r"[^a-z0-9 \-]", "", slug)
+        slug = slug.replace(" ", "-")
+        slug = re.sub(r"-+", "-", slug)
+        slug = slug.strip("-")
+        slug = f"#{slug}"
+
+        seen: typing.Dict[str, int] = {}
+        for e in existing:
+            if e not in seen:
+                seen[e] = 1
+            else:
+                seen[e] += 1
+
+        if title in seen:
+            if seen[title] > 0:
+                slug = f"{slug}-{seen[title]}"
+
+        return slug
