@@ -53,7 +53,9 @@ def validate(
         for link in section.links_bracket:
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
-                url=link.url
+                url=link.url,
+                timeout=cfg_timeout,
+                headers=cfg_headers
             )
             if not is_valid:
                 position = link.position
@@ -70,7 +72,9 @@ def validate(
         for link in section.links_bare:
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
-                url=link.url
+                url=link.url,
+                timeout=cfg_timeout,
+                headers=cfg_headers
             )
             if not is_valid:
                 position = link.position
@@ -87,7 +91,9 @@ def validate(
         for link in section.reference_definitions:
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
-                url=link.url
+                url=link.url,
+                timeout=cfg_timeout,
+                headers=cfg_headers
             )
             if not is_valid:
                 position = link.position
