@@ -1,4 +1,5 @@
 from tiredize.markdown.types.document import Document
+from pathlib import Path
 import requests
 import typing
 
@@ -97,6 +98,16 @@ def check_url_valid(
             if section.header.slug == url:
                 return True, None, None
         return False, None, "anchor not found in document"
+
+    if url.startswith("."):
+        if document.path is None:
+            return False, None, "document has no path for relative URL"
+
+        path = document.path / Path(url)
+        if path.exists():
+            return True, None, None
+        else:
+            return False, None, "relative file not found"
 
     req_headers = headers or {
         "User-Agent": "tiredize-link-checker/1.0"
