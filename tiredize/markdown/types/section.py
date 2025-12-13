@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.types.header import Header
@@ -13,7 +14,6 @@ from tiredize.markdown.types.reference import LinkReference
 from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.types.table import Table
 from tiredize.markdown.utils import get_offset_from_position
-from tiredize.types import Position
 import typing
 
 

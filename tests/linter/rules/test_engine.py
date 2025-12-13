@@ -1,5 +1,5 @@
 from tiredize.linter.engine import run_linter
-from tiredize.linter.types import RuleResult
+from tiredize.core_types import RuleResult
 from tiredize.markdown.types.document import Document
 import typing
 

@@ -1,5 +1,6 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.image import InlineImage
-from tiredize.types import Position
+
 
 md_section = """# Markdown Test Section - Lorem Ipsum
 

@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.table import Table
-from tiredize.types import Position
 import typing
 
 md_section = """# Markdown Test Section - Lorem Ipsum

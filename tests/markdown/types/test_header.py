@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.header import Header
-from tiredize.types import Position
 
 md_section = """{}
 

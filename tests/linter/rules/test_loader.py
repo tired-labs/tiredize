@@ -1,7 +1,7 @@
+from tiredize.core_types import Position
+from tiredize.core_types import RuleResult
 from tiredize.linter.rules import discover_rules, Rule
-from tiredize.linter.types import RuleResult
 from tiredize.markdown.types.document import Document
-from tiredize.types import Position
 
 
 def test_discover_rules_no_rules():

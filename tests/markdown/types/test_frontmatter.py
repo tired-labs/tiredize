@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.frontmatter import FrontMatter
-from tiredize.types import Position
 import datetime
 import typing
 import yaml

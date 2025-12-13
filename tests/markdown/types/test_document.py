@@ -1,6 +1,6 @@
 from pathlib import Path
+from tiredize.core_types import Position
 from tiredize.markdown.types.document import Document
-from tiredize.types import Position
 import datetime
 import typing
 import yaml

@@ -1,7 +1,8 @@
 from __future__ import annotations
-from tiredize.linter.types import RuleResult
+from tiredize.core_types import RuleResult
 from tiredize.linter.utils import check_url_valid
 from tiredize.linter.utils import get_config_bool
+from tiredize.linter.utils import get_config_dict
 from tiredize.linter.utils import get_config_int
 from tiredize.markdown.types.document import Document
 import typing
@@ -25,6 +26,8 @@ def validate(
         return []
 
     cfg_timeout = get_config_int(config, "timeout")
+    cfg_headers = get_config_dict(config, "headers")
+    # cfg_ignore_codes = get_config_list(config, "ignore_status_codes")
 
     results: typing.List[RuleResult] = []
     for section in document.sections:
@@ -32,7 +35,8 @@ def validate(
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
                 url=link.url,
-                timeout=cfg_timeout
+                timeout=cfg_timeout,
+                headers=cfg_headers
             )
             if not is_valid:
                 position = link.position

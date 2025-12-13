@@ -1,15 +1,12 @@
-# tiredize/linter/rules/__init__.py
-
 from __future__ import annotations
-
+from dataclasses import dataclass
+from tiredize.core_types import RuleResult
+from tiredize.markdown.types.document import Document
+from typing import Any, Callable, Dict, List
 import importlib
 import inspect
 import pkgutil
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
 
-from tiredize.markdown.types.document import Document
-from tiredize.linter.types import RuleResult
 
 RuleFunc = Callable[[Document, Dict[str, Any]], List[RuleResult]]
 

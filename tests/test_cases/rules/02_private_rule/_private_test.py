@@ -1,4 +1,4 @@
-from tiredize.linter.types import RuleResult
+from tiredize.core_types import RuleResult
 from tiredize.markdown.types.document import Document
 from typing import Any
 from typing import Dict

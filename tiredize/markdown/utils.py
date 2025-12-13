@@ -1,4 +1,4 @@
-from tiredize.types import Position
+from tiredize.core_types import Position
 import re
 
 

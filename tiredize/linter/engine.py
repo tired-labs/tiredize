@@ -1,9 +1,11 @@
 from __future__ import annotations
 from dataclasses import replace
+from tiredize.core_types import RuleResult
 from tiredize.linter.rules import Rule, discover_rules
-from tiredize.linter.types import RuleResult
 from tiredize.markdown.types.document import Document
-from typing import Any, Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
 
 
 def _select_rules(

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.types.image import InlineImage
@@ -7,7 +8,6 @@ from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-from tiredize.types import Position
 import typing
 
 

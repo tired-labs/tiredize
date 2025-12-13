@@ -1,5 +1,11 @@
 from dataclasses import dataclass
-from tiredize.types import Position
+
+
+@dataclass(frozen=False)
+class Position:
+    line: int
+    offset: int
+    length: int
 
 
 @dataclass(frozen=False)

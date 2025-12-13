@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
+from tiredize.core_types import RuleResult
 from tiredize.linter.engine import run_linter
-from tiredize.linter.types import RuleResult
 from tiredize.markdown.types.document import Document
 from typing import Any, Dict, List
 import argparse

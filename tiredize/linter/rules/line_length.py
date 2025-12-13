@@ -1,10 +1,8 @@
 from __future__ import annotations
-from tiredize.linter.types import RuleResult
+from tiredize.core_types import Position
+from tiredize.core_types import RuleResult
 from tiredize.linter.utils import get_config_int
-# from tiredize.linter.utils import get_config_bool
-# from tiredize.linter.utils import get_config_list
 from tiredize.markdown.types.document import Document
-from tiredize.types import Position
 import typing
 
 

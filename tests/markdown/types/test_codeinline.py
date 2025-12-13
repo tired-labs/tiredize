@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeInline
-from tiredize.types import Position
 
 md_section = """# Markdown Test Section - Lorem Ipsum
 
