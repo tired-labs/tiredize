@@ -35,7 +35,7 @@ def get_config_bool(
     key: str
 ) -> bool | None:
     """
-    Retrieve an boolean configuration value.
+    Retrieve a boolean configuration value.
     """
     raw_value = config.get(key)
     if not isinstance(raw_value, bool):
