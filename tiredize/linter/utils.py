@@ -61,7 +61,7 @@ def get_config_list(
     key: str
 ) -> typing.List[str] | None:
     """
-    Retrieve an list configuration value.
+    Retrieve a list configuration value.
     """
     raw_value: list[str] | None = config.get(key)
     if not isinstance(raw_value, list):
