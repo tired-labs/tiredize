@@ -53,7 +53,7 @@ def _is_rule_function(name: str, obj: Any) -> bool:
     """
     A rule is any callable named 'validate'.
     """
-    return callable(obj) and name == ("validate")
+    return callable(obj) and name == "validate"
 
 
 def _rule_id(module_name: str, func_name: str) -> str:
