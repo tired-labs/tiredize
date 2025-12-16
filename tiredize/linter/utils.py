@@ -48,7 +48,7 @@ def get_config_dict(
     key: str
 ) -> typing.Dict[str, typing.Any] | None:
     """
-    Retrieve an dictionary configuration value.
+    Retrieve a dictionary configuration value.
     """
     raw_value: dict[str, typing.Any] | None = config.get(key)
     if not isinstance(raw_value, dict):
