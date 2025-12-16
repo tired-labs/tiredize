@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeInline
-from tiredize.types import Position
 
 md_section = """# Markdown Test Section - Lorem Ipsum
 
@@ -74,7 +74,7 @@ def test_single_codeinline_normal():
 
     exp_code = actual_code
     exp_string = actual_string
-    exp_position = Position(line=36, offset=12, length=len(exp_string))
+    exp_position = Position(offset=1781, length=len(exp_string))
 
     md_text = md_section.format("", "", actual_line, "", "")
 
@@ -104,11 +104,11 @@ def test_five_codeinlines_repeated():
     )
 
     positions = [
-        Position(line=15, offset=12, length=len(exp_string)),
-        Position(line=25, offset=12, length=len(exp_string)),
-        Position(line=36, offset=12, length=len(exp_string)),
-        Position(line=47, offset=12, length=len(exp_string)),
-        Position(line=58, offset=12, length=len(exp_string))
+        Position(offset=837, length=len(exp_string)),
+        Position(offset=1302, length=len(exp_string)),
+        Position(offset=1891, length=len(exp_string)),
+        Position(offset=2451, length=len(exp_string)),
+        Position(offset=3003, length=len(exp_string))
     ]
 
     matches = CodeInline.extract(md_text)

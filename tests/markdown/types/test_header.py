@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.header import Header
-from tiredize.types import Position
 
 md_section = """{}
 
@@ -72,8 +72,9 @@ def test_single_header_level01():
     actual_text = "Header Test: Level One"
     actual_string = f"{'#' * actual_level} {actual_text}"
 
+    exp_slug = "#header-test-level-one"
     exp_string = "# Header Test: Level One"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -81,6 +82,7 @@ def test_single_header_level01():
     assert matches[0] == Header(
         level=actual_level,
         position=exp_position,
+        slug=exp_slug,
         string=exp_string,
         title=actual_text
     )
@@ -91,8 +93,9 @@ def test_single_header_level02():
     actual_text = "Header Test: Level Two"
     actual_string = f"{'#' * actual_level} {actual_text}"
 
+    exp_slug = "#header-test-level-two"
     exp_string = "## Header Test: Level Two"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -100,6 +103,7 @@ def test_single_header_level02():
     assert matches[0] == Header(
         level=actual_level,
         position=exp_position,
+        slug=exp_slug,
         string=exp_string,
         title=actual_text
     )
@@ -110,8 +114,9 @@ def test_single_header_level03():
     actual_text = "Header Test: Level Three"
     actual_string = f"{'#' * actual_level} {actual_text}"
 
+    exp_slug = "#header-test-level-three"
     exp_string = "### Header Test: Level Three"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -119,6 +124,7 @@ def test_single_header_level03():
     assert matches[0] == Header(
         level=actual_level,
         position=exp_position,
+        slug=exp_slug,
         string=exp_string,
         title=actual_text
     )
@@ -129,8 +135,9 @@ def test_single_header_level04():
     actual_text = "Header Test: Level Four"
     actual_string = f"{'#' * actual_level} {actual_text}"
 
+    exp_slug = "#header-test-level-four"
     exp_string = "#### Header Test: Level Four"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -138,6 +145,7 @@ def test_single_header_level04():
     assert matches[0] == Header(
         level=actual_level,
         position=exp_position,
+        slug=exp_slug,
         string=exp_string,
         title=actual_text
     )
@@ -148,8 +156,9 @@ def test_single_header_level05():
     actual_text = "Header Test: Level Five"
     actual_string = f"{'#' * actual_level} {actual_text}"
 
+    exp_slug = "#header-test-level-five"
     exp_string = "##### Header Test: Level Five"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -157,6 +166,7 @@ def test_single_header_level05():
     assert matches[0] == Header(
         level=actual_level,
         position=exp_position,
+        slug=exp_slug,
         string=exp_string,
         title=actual_text
     )
@@ -167,8 +177,9 @@ def test_single_header_level06():
     actual_text = "Header Test: Level Six"
     actual_string = f"{'#' * actual_level} {actual_text}"
 
+    exp_slug = "#header-test-level-six"
     exp_string = "###### Header Test: Level Six"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -176,6 +187,7 @@ def test_single_header_level06():
     assert matches[0] == Header(
         level=actual_level,
         position=exp_position,
+        slug=exp_slug,
         string=exp_string,
         title=actual_text
     )
@@ -187,13 +199,21 @@ def test_six_headers_repeated():
     actual_string = f"{'#' * actual_level} {actual_text}"
 
     exp_string = "# Header Test: Duplicate Level One"
+    exp_slugs = [
+        "#header-test-duplicate-level-one",
+        "#header-test-duplicate-level-one-1",
+        "#header-test-duplicate-level-one-2",
+        "#header-test-duplicate-level-one-3",
+        "#header-test-duplicate-level-one-4",
+        "#header-test-duplicate-level-one-5",
+    ]
     exp_positions = [
-        Position(line=1, offset=0, length=len(actual_string)),
-        Position(line=15, offset=0, length=len(actual_string)),
-        Position(line=25, offset=0, length=len(actual_string)),
-        Position(line=36, offset=0, length=len(actual_string)),
-        Position(line=47, offset=0, length=len(actual_string)),
-        Position(line=58, offset=0, length=len(actual_string))
+        Position(offset=0, length=len(actual_string)),
+        Position(offset=822, length=len(actual_string)),
+        Position(offset=1266, length=len(actual_string)),
+        Position(offset=1834, length=len(actual_string)),
+        Position(offset=2373, length=len(actual_string)),
+        Position(offset=2904, length=len(actual_string))
     ]
 
     md_text = md_section.format(
@@ -210,6 +230,7 @@ def test_six_headers_repeated():
         assert match == Header(
             level=actual_level,
             position=exp_positions[i],
+            slug=exp_slugs[i],
             string=exp_string,
             title=actual_text
         )

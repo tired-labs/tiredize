@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.types.header import Header
@@ -12,8 +13,6 @@ from tiredize.markdown.types.reference import ImageReference
 from tiredize.markdown.types.reference import LinkReference
 from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.types.table import Table
-from tiredize.markdown.utils import get_offset_from_position
-from tiredize.types import Position
 import typing
 
 
@@ -38,77 +37,120 @@ class Section:
     tables: typing.List["Table"]
 
     @staticmethod
-    def extract(text: str) -> typing.List["Section"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["Section"]:
         """
         Extract sections from markdown.
         """
         result: typing.List[Section] = []
 
-        headers = Header.extract(text)
+        headers = Header.extract(text=text, base_offset=base_offset)
         if len(headers) == 0:
             position = Position(
-                line=1,
-                offset=0,
+                offset=base_offset,
                 length=len(text)
             )
-            section = Section._extract(text, position)
+            section = Section._extract(
+                text,
+                position,
+                base_offset=position.offset,
+            )
             return [section]
 
         for i, position in enumerate([header.position for header in headers]):
-            offset_start = get_offset_from_position(position, text)
+            offset_start = position.offset - base_offset
             if i + 1 == len(headers):
                 offset_end = len(text)
             else:
-                offset_end = get_offset_from_position(
-                    headers[i + 1].position,
-                    text
-                )
+                offset_end = headers[i + 1].position.offset - base_offset
             position = Position(
-                line=position.line,
-                offset=0,
+                offset=base_offset + offset_start,
                 length=offset_end - offset_start
             )
-            section = Section._extract(text[offset_start:offset_end], position)
+            section = Section._extract(
+                text[offset_start:offset_end],
+                position,
+                base_offset=position.offset,
+            )
             result.append(section)
         Section._map_subsections(result)
         return result
 
     @staticmethod
-    def _extract(string: str, position: Position) -> "Section":
-        headers = Header.extract(string)
+    def _extract(
+        string: str,
+        position: Position,
+        base_offset: int = 0
+    ) -> "Section":
+
         header = None
+        headers = Header.extract(text=string, base_offset=base_offset)
         if len(headers) >= 1:
             header = headers[0]
         else:
             header = Header(
                 level=0,
-                position=Position(line=0, offset=0, length=0),
+                position=Position(offset=base_offset, length=0),
+                slug="",
                 string="",
                 title=""
             )
 
         section = Section(
-            code_block=CodeBlock.extract(string),
-            code_inline=CodeInline.extract(string),
+            code_block=CodeBlock.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            code_inline=CodeInline.extract(
+                text=string,
+                base_offset=base_offset
+            ),
             header=header,
-            images_inline=InlineImage.extract(string),
-            images_reference=ImageReference.extract(string),
-            links_bare=BareLink.extract(string),
-            links_bracket=BracketLink.extract(string),
-            links_inline=InlineLink.extract(string),
-            links_reference=LinkReference.extract(string),
-            lists=List.extract(string),
+            images_inline=InlineImage.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            images_reference=ImageReference.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            links_bare=BareLink.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            links_bracket=BracketLink.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            links_inline=InlineLink.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            links_reference=LinkReference.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            lists=List.extract(
+                text=string,
+                base_offset=base_offset
+            ),
             position=position,
-            quoteblocks=QuoteBlock.extract(string),
+            quoteblocks=QuoteBlock.extract(
+                text=string,
+                base_offset=base_offset
+            ),
             reference_definitions=ReferenceDefinition.extract(
-                string
+                text=string,
+                base_offset=base_offset
             ),
             string=string,
             string_safe=CodeBlock.sanitize(
                 CodeInline.sanitize(string)
             ),
             subsections=[],
-            tables=Table.extract(string)
+            tables=Table.extract(
+                text=string,
+                base_offset=base_offset
+            )
         )
         return section
 

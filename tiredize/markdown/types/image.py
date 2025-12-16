@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from tiredize.markdown.utils import get_position_from_match
+from tiredize.core_types import Position
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-from tiredize.types import Position
 import typing
 
 
@@ -27,7 +26,7 @@ class InlineImage:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["InlineImage"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["InlineImage"]:
         """
         Extract markdown images from text.
         """
@@ -38,14 +37,13 @@ class InlineImage:
 
         result: list[InlineImage] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
             result.append(
                 InlineImage(
-                    position=Position(
-                        line=line_num,
-                        offset=offset,
-                        length=length
-                    ),
+                    position=position,
                     string=match.group(),
                     text=match.group("text"),
                     title=match.group("title"),

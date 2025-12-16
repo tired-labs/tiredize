@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from tiredize.markdown.utils import get_position_from_match
+from tiredize.core_types import Position
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-from tiredize.types import Position
 import typing
 import yaml
 
@@ -24,7 +23,10 @@ class FrontMatter:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.Optional["FrontMatter"]:
+    def extract(
+        text: str,
+        base_offset: int = 0
+    ) -> typing.Optional["FrontMatter"]:
         """
         Extract frontmatter from text.
         """
@@ -35,8 +37,10 @@ class FrontMatter:
         match = matches[0] if matches else None
         if not match:
             return None
-
-        line_num, offset, length = get_position_from_match(match, text)
+        position = Position(
+            offset=base_offset + match.start(),
+            length=match.end() - match.start()
+        )
         try:
             content = yaml.safe_load(match.group("yaml"))
         except yaml.YAMLError:
@@ -44,11 +48,7 @@ class FrontMatter:
 
         result = FrontMatter(
             content=content,
-            position=Position(
-                line=line_num,
-                offset=offset,
-                length=length
-            ),
+            position=position,
             string=match.group(),
         )
         return result

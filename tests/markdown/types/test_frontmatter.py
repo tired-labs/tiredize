@@ -1,5 +1,5 @@
+from tiredize.core_types import Position
 from tiredize.markdown.types.frontmatter import FrontMatter
-from tiredize.types import Position
 import datetime
 import typing
 import yaml
@@ -75,7 +75,7 @@ def test_single_frontmatter_normal():
     }
     actual_yaml = yaml.safe_dump(actual_data)
     actual_string = f"---\n{actual_yaml}\n---\n"
-    position = Position(line=1, offset=0, length=len(actual_string))
+    position = Position(offset=0, length=len(actual_string))
 
     expected = FrontMatter(
         content=actual_data,
@@ -98,7 +98,7 @@ def test_six_frontmatters_repeated():
     }
     actual_yaml = yaml.safe_dump(actual_data)
     actual_string = f"---\n{actual_yaml}\n---\n"
-    position = Position(line=1, offset=0, length=len(actual_string))
+    position = Position(offset=0, length=len(actual_string))
 
     expected = FrontMatter(
         content=actual_data,

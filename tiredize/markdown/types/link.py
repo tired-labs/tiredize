@@ -1,13 +1,12 @@
 from dataclasses import dataclass
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.types.image import InlineImage
 from tiredize.markdown.types.quoteblock import QuoteBlock
 from tiredize.markdown.types.reference import ReferenceDefinition
-from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-from tiredize.types import Position
 import typing
 
 
@@ -18,11 +17,11 @@ class BareLink:
     url: str
 
     RE_URL = r"""
-        (?P<url>(https?:\/\/|(./|\\))\S+)  # Capture the URL
+        (?P<url>(http[s]?:\/\/|(\.\/|\\))\S+)  # Capture the URL
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["BareLink"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["BareLink"]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = QuoteBlock.sanitize(text_sanitized)
@@ -37,14 +36,14 @@ class BareLink:
 
         result: list[BareLink] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
+
             result.append(
                 BareLink(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     string=match.group(),
                     url=match.group("url")
                 )
@@ -72,7 +71,7 @@ class BracketLink:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["BracketLink"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["BracketLink"]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = QuoteBlock.sanitize(text_sanitized)
@@ -83,14 +82,14 @@ class BracketLink:
 
         result: list[BracketLink] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
+
             result.append(
                 BracketLink(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     string=match.group(),
                     url=match.group("url")
                 )
@@ -125,7 +124,7 @@ class InlineLink:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["InlineLink"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["InlineLink"]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = QuoteBlock.sanitize(text_sanitized)
@@ -136,14 +135,14 @@ class InlineLink:
 
         result: list[InlineLink] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
+
             result.append(
                 InlineLink(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     string=match.group(),
                     title=match.group("title"),
                     url=match.group("url")

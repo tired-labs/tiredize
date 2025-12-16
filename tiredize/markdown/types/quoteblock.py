@@ -1,9 +1,8 @@
 from dataclasses import dataclass
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
-from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-from tiredize.types import Position
 import typing
 
 
@@ -22,45 +21,51 @@ class QuoteBlock:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["QuoteBlock"]:
-        """
-        Extract markdown quoteblocks from text.
-        """
+    def extract(text: str, base_offset: int = 0) -> typing.List["QuoteBlock"]:
         text_sanitized = CodeBlock.sanitize(text)
-        matches = search_all_re(
-            QuoteBlock.RE_QUOTEBLOCK,
-            text_sanitized
-        )
+        matches = search_all_re(QuoteBlock.RE_QUOTEBLOCK, text_sanitized)
 
         result: list[QuoteBlock] = []
+        prev_end_local: int | None = None
+
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
             depth = len(match.group("depth"))
+            start_local = match.start()
+            end_local = match.end()
 
             # Handle continued quotes
-            if (len(result) > 0):
-                line_count = result[-1].quote.count("\n") + 1
-                line_end = result[-1].position.line + line_count
+            if result and prev_end_local is not None:
+                between = text_sanitized[prev_end_local:start_local]
 
-                if (line_num == line_end):
-                    if (result[-1].depth == depth):
-                        result[-1].quote += "\n" + match.group("quote")
-                        result[-1].string += "\n" + match.group()
-                        result[-1].position.length += length + 1
-                        continue
+                is_next_line = between == "\n" or between == "\r\n"
+                if is_next_line and result[-1].depth == depth:
+                    result[-1].quote += "\n" + match.group("quote")
+                    result[-1].string += "\n" + match.group()
+                    new_length = result[-1].position.length
+                    new_length += (end_local - start_local)
+                    new_length += len(between)
+                    result[-1].position = Position(
+                        offset=result[-1].position.offset,
+                        length=new_length,
+                    )
 
+                    prev_end_local = end_local
+                    continue
+
+            position = Position(
+                offset=base_offset + start_local,
+                length=end_local - start_local,
+            )
             result.append(
                 QuoteBlock(
-                    depth=len(match.group("depth")),
-                    position=Position(
-                        line=line_num,
-                        offset=offset,
-                        length=length
-                    ),
+                    depth=depth,
+                    position=position,
                     quote=match.group("quote"),
                     string=match.group(),
                 )
             )
+            prev_end_local = end_local
+
         return result
 
     @staticmethod

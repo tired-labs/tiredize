@@ -1,10 +1,9 @@
-import typing
+from dataclasses import dataclass
+from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
-from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-from tiredize.types import Position
-from dataclasses import dataclass
+import typing
 
 
 @dataclass(frozen=False)
@@ -26,7 +25,10 @@ class ReferenceDefinition:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["ReferenceDefinition"]:
+    def extract(
+        text: str,
+        base_offset: int = 0
+    ) -> typing.List["ReferenceDefinition"]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             ReferenceDefinition.RE_REFERENCE_DEFINITION,
@@ -35,14 +37,13 @@ class ReferenceDefinition:
 
         result: list[ReferenceDefinition] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
             result.append(
                 ReferenceDefinition(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     string=match.group(),
                     text=match.group("text"),
                     title=match.group("title"),
@@ -77,7 +78,10 @@ class LinkReference:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["LinkReference"]:
+    def extract(
+        text: str,
+        base_offset: int = 0
+    ) -> typing.List["LinkReference"]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             LinkReference.RE_LINK_REFERENCE,
@@ -86,14 +90,13 @@ class LinkReference:
 
         result: list[LinkReference] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
             result.append(
                 LinkReference(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     reference=match.group("reference"),
                     string=match.group(),
                     text=match.group("text")
@@ -128,7 +131,10 @@ class ImageReference:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["ImageReference"]:
+    def extract(
+        text: str,
+        base_offset: int = 0
+    ) -> typing.List["ImageReference"]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             ImageReference.RE_IMAGE_REFERENCE,
@@ -137,14 +143,13 @@ class ImageReference:
 
         result: list[ImageReference] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
             result.append(
                 ImageReference(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     reference=match.group("reference"),
                     string=match.group(),
                     text=match.group("text")

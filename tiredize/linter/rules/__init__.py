@@ -1,15 +1,12 @@
-# tiredize/linter/rules/__init__.py
-
 from __future__ import annotations
-
+from dataclasses import dataclass
+from tiredize.core_types import RuleResult
+from tiredize.markdown.types.document import Document
+from typing import Any, Callable, Dict, List
 import importlib
 import inspect
 import pkgutil
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, List
 
-from tiredize.markdown.types.document import Document
-from tiredize.linter.types import RuleResult
 
 RuleFunc = Callable[[Document, Dict[str, Any]], List[RuleResult]]
 
@@ -54,9 +51,9 @@ def _iter_rule_modules(package_name: str) -> List[str]:
 
 def _is_rule_function(name: str, obj: Any) -> bool:
     """
-    A rule is any callable named 'validate_*'.
+    A rule is any callable named 'validate'.
     """
-    return callable(obj) and name.startswith("validate_")
+    return callable(obj) and name == "validate"
 
 
 def _rule_id(module_name: str, func_name: str) -> str:
@@ -69,8 +66,7 @@ def _rule_id(module_name: str, func_name: str) -> str:
         result = 'whitespace.validate_newline_at_eof'
     """
     short_module = module_name.rsplit(".", 1)[-1]
-    short_func_name = func_name.removeprefix("validate_")
-    return f"{short_module}.{short_func_name}"
+    return f"{short_module}"
 
 
 def discover_rules(package: str | None = None) -> Dict[str, Rule]:
@@ -94,7 +90,6 @@ def discover_rules(package: str | None = None) -> Dict[str, Rule]:
 
             func: RuleFunc = obj
             rule_id = _rule_id(module_name, name)
-
             description = inspect.getdoc(func)
             if description:
                 description = description.strip()

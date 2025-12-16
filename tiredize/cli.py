@@ -1,7 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
+from tiredize.core_types import RuleResult
 from tiredize.linter.engine import run_linter
-from tiredize.linter.types import RuleResult
 from tiredize.markdown.types.document import Document
 from typing import Any, Dict, List
 import argparse
@@ -54,7 +54,7 @@ def _run_rules(
 
     results: List[RuleResult] = run_linter(
         document=doc,
-        rules_config=raw_config
+        rule_configs=raw_config
     )
     return results
 
@@ -125,9 +125,8 @@ def main(argv: list[str] | None = None) -> int:
 
         for res in all_results:
             pos = res.position
-            print(f"{doc.path}:{pos.line}:{pos.offset}: "
-                  f"[{res.rule_id}] {res.message}")
-
+            line, col = doc.line_col(pos.offset)
+            print(f"{doc.path}:{line}:{col}: [{res.rule_id}] {res.message}")
         if all_results:
             exit_code = 1
     return exit_code
