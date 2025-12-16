@@ -69,8 +69,7 @@ This line is absolutely, positively too long!
     res: RuleResult = results[0]
     assert res.rule_id == "line_length"
     assert "exceeds maximum length" in res.message
-    assert res.position.line == 3
-    assert res.position.offset == 25
+    assert res.position.offset == 52
     assert res.position.length == 20
 
 
@@ -101,13 +100,11 @@ Another overly long line is right here! What gives?!
     res: RuleResult = results[0]
     assert res.rule_id == "line_length"
     assert "exceeds maximum length" in res.message
-    assert res.position.line == 3
-    assert res.position.offset == 25
+    assert res.position.offset == 52
     assert res.position.length == 20
 
     res = results[1]
     assert res.rule_id == "line_length"
     assert "exceeds maximum length" in res.message
-    assert res.position.line == 6
-    assert res.position.offset == 25
+    assert res.position.offset == 100
     assert res.position.length == 27

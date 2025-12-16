@@ -16,7 +16,6 @@ def validate(
     result = RuleResult(
         message="This is a simple test rule.",
         position=Position(
-            line=500,
             offset=50,
             length=15
         ),

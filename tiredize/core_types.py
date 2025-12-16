@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 
 
-@dataclass(frozen=False)
+@dataclass(frozen=True)
 class Position:
-    line: int
     offset: int
     length: int
 

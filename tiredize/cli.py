@@ -125,9 +125,8 @@ def main(argv: list[str] | None = None) -> int:
 
         for res in all_results:
             pos = res.position
-            print(f"{doc.path}:{pos.line}:{pos.offset}: "
-                  f"[{res.rule_id}] {res.message}")
-
+            line, col = doc.line_col(pos.offset)
+            print(f"{doc.path}:{line}:{col}: [{res.rule_id}] {res.message}")
         if all_results:
             exit_code = 1
     return exit_code

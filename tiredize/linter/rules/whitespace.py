@@ -13,9 +13,6 @@ def validate(
 ) -> typing.List[RuleResult]:
     """
     Validate document meets whitespace requirements.
-
-    Configuration:
-        maximum_length: int - The maximum allowed line length.
     """
     tabs_dict = get_config_dict(config, "tabs")
     trailing_whitespace_dict = get_config_dict(config, "trailing_whitespace")
@@ -47,7 +44,6 @@ def validate(
                 for segment in split_line[:-1]:
                     offset += len(segment)
                     position = Position(
-                        line=line_number,
                         offset=offset,
                         length=1,
                     )
@@ -68,7 +64,6 @@ def validate(
                 offset = len(stripped_line)
                 length = len(line) - len(stripped_line)
                 position = Position(
-                    line=line_number,
                     offset=offset,
                     length=length,
                 )

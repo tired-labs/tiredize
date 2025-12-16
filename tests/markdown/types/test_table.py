@@ -100,7 +100,7 @@ def test_single_table_normal():
     exp_string = '\n'.join(actual_rows) + '\n'
     exp_string_len = len(exp_string)
     md = md_section.format(exp_string, "", "", "", "")
-    position = Position(line=15, offset=0, length=exp_string_len)
+    position = Position(offset=825, length=exp_string_len)
 
     regex_matches = Table.extract(md)
     assert len(regex_matches) == 1
@@ -153,11 +153,11 @@ def test_five_tables_repeated():
     )
 
     positions = [
-        Position(line=15, offset=0, length=exp_string_len),
-        Position(line=33, offset=0, length=exp_string_len),
-        Position(line=52, offset=0, length=exp_string_len),
-        Position(line=71, offset=0, length=exp_string_len),
-        Position(line=90, offset=0, length=exp_string_len)
+        Position(offset=825, length=exp_string_len),
+        Position(offset=1491, length=exp_string_len),
+        Position(offset=2281, length=exp_string_len),
+        Position(offset=3042, length=exp_string_len),
+        Position(offset=3795, length=exp_string_len)
     ]
 
     regex_matches = Table.extract(md)
@@ -170,59 +170,6 @@ def test_five_tables_repeated():
             position=positions[i],
             string=exp_string
         )
-
-
-# def test_five_tables_unique():
-#     header_01: str = "| Col 01  | Col 02  | Col 02  |\n"
-#     divider_01 = "|---------|---------|---------|\n"
-#     rows_01 = [
-#         "| Data 01 | Data 02 | Data 03 |\n",
-#         "| Data 11 | Data 12 | Data 13 |\n",
-#         "| Data 21 | Data 22 | Data 23 |\n",
-#         "| Data 31 | Data 32 | Data 33 |\n",
-#         "| Data 41 | Data 42 | Data 43 |\n",
-#         "| Data 51 | Data 52 | Data 53 |\n",
-#     ]
-#     table_01 = f"{header_01}{divider_01}{''.join(rows_01)}"
-#     len_01 = len(table_01)
-
-
-#     md = md_section.format(
-#         table_01,
-#         table_01,
-#         table_01,
-#         table_01,
-#         table_01
-#     )
-
-#     positions = [
-#         Position(line=15, offset=0, length=len_01),
-#         Position(line=33, offset=0, length=len_01),
-#         Position(line=52, offset=0, length=len_01),
-#         Position(line=71, offset=0, length=len_01),
-#         Position(line=90, offset=0, length=len_01)
-#     ]
-
-#     exp_divider = divider_01.strip()
-#     exp_divider = exp_divider[:-1] if exp_divider[-1] == "|" else exp_divider
-#     exp_divider = exp_divider[1:] if exp_divider[0] == "|" else exp_divider
-#     exp_divider = exp_divider.split("|")
-
-#     exp_header = header_01.strip()
-#     exp_header = exp_header[:-1] if exp_header[-1] == "|" else exp_header
-#     exp_header = exp_header[1:] if exp_header[0] == "|" else exp_header
-#     exp_header = exp_header.split("|")
-
-#     regex_matches = Table.extract(md)
-#     assert len(regex_matches) == 5
-#     for i, match in enumerate(regex_matches):
-#         assert match == Table(
-#             header=exp_header,
-#             divider=exp_divider,
-#             rows=exp_rows,
-#             position=positions[i],
-#             string=table_01
-#         )
 
 
 def test_vomit_table():
@@ -255,7 +202,7 @@ def test_vomit_table():
     exp_string = '\n'.join(actual_rows) + '\n'
     exp_string_len = len(exp_string)
     md = md_section.format(exp_string, "", "", "", "")
-    position = Position(line=15, offset=0, length=exp_string_len)
+    position = Position(offset=825, length=exp_string_len)
 
     regex_matches = Table.extract(md)
     assert len(regex_matches) == 1

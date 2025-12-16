@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
-from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 import re
@@ -24,7 +23,7 @@ class Header:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["Header"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["Header"]:
         """
         Extract markdown titles from a section.
         As we are expecting a section's text to be the input, this must be the
@@ -38,18 +37,18 @@ class Header:
         result: list[Header] = []
         header_titles: list[str] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
             level = len(match.group("hashes"))
             title = match.group("title")
             header_titles.append(title)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
+
             result.append(
                 Header(
                     level=level,
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     slug=Header.slugify_header(
                         title,
                         existing=header_titles[:-1]
@@ -69,9 +68,9 @@ class Header:
 
     @staticmethod
     def slugify_header(
-            title: str,
-            existing: list[str] = []
-            ) -> str:
+        title: str,
+        existing: typing.Optional[list[str]] = None
+    ) -> str:
         """
         Generate GitHub-Flavored Markdown (GFM) anchor slugs for all headings.
 
@@ -91,7 +90,7 @@ class Header:
         A list of unique slugs corresponding to the input headings.
         """
         if title == "":
-            slug = "section"
+            title = "section"
 
         slug = title.lower()
         slug = re.sub(r"[^a-z0-9 \-]", "", slug)
@@ -101,7 +100,7 @@ class Header:
         slug = f"#{slug}"
 
         seen: typing.Dict[str, int] = {}
-        for e in existing:
+        for e in (existing or []):
             if e not in seen:
                 seen[e] = 1
             else:

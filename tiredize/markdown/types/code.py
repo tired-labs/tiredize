@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from tiredize.core_types import Position
-from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 import typing
@@ -25,7 +24,7 @@ class CodeBlock:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["CodeBlock"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["CodeBlock"]:
         """
         Extract fenced codeblocks from markdown text.
         """
@@ -36,18 +35,16 @@ class CodeBlock:
 
         result: list[CodeBlock] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
-
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
             result.append(
                 CodeBlock(
                     code=match.group("code"),
                     delimiter=match.group("delimiter"),
                     language=match.group("language"),
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     string=match.group()
                 )
             )
@@ -74,7 +71,7 @@ class CodeInline:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["CodeInline"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["CodeInline"]:
         """
         Extract inline code from markdown text.
         """
@@ -85,15 +82,13 @@ class CodeInline:
 
         result: list[CodeInline] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
-
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
             result.append(
                 CodeInline(
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     string=match.group(),
                     code=match.group("code")
                 )

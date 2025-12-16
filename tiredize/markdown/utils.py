@@ -1,4 +1,3 @@
-from tiredize.core_types import Position
 import re
 
 
@@ -16,17 +15,6 @@ def get_position_from_match(
     string_first_line = string.split("\n")[0]
     offset = text.split("\n")[line_num - 1].index(string_first_line)
     return line_num, offset, len(string)
-
-
-def get_offset_from_position(position: Position, text: str) -> int:
-    lines = text.split("\n")
-    line = position.line
-    if line == 1:
-        return position.offset
-
-    column = position.offset
-    offset = len("\n".join(lines[0:line-1]) + "\n") + column
-    return offset
 
 
 def sanitize_text(pattern: str, text: str) -> str:

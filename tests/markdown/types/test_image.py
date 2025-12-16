@@ -69,7 +69,7 @@ def test_single_image_normal():
     actual_url = "https://tired.labs/eye.svg"
     actual_title = "Image Title"
     actual_string = f"![{actual_alttext}]({actual_url} \"{actual_title}\")"
-    position = Position(line=14, offset=19, length=len(actual_string))
+    position = Position(offset=825, length=len(actual_string))
     md_text = md_section.format(actual_string, "", "", "", "")
 
     exp_string = '![Alt Text](https://tired.labs/eye.svg "Image Title")'
@@ -93,11 +93,11 @@ def test_five_images_repeated():
 
     exp_string = '![Alt Text](https://tired.labs/eye.svg "Image Title")'
     exp_positions = [
-        Position(line=14, offset=19, length=len(actual_string)),
-        Position(line=24, offset=10, length=len(actual_string)),
-        Position(line=34, offset=29, length=len(actual_string)),
-        Position(line=44, offset=9, length=len(actual_string)),
-        Position(line=54, offset=15, length=len(actual_string))
+        Position(offset=825, length=len(actual_string)),
+        Position(offset=1287, length=len(actual_string)),
+        Position(offset=1884, length=len(actual_string)),
+        Position(offset=2454, length=len(actual_string)),
+        Position(offset=3023, length=len(actual_string))
     ]
 
     md_text = md_section.format(
@@ -130,13 +130,7 @@ def test_five_images_unique():
         "Local Image for the Fourth Test",
         "Fifth Image With Alt Text",
     ]
-    position_values = [
-        [14, 19],
-        [24, 10],
-        [34, 29],
-        [44, 9],
-        [54, 15]
-    ]
+    position_values = [825, 1302, 1906, 2476, 3048]
     title_values = [
         "Image 01 Title",
         "Title 2",
@@ -171,8 +165,7 @@ def test_five_images_unique():
         expected.append(
             InlineImage(
                 position=Position(
-                    line=position_values[i][0],
-                    offset=position_values[i][1],
+                    offset=position_values[i],
                     length=len(actual_string)
                 ),
                 string=expected_strings[i],

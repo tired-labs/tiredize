@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from tiredize.core_types import Position
-from tiredize.markdown.utils import get_position_from_match
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 import typing
@@ -33,7 +32,7 @@ class Table:
     """
 
     @staticmethod
-    def extract(text: str) -> typing.List["Table"]:
+    def extract(text: str, base_offset: int = 0) -> typing.List["Table"]:
         """
         Extract table from markdown text.
         """
@@ -44,7 +43,10 @@ class Table:
 
         result: list[Table] = []
         for match in matches:
-            line_num, offset, length = get_position_from_match(match, text)
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
 
             header = match.group("header")
             header = header.strip()
@@ -74,11 +76,7 @@ class Table:
                 Table(
                     divider=divider,
                     header=header,
-                    position=Position(
-                        length=length,
-                        line=line_num,
-                        offset=offset
-                    ),
+                    position=position,
                     rows=rows,
                     string=match.group()
                 )

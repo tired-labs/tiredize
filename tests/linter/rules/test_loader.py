@@ -24,7 +24,6 @@ def test_discover_rules_finds_simple_rule():
     expected_result = RuleResult(
         message="This is a simple test rule.",
         position=Position(
-            line=500,
             offset=50,
             length=15
         ),

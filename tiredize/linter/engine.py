@@ -23,6 +23,7 @@ def _select_rules(
     enabled_set: Dict[str, Dict[str, Dict[str, Any] | Rule]] = dict()
     for rule_id in rule_configs.keys():
         if rule_id not in rules:
+            continue
             raise ValueError(f"Unknown rule id: {rule_id}")
         if rule_id not in enabled_set:
             enabled_set[rule_id] = dict()

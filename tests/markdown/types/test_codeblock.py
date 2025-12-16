@@ -86,7 +86,7 @@ def test_single_codeblock_normal():
     exp_delimiter = "```"
     exp_language = actual_language
     exp_string = actual_string
-    exp_position = Position(line=25, offset=0, length=len(exp_string))
+    exp_position = Position(offset=1235, length=len(exp_string))
 
     md_text = md_section.format("", actual_string, "", "", "")
     regex_matches = CodeBlock.extract(md_text)
@@ -130,11 +130,11 @@ def test_five_codeblocks_repeated():
     )
 
     positions = [
-        Position(line=15, offset=0, length=len(exp_string)),
-        Position(line=33, offset=0, length=len(exp_string)),
-        Position(line=52, offset=0, length=len(exp_string)),
-        Position(line=71, offset=0, length=len(exp_string)),
-        Position(line=90, offset=0, length=len(exp_string))
+        Position(offset=825, length=len(exp_string)),
+        Position(offset=1351, length=len(exp_string)),
+        Position(offset=2001, length=len(exp_string)),
+        Position(offset=2622, length=len(exp_string)),
+        Position(offset=3235, length=len(exp_string))
     ]
 
     regex_matches = CodeBlock.extract(md_text)

@@ -72,7 +72,7 @@ def test_single_quoteblock_normal():
     text_01 = "Four score and seven years ago...."
     quote_01 = f"{'>' * depth_01} {text_01}"
     len_01 = len(quote_01)
-    position_01 = Position(line=15, offset=0, length=len_01)
+    position_01 = Position(offset=825, length=len_01)
     md_text = md_section.format(quote_01, "", "", "", "")
 
     matches = QuoteBlock.extract(md_text)
@@ -95,7 +95,7 @@ def test_single_quoteblock_multiline():
     ]
     quote_multiline = "> " + "\n> ".join(quote_lines).lstrip("\n")
     len_multiline = len(quote_multiline)
-    position_multiline = Position(line=15, offset=0, length=len_multiline)
+    position_multiline = Position(offset=825, length=len_multiline)
     md_text = md_section.format(quote_multiline, "", "", "", "")
 
     matches = QuoteBlock.extract(md_text)
@@ -114,11 +114,11 @@ def test_five_quoteblocks_repeated():
     quote_01 = f"{'>' * depth_01} {text_01}"
     len_01 = len(quote_01)
     positions = [
-        Position(line=15, offset=0, length=len_01),
-        Position(line=25, offset=0, length=len_01),
-        Position(line=36, offset=0, length=len_01),
-        Position(line=47, offset=0, length=len_01),
-        Position(line=58, offset=0, length=len_01)
+        Position(offset=825, length=len_01),
+        Position(offset=1271, length=len_01),
+        Position(offset=1841, length=len_01),
+        Position(offset=2382, length=len_01),
+        Position(offset=2915, length=len_01)
     ]
 
     md_text = md_section.format(

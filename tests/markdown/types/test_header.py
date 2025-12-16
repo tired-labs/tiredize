@@ -74,7 +74,7 @@ def test_single_header_level01():
 
     exp_slug = "#header-test-level-one"
     exp_string = "# Header Test: Level One"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -95,7 +95,7 @@ def test_single_header_level02():
 
     exp_slug = "#header-test-level-two"
     exp_string = "## Header Test: Level Two"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -116,7 +116,7 @@ def test_single_header_level03():
 
     exp_slug = "#header-test-level-three"
     exp_string = "### Header Test: Level Three"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -137,7 +137,7 @@ def test_single_header_level04():
 
     exp_slug = "#header-test-level-four"
     exp_string = "#### Header Test: Level Four"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -158,7 +158,7 @@ def test_single_header_level05():
 
     exp_slug = "#header-test-level-five"
     exp_string = "##### Header Test: Level Five"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -179,7 +179,7 @@ def test_single_header_level06():
 
     exp_slug = "#header-test-level-six"
     exp_string = "###### Header Test: Level Six"
-    exp_position = Position(line=1, offset=0, length=len(actual_string))
+    exp_position = Position(offset=0, length=len(actual_string))
 
     md_text = md_section.format(actual_string, "", "", "", "", "")
     matches = Header.extract(md_text)
@@ -208,12 +208,12 @@ def test_six_headers_repeated():
         "#header-test-duplicate-level-one-5",
     ]
     exp_positions = [
-        Position(line=1, offset=0, length=len(actual_string)),
-        Position(line=15, offset=0, length=len(actual_string)),
-        Position(line=25, offset=0, length=len(actual_string)),
-        Position(line=36, offset=0, length=len(actual_string)),
-        Position(line=47, offset=0, length=len(actual_string)),
-        Position(line=58, offset=0, length=len(actual_string))
+        Position(offset=0, length=len(actual_string)),
+        Position(offset=822, length=len(actual_string)),
+        Position(offset=1266, length=len(actual_string)),
+        Position(offset=1834, length=len(actual_string)),
+        Position(offset=2373, length=len(actual_string)),
+        Position(offset=2904, length=len(actual_string))
     ]
 
     md_text = md_section.format(

@@ -49,119 +49,119 @@ def test_document_load_from_path():
     }
     expected_yaml = yaml.safe_dump(expected_data)
     expected_string = f"---\n{expected_yaml}---\n"
-    expected_pos = Position(line=1, offset=0, length=len(expected_string))
+    expected_pos = Position(offset=0, length=len(expected_string))
     assert document.frontmatter.content == expected_data
     assert document.frontmatter.position == expected_pos
 
     assert len(document.sections) == 18
     expected_section: typing.List[Position] = [
-        Position(line=1, offset=0, length=636),
-        Position(line=20, offset=0, length=33),
-        Position(line=22, offset=0, length=209),
-        Position(line=28, offset=0, length=166),
-        Position(line=36, offset=0, length=187),
-        Position(line=49, offset=0, length=37),
-        Position(line=51, offset=0, length=152),
-        Position(line=56, offset=0, length=492),
-        Position(line=84, offset=0, length=23),
-        Position(line=86, offset=0, length=118),
-        Position(line=93, offset=0, length=320),
-        Position(line=101, offset=0, length=209),
-        Position(line=110, offset=0, length=39),
-        Position(line=112, offset=0, length=56),
-        Position(line=116, offset=0, length=57),
-        Position(line=120, offset=0, length=58),
-        Position(line=124, offset=0, length=64),
-        Position(line=130, offset=0, length=401)
+        Position(offset=199, length=636),
+        Position(offset=835, length=33),
+        Position(offset=868, length=209),
+        Position(offset=1077, length=166),
+        Position(offset=1243, length=187),
+        Position(offset=1430, length=37),
+        Position(offset=1467, length=152),
+        Position(offset=1619, length=492),
+        Position(offset=2111, length=23),
+        Position(offset=2134, length=118),
+        Position(offset=2252, length=320),
+        Position(offset=2572, length=209),
+        Position(offset=2781, length=39),
+        Position(offset=2820, length=56),
+        Position(offset=2876, length=57),
+        Position(offset=2933, length=58),
+        Position(offset=2991, length=64),
+        Position(offset=3055, length=401)
     ]
 
     expected_header: typing.List[Position] = [
-        Position(line=1, offset=0, length=37),
-        Position(line=1, offset=0, length=31),
-        Position(line=1, offset=0, length=18),
-        Position(line=1, offset=0, length=16),
-        Position(line=1, offset=0, length=10),
-        Position(line=1, offset=0, length=35),
-        Position(line=1, offset=0, length=29),
-        Position(line=1, offset=0, length=37),
-        Position(line=1, offset=0, length=21),
-        Position(line=1, offset=0, length=19),
-        Position(line=1, offset=0, length=47),
-        Position(line=1, offset=0, length=25),
-        Position(line=1, offset=0, length=37),
-        Position(line=1, offset=0, length=22),
-        Position(line=1, offset=0, length=23),
-        Position(line=1, offset=0, length=24),
-        Position(line=1, offset=0, length=25),
-        Position(line=1, offset=0, length=28)
+        Position(offset=199, length=37),
+        Position(offset=835, length=31),
+        Position(offset=868, length=18),
+        Position(offset=1077, length=16),
+        Position(offset=1243, length=10),
+        Position(offset=1430, length=35),
+        Position(offset=1467, length=29),
+        Position(offset=1619, length=37),
+        Position(offset=2111, length=21),
+        Position(offset=2134, length=19),
+        Position(offset=2252, length=47),
+        Position(offset=2572, length=25),
+        Position(offset=2781, length=37),
+        Position(offset=2820, length=22),
+        Position(offset=2876, length=23),
+        Position(offset=2933, length=24),
+        Position(offset=2991, length=25),
+        Position(offset=3055, length=28)
     ]
 
     expected_code_block: typing.List[typing.List[Position]]
     expected_code_block = [[] for _ in range(18)]
     expected_code_block[7] = [
-        Position(line=5, offset=0, length=142),
-        Position(line=15, offset=0, length=229)
+        Position(offset=1688, length=142),
+        Position(offset=1880, length=229)
     ]
 
     expected_code_inline: typing.List[typing.List[Position]]
     expected_code_inline = [[] for _ in range(18)]
-    expected_code_inline[0] = [Position(line=16, offset=53, length=13)]
-    expected_code_inline[2] = [Position(line=4, offset=28, length=22)]
-    expected_code_inline[3] = [Position(line=6, offset=28, length=6)]
+    expected_code_inline[0] = [Position(offset=814, length=13)]
+    expected_code_inline[2] = [Position(offset=980, length=22)]
+    expected_code_inline[3] = [Position(offset=1211, length=6)]
     expected_code_inline[10] = [
-        Position(line=5, offset=2, length=19),
-        Position(line=6, offset=2, length=4),
-        Position(line=7, offset=2, length=8)
+        Position(offset=2411, length=19),
+        Position(offset=2465, length=4),
+        Position(offset=2519, length=8)
     ]
-    expected_code_inline[17] = [Position(line=7, offset=72, length=20)]
+    expected_code_inline[17] = [Position(offset=3242, length=20)]
 
     expected_link_bare: typing.List[typing.List[Position]]
     expected_link_bare = [[] for _ in range(18)]
-    expected_link_bare[0] = [Position(line=12, offset=0, length=33)]
+    expected_link_bare[0] = [Position(offset=659, length=33)]
 
     expected_link_bracket: typing.List[typing.List[Position]]
     expected_link_bracket = [[] for _ in range(18)]
-    expected_link_bracket[0] = [Position(line=14, offset=32, length=32)]
+    expected_link_bracket[0] = [Position(offset=726, length=32)]
 
     expected_link_inline: typing.List[typing.List[Position]]
     expected_link_inline = [[] for _ in range(18)]
-    expected_link_inline[0] = [Position(line=7, offset=43, length=44)]
-    expected_link_inline[2] = [Position(line=3, offset=34, length=28)]
+    expected_link_inline[0] = [Position(offset=500, length=44)]
+    expected_link_inline[2] = [Position(offset=922, length=28)]
 
     expected_link_reference: typing.List[typing.List[Position]]
     expected_link_reference = [[] for _ in range(18)]
     expected_link_reference[0] = [
-        Position(line=5, offset=52, length=12),
-        Position(line=8, offset=55, length=35)
+        Position(offset=442, length=12),
+        Position(offset=562, length=35)
     ]
-    expected_link_reference[2] = [Position(line=5, offset=43, length=27)]
-    expected_link_reference[17] = [Position(line=5, offset=16, length=40)]
+    expected_link_reference[2] = [Position(offset=1047, length=27)]
+    expected_link_reference[17] = [Position(offset=3127, length=40)]
 
     expected_image_inline: typing.List[typing.List[Position]]
     expected_image_inline = [[] for _ in range(18)]
-    expected_image_inline[4] = [Position(line=5, offset=0, length=86)]
+    expected_image_inline[4] = [Position(offset=1270, length=86)]
 
     expected_quoteblock: typing.List[typing.List[Position]]
     expected_quoteblock = [[] for _ in range(18)]
-    expected_quoteblock[6] = [Position(line=3, offset=0, length=119)]
+    expected_quoteblock[6] = [Position(offset=1498, length=119)]
 
     expected_image_reference: typing.List[typing.List[Position]]
     expected_image_reference = [[] for _ in range(18)]
-    expected_image_reference[4] = [Position(line=10, offset=0, length=41)]
+    expected_image_reference[4] = [Position(offset=1382, length=41)]
 
     expected_table: typing.List[typing.List[Position]]
     expected_table = [[] for _ in range(18)]
-    expected_table[9] = [Position(line=3, offset=0, length=96)]
-    expected_table[10] = [Position(line=3, offset=0, length=270)]
-    expected_table[11] = [Position(line=3, offset=0, length=176)]
+    expected_table[9] = [Position(offset=2155, length=96)]
+    expected_table[10] = [Position(offset=2301, length=270)]
+    expected_table[11] = [Position(offset=2599, length=176)]
 
     expected_reference_definition: typing.List[typing.List[Position]]
     expected_reference_definition = [[] for _ in range(18)]
     expected_reference_definition[17] = [
-        Position(line=13, offset=0, length=17),
-        Position(line=14, offset=0, length=61),
-        Position(line=15, offset=0, length=31),
-        Position(line=16, offset=0, length=45)
+        Position(offset=3298, length=17),
+        Position(offset=3316, length=61),
+        Position(offset=3378, length=31),
+        Position(offset=3410, length=45)
     ]
 
     for i, section in enumerate(document.sections):

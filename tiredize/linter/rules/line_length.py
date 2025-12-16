@@ -19,34 +19,37 @@ def validate(
     maximum_length = get_config_int(config, "maximum_length")
     if maximum_length is None:
         return []
-    # ignore_code_blocks = get_config_bool(config, "ignore_code_blocks")
-    # ignore_frontmatter = get_config_bool(config, "ignore_frontmatter")
-    # ignore_sections_list = get_config_list(config, "ignore_sections")
 
     results: typing.List[RuleResult] = []
 
-    lines = document.string_markdown.splitlines()
-    for line_number, line in enumerate(lines, start=1):
-        line_length = len(line)
-        if line_length <= maximum_length:
-            continue
+    text = document.string
+    cursor = 0
 
-        overflow = line_length - maximum_length
-        position = Position(
-            line=line_number,
-            offset=maximum_length,
-            length=overflow,
-        )
+    for line in text.splitlines(keepends=True):
 
-        results.append(
-            RuleResult(
-                message=(
-                    f"Line {line_number} exceeds maximum length of "
-                    f"{maximum_length} characters ({line_length} found)."
-                ),
-                position=position,
-                rule_id=None
+        line_text = line
+        if line.endswith("\n"):
+            line_text = line[:-1]
+            if line_text.endswith("\r"):
+                line_text = line_text[:-1]
+
+        line_length = len(line_text)
+        if line_length > maximum_length:
+            overflow = line_length - maximum_length
+            position = Position(
+                offset=cursor + maximum_length,
+                length=overflow,
             )
-        )
+            results.append(
+                RuleResult(
+                    message=(
+                        f"Line exceeds maximum length of {maximum_length} "
+                        f"({line_length} found)."
+                    ),
+                    position=position,
+                    rule_id=None,
+                )
+            )
 
+        cursor += len(line)
     return results
