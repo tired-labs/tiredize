@@ -53,7 +53,9 @@ class Document:
             raise ValueError("Provide either 'path' or 'text', not both.")
         if path == Path() and len(text) == 0:
             raise ValueError("Provide either 'path' or 'text'.")
-        if path.is_file():
+        if path != Path():
+            if not path.is_file():
+                raise FileNotFoundError(f"Path does not exist: {path}")
             self.path = path
             with open(Path(path), "r", encoding="utf-8") as f:
                 self.string = f.read()

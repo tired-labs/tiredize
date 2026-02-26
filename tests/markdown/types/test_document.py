@@ -22,6 +22,15 @@ def test_document_both_path_and_string():
         assert str(e) == "Provide either 'path' or 'text', not both."
 
 
+def test_document_load_nonexistent_path():
+    document = Document()
+    try:
+        document.load(path=Path("the/cake/is/a/lie.md"))
+        assert False, "Expected FileNotFoundError was not raised"
+    except FileNotFoundError:
+        pass
+
+
 def test_document_load_from_string():
     md_text = r"""# Sample Document
 

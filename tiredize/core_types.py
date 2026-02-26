@@ -1,6 +1,11 @@
 from dataclasses import dataclass
 
 
+class RuleNotFoundError(Exception):
+    """Raised when a rule ID does not match any discovered rule."""
+    pass
+
+
 @dataclass(frozen=True)
 class Position:
     offset: int

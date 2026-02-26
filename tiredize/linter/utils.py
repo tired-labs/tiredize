@@ -73,7 +73,7 @@ def check_url_valid(
     document: Document,
     url: str,
     timeout: float | None = None,
-    headers: typing.Optional[typing.Dict[str, typing.Any]] | None = None,
+    headers: typing.Dict[str, typing.Any] | None = None,
     allow_redirects: bool | None = None,
     verify_ssl: bool | None = None
 ) -> tuple[bool, int | None, str | None]:

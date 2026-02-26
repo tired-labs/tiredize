@@ -1,7 +1,26 @@
 from tiredize.linter.engine import run_linter
+from tiredize.core_types import RuleNotFoundError
 from tiredize.core_types import RuleResult
 from tiredize.markdown.types.document import Document
 import typing
+
+
+def test_run_linter_unknown_rule_raises():
+    markdown = """# Nothing to see here, move along."""
+    doc = Document()
+    doc.load(text=markdown)
+
+    rule_configs: dict[str, typing.Any] = {
+        "the_rule_of_cool": {
+            "enabled": True
+        }
+    }
+
+    try:
+        run_linter(document=doc, rule_configs=rule_configs)
+        assert False, "Expected RuleNotFoundError was not raised"
+    except RuleNotFoundError:
+        pass
 
 
 def test_run_linter_no_violations():

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import replace
+from tiredize.core_types import RuleNotFoundError
 from tiredize.core_types import RuleResult
 from tiredize.linter.rules import Rule, discover_rules
 from tiredize.markdown.types.document import Document
@@ -23,8 +24,7 @@ def _select_rules(
     enabled_set: Dict[str, Dict[str, Dict[str, Any] | Rule]] = dict()
     for rule_id in rule_configs.keys():
         if rule_id not in rules:
-            continue
-            raise ValueError(f"Unknown rule id: {rule_id}")
+            raise RuleNotFoundError(f"Unknown rule id: {rule_id}")
         if rule_id not in enabled_set:
             enabled_set[rule_id] = dict()
         rule_config = rule_configs[rule_id]
