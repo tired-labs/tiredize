@@ -1,6 +1,9 @@
+# Standard library
+from __future__ import annotations
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.table import Table
-import typing
 
 md_section = """# Markdown Test Section - Lorem Ipsum
 
@@ -69,7 +72,7 @@ def test_no_tables():
 
 
 def test_single_table_normal():
-    actual_rows: typing.List[str] = [
+    actual_rows: list[str] = [
         "| Col 01  | Col 02  | Col 03  |",
         "|---------|---------|---------|",
         "| Data 01 | Data 02 | Data 03 |",
@@ -80,15 +83,15 @@ def test_single_table_normal():
         "| Data 51 | Data 52 | Data 53 |",
     ]
 
-    exp_divider: typing.List[str] = [
+    exp_divider: list[str] = [
         "---------", "---------", "---------"
     ]
 
-    exp_header: typing.List[str] = [
+    exp_header: list[str] = [
         "Col 01", "Col 02", "Col 03"
     ]
 
-    exp_rows: typing.List[typing.List[str]] = [
+    exp_rows: list[list[str]] = [
         ["Data 01", "Data 02", "Data 03"],
         ["Data 11", "Data 12", "Data 13"],
         ["Data 21", "Data 22", "Data 23"],
@@ -114,7 +117,7 @@ def test_single_table_normal():
 
 
 def test_five_tables_repeated():
-    actual_rows: typing.List[str] = [
+    actual_rows: list[str] = [
         "| Col 01  | Col 02  | Col 03  |",
         "|---------|---------|---------|",
         "| Data 01 | Data 02 | Data 03 |",
@@ -125,15 +128,15 @@ def test_five_tables_repeated():
         "| Data 51 | Data 52 | Data 53 |",
     ]
 
-    exp_divider: typing.List[str] = [
+    exp_divider: list[str] = [
         "---------", "---------", "---------"
     ]
 
-    exp_header: typing.List[str] = [
+    exp_header: list[str] = [
         "Col 01", "Col 02", "Col 03"
     ]
 
-    exp_rows: typing.List[typing.List[str]] = [
+    exp_rows: list[list[str]] = [
         ["Data 01", "Data 02", "Data 03"],
         ["Data 11", "Data 12", "Data 13"],
         ["Data 21", "Data 22", "Data 23"],
@@ -173,7 +176,7 @@ def test_five_tables_repeated():
 
 
 def test_vomit_table():
-    actual_rows: typing.List[str] = [
+    actual_rows: list[str] = [
         "| A | B",
         "-- | -",
         "| a | b |",
@@ -183,15 +186,15 @@ def test_vomit_table():
         "|| b        "
     ]
 
-    exp_divider: typing.List[str] = [
+    exp_divider: list[str] = [
         "--", "-"
     ]
 
-    exp_header: typing.List[str] = [
+    exp_header: list[str] = [
         "A", "B"
     ]
 
-    exp_rows: typing.List[typing.List[str]] = [
+    exp_rows: list[list[str]] = [
         ["a", "b"],
         ["a", "b"],
         ["a", "b"],

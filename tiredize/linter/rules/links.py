@@ -1,17 +1,20 @@
+# Standard library
 from __future__ import annotations
+from typing import Any
+
+# Local
 from tiredize.core_types import RuleResult
 from tiredize.linter.utils import check_url_valid
 from tiredize.linter.utils import get_config_bool
 from tiredize.linter.utils import get_config_dict
 from tiredize.linter.utils import get_config_int
 from tiredize.markdown.types.document import Document
-import typing
 
 
 def validate(
     document: Document,
-    config: typing.Dict[str, typing.Any],
-) -> typing.List[RuleResult]:
+    config: dict[str, Any],
+) -> list[RuleResult]:
     """
     Validate document meets link requirements.
 
@@ -29,7 +32,7 @@ def validate(
     cfg_headers = get_config_dict(config, "headers")
     # cfg_ignore_codes = get_config_list(config, "ignore_status_codes")
 
-    results: typing.List[RuleResult] = []
+    results: list[RuleResult] = []
     for section in document.sections:
         for link in section.links_inline:
             is_valid, status_code, error_message = check_url_valid(

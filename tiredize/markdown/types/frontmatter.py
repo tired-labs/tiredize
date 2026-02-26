@@ -1,14 +1,20 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+from typing import Any
+
+# Third-party
+import yaml
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
-import yaml
 
 
 @dataclass(frozen=False)
 class FrontMatter:
-    content: typing.Dict[typing.Any, typing.Any]
+    content: dict[Any, Any]
     position: Position
     string: str
 
@@ -26,7 +32,7 @@ class FrontMatter:
     def extract(
         text: str,
         base_offset: int = 0
-    ) -> typing.Optional["FrontMatter"]:
+    ) -> FrontMatter | None:
         """
         Extract frontmatter from text.
         """

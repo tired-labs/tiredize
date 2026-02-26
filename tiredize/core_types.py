@@ -1,3 +1,5 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
 
 
@@ -14,6 +16,6 @@ class Position:
 
 @dataclass(frozen=False)
 class RuleResult:
-    position: "Position"
+    position: Position
     rule_id: str | None
     message: str

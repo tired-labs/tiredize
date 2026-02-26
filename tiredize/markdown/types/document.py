@@ -1,12 +1,14 @@
+# Standard library
 from __future__ import annotations
+import bisect
 from dataclasses import dataclass
 from dataclasses import field
 from dataclasses import replace
 from pathlib import Path
+
+# Local
 from tiredize.markdown.types.frontmatter import FrontMatter
 from tiredize.markdown.types.section import Section
-import bisect
-import typing
 
 
 def _new_sections() -> list[Section]:
@@ -15,10 +17,10 @@ def _new_sections() -> list[Section]:
 
 @dataclass
 class Document:
-    frontmatter: typing.Optional[FrontMatter] = None
-    _line_starts: typing.List[int] = field(init=False, repr=False)
-    path: typing.Optional[Path] = None
-    sections: typing.List["Section"] = field(default_factory=_new_sections)
+    frontmatter: FrontMatter | None = None
+    _line_starts: list[int] = field(init=False, repr=False)
+    path: Path | None = None
+    sections: list[Section] = field(default_factory=_new_sections)
     string_markdown: str = ""
     string: str = ""
 

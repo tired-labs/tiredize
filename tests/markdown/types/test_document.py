@@ -1,9 +1,15 @@
+# Standard library
+from __future__ import annotations
+import datetime
 from pathlib import Path
+from typing import Any
+
+# Third-party
+import yaml
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.document import Document
-import datetime
-import typing
-import yaml
 
 
 def test_document_no_path_or_string():
@@ -49,7 +55,7 @@ def test_document_load_from_path():
     document.load(Path(test_path))
 
     assert document.frontmatter is not None
-    expected_data: typing.Dict[str, typing.Any] = {
+    expected_data: dict[str, Any] = {
         'id': 'MD-001',
         'description': "Valid Markdown document for parser testing.",
         'elements': ['frontmatter', 'lists', 'markdown', 'sections', 'tables'],
@@ -63,7 +69,7 @@ def test_document_load_from_path():
     assert document.frontmatter.position == expected_pos
 
     assert len(document.sections) == 18
-    expected_section: typing.List[Position] = [
+    expected_section: list[Position] = [
         Position(offset=199, length=636),
         Position(offset=835, length=33),
         Position(offset=868, length=209),
@@ -84,7 +90,7 @@ def test_document_load_from_path():
         Position(offset=3055, length=401)
     ]
 
-    expected_header: typing.List[Position] = [
+    expected_header: list[Position] = [
         Position(offset=199, length=37),
         Position(offset=835, length=31),
         Position(offset=868, length=18),
@@ -105,14 +111,14 @@ def test_document_load_from_path():
         Position(offset=3055, length=28)
     ]
 
-    expected_code_block: typing.List[typing.List[Position]]
+    expected_code_block: list[list[Position]]
     expected_code_block = [[] for _ in range(18)]
     expected_code_block[7] = [
         Position(offset=1688, length=142),
         Position(offset=1880, length=229)
     ]
 
-    expected_code_inline: typing.List[typing.List[Position]]
+    expected_code_inline: list[list[Position]]
     expected_code_inline = [[] for _ in range(18)]
     expected_code_inline[0] = [Position(offset=814, length=13)]
     expected_code_inline[2] = [Position(offset=980, length=22)]
@@ -124,20 +130,20 @@ def test_document_load_from_path():
     ]
     expected_code_inline[17] = [Position(offset=3242, length=20)]
 
-    expected_link_bare: typing.List[typing.List[Position]]
+    expected_link_bare: list[list[Position]]
     expected_link_bare = [[] for _ in range(18)]
     expected_link_bare[0] = [Position(offset=659, length=33)]
 
-    expected_link_bracket: typing.List[typing.List[Position]]
+    expected_link_bracket: list[list[Position]]
     expected_link_bracket = [[] for _ in range(18)]
     expected_link_bracket[0] = [Position(offset=726, length=32)]
 
-    expected_link_inline: typing.List[typing.List[Position]]
+    expected_link_inline: list[list[Position]]
     expected_link_inline = [[] for _ in range(18)]
     expected_link_inline[0] = [Position(offset=500, length=44)]
     expected_link_inline[2] = [Position(offset=922, length=28)]
 
-    expected_link_reference: typing.List[typing.List[Position]]
+    expected_link_reference: list[list[Position]]
     expected_link_reference = [[] for _ in range(18)]
     expected_link_reference[0] = [
         Position(offset=442, length=12),
@@ -146,25 +152,25 @@ def test_document_load_from_path():
     expected_link_reference[2] = [Position(offset=1047, length=27)]
     expected_link_reference[17] = [Position(offset=3127, length=40)]
 
-    expected_image_inline: typing.List[typing.List[Position]]
+    expected_image_inline: list[list[Position]]
     expected_image_inline = [[] for _ in range(18)]
     expected_image_inline[4] = [Position(offset=1270, length=86)]
 
-    expected_quoteblock: typing.List[typing.List[Position]]
+    expected_quoteblock: list[list[Position]]
     expected_quoteblock = [[] for _ in range(18)]
     expected_quoteblock[6] = [Position(offset=1498, length=119)]
 
-    expected_image_reference: typing.List[typing.List[Position]]
+    expected_image_reference: list[list[Position]]
     expected_image_reference = [[] for _ in range(18)]
     expected_image_reference[4] = [Position(offset=1382, length=41)]
 
-    expected_table: typing.List[typing.List[Position]]
+    expected_table: list[list[Position]]
     expected_table = [[] for _ in range(18)]
     expected_table[9] = [Position(offset=2155, length=96)]
     expected_table[10] = [Position(offset=2301, length=270)]
     expected_table[11] = [Position(offset=2599, length=176)]
 
-    expected_reference_definition: typing.List[typing.List[Position]]
+    expected_reference_definition: list[list[Position]]
     expected_reference_definition = [[] for _ in range(18)]
     expected_reference_definition[17] = [
         Position(offset=3298, length=17),

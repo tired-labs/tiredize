@@ -1,8 +1,12 @@
-from tiredize.linter.engine import run_linter
+# Standard library
+from __future__ import annotations
+from typing import Any
+
+# Local
 from tiredize.core_types import RuleNotFoundError
 from tiredize.core_types import RuleResult
+from tiredize.linter.engine import run_linter
 from tiredize.markdown.types.document import Document
-import typing
 
 
 def test_run_linter_unknown_rule_raises():
@@ -10,7 +14,7 @@ def test_run_linter_unknown_rule_raises():
     doc = Document()
     doc.load(text=markdown)
 
-    rule_configs: dict[str, typing.Any] = {
+    rule_configs: dict[str, Any] = {
         "the_rule_of_cool": {
             "enabled": True
         }
@@ -32,7 +36,7 @@ def test_run_linter_no_violations():
     doc = Document()
     doc.load(text=markdown)
 
-    rule_configs: dict[str, typing.Any] = {
+    rule_configs: dict[str, Any] = {
         "line_length": {
             "maximum_length": 80
         }
@@ -51,7 +55,7 @@ def test_run_linter_undefined_rule():
     doc = Document()
     doc.load(text=markdown)
 
-    rule_configs: dict[str, typing.Any] = {
+    rule_configs: dict[str, Any] = {
         "line_length": {
             "undefined_rule_for_testing": True
         }
@@ -72,7 +76,7 @@ This line is absolutely, positively too long!
     doc = Document()
     doc.load(text=markdown)
 
-    rule_configs: dict[str, typing.Any] = {
+    rule_configs: dict[str, Any] = {
         "line_length": {
             "maximum_length": 25
         }
@@ -103,7 +107,7 @@ Another overly long line is right here! What gives?!
     doc = Document()
     doc.load(text=markdown)
 
-    rule_configs: dict[str, typing.Any] = {
+    rule_configs: dict[str, Any] = {
         "line_length": {
             "maximum_length": 25
         }

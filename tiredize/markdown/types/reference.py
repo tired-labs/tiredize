@@ -1,9 +1,12 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
 
 
 @dataclass(frozen=False)
@@ -28,7 +31,7 @@ class ReferenceDefinition:
     def extract(
         text: str,
         base_offset: int = 0
-    ) -> typing.List["ReferenceDefinition"]:
+    ) -> list[ReferenceDefinition]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             ReferenceDefinition.RE_REFERENCE_DEFINITION,
@@ -65,7 +68,7 @@ class LinkReference:
     position: Position
     reference: str
     string: str
-    text: typing.Optional[str]
+    text: str | None
 
     RE_LINK_REFERENCE = r"""
         (?<!(!|\]))\[
@@ -81,7 +84,7 @@ class LinkReference:
     def extract(
         text: str,
         base_offset: int = 0
-    ) -> typing.List["LinkReference"]:
+    ) -> list[LinkReference]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             LinkReference.RE_LINK_REFERENCE,
@@ -117,7 +120,7 @@ class ImageReference:
     position: Position
     reference: str
     string: str
-    text: typing.Optional[str]
+    text: str | None
 
     RE_IMAGE_REFERENCE = r"""
         !
@@ -134,7 +137,7 @@ class ImageReference:
     def extract(
         text: str,
         base_offset: int = 0
-    ) -> typing.List["ImageReference"]:
+    ) -> list[ImageReference]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             ImageReference.RE_IMAGE_REFERENCE,
