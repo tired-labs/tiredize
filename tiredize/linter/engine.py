@@ -13,7 +13,7 @@ from tiredize.markdown.types.document import Document
 
 def _select_rules(
     rules: dict[str, Rule],
-    rule_configs: dict[str, dict[str, dict[str, Any]]] | None,
+    rule_configs: dict[str, dict[str, Any]] | None,
 ) -> dict[str, dict[str, Rule | dict[str, Any]]]:
     """
     Filter rules by id.
@@ -38,7 +38,7 @@ def _select_rules(
 
 def run_linter(
     document: Document,
-    rule_configs: dict[str, dict[str, dict[str, Any]]] | None = None
+    rule_configs: dict[str, dict[str, Any]] | None = None
 ) -> list[RuleResult]:
     """
     Run lint rules against a document and return normalized results.

@@ -138,6 +138,7 @@ def check_url_valid(
     except requests.exceptions.Timeout:
         return False, None, "timeout"
 
-    # Covers DNS errors, connection failures, SSL issues, invalid URLs, etc.
+    # Covers DNS errors, connection failures,
+    # SSL issues, invalid URLs, etc.
     except requests.exceptions.RequestException as exc:
         return False, None, str(exc)

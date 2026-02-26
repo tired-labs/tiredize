@@ -1,3 +1,6 @@
+# Standard library
+from __future__ import annotations
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.image import InlineImage

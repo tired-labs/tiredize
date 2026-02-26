@@ -15,7 +15,7 @@ def _new_sections() -> list[Section]:
     return []
 
 
-@dataclass
+@dataclass(frozen=False)
 class Document:
     frontmatter: FrontMatter | None = None
     _line_starts: list[int] = field(init=False, repr=False)
