@@ -9,6 +9,7 @@ import sys
 import yaml
 
 # Local
+from tiredize.core_types import RuleNotFoundError
 from tiredize.core_types import RuleResult
 from tiredize.linter.engine import run_linter
 from tiredize.markdown.types.document import Document
@@ -108,11 +109,18 @@ def main(argv: list[str] | None = None) -> int:
         all_results: list[RuleResult] = []
 
         if args.rules_path:
-            all_results.extend(
-                _run_rules(
-                    doc, Path(args.rules_path)
+            try:
+                all_results.extend(
+                    _run_rules(
+                        doc, Path(args.rules_path)
+                    )
                 )
-            )
+            except RuleNotFoundError as exc:
+                print(
+                    f"error: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
 
         if args.markdown_schema_path:
             all_results.extend(
