@@ -191,9 +191,7 @@ A separate workflow handles publishing to TestPyPI on version tags.
 Tracked next steps for the project:
 
 - [ ] Investigate replacing flake8 with Ruff as the project linter
-- [ ] Add missing `__init__.py` files in test subdirectories
-      (`tests/linter/`, `tests/markdown/`, `tests/markdown/types/`,
-      `tests/linter/rules/`)
+- [x] Add missing `__init__.py` files in test subdirectories
 - [ ] Write unit tests to validate the sanitize chain precedence order
       against GitHub-Flavored Markdown rendering rules
 - [ ] Migrate existing code to PEP 8 import grouping (blank lines between
