@@ -1,6 +1,11 @@
+# Standard library
+from __future__ import annotations
+
+# Local
 from tiredize.core_types import Position
 from tiredize.core_types import RuleResult
-from tiredize.linter.rules import discover_rules, Rule
+from tiredize.linter.rules import Rule
+from tiredize.linter.rules import discover_rules
 from tiredize.markdown.types.document import Document
 
 

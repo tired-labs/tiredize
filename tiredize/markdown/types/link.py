@@ -1,4 +1,8 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
@@ -7,7 +11,6 @@ from tiredize.markdown.types.quoteblock import QuoteBlock
 from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
 
 
 @dataclass(frozen=False)
@@ -21,7 +24,7 @@ class BareLink:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["BareLink"]:
+    def extract(text: str, base_offset: int = 0) -> list[BareLink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = QuoteBlock.sanitize(text_sanitized)
@@ -71,7 +74,7 @@ class BracketLink:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["BracketLink"]:
+    def extract(text: str, base_offset: int = 0) -> list[BracketLink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = QuoteBlock.sanitize(text_sanitized)
@@ -124,7 +127,7 @@ class InlineLink:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["InlineLink"]:
+    def extract(text: str, base_offset: int = 0) -> list[InlineLink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = QuoteBlock.sanitize(text_sanitized)

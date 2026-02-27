@@ -1,11 +1,17 @@
+# Standard library
+from __future__ import annotations
 from pathlib import Path
-from tiredize.markdown.types.document import Document
+from typing import Any
+
+# Third-party
 import requests
-import typing
+
+# Local
+from tiredize.markdown.types.document import Document
 
 
 def get_config_int(
-    config: typing.Dict[str, typing.Any],
+    config: dict[str, Any],
     key: str
 ) -> int | None:
     """
@@ -18,7 +24,7 @@ def get_config_int(
 
 
 def get_config_str(
-    config: typing.Dict[str, typing.Any],
+    config: dict[str, Any],
     key: str
 ) -> str | None:
     """
@@ -31,7 +37,7 @@ def get_config_str(
 
 
 def get_config_bool(
-    config: typing.Dict[str, typing.Any],
+    config: dict[str, Any],
     key: str
 ) -> bool | None:
     """
@@ -44,22 +50,22 @@ def get_config_bool(
 
 
 def get_config_dict(
-    config: typing.Dict[str, typing.Any],
+    config: dict[str, Any],
     key: str
-) -> typing.Dict[str, typing.Any] | None:
+) -> dict[str, Any] | None:
     """
     Retrieve a dictionary configuration value.
     """
-    raw_value: dict[str, typing.Any] | None = config.get(key)
+    raw_value: dict[str, Any] | None = config.get(key)
     if not isinstance(raw_value, dict):
         return None
     return raw_value
 
 
 def get_config_list(
-    config: typing.Dict[str, typing.Any],
+    config: dict[str, Any],
     key: str
-) -> typing.List[str] | None:
+) -> list[str] | None:
     """
     Retrieve a list configuration value.
     """
@@ -73,7 +79,7 @@ def check_url_valid(
     document: Document,
     url: str,
     timeout: float | None = None,
-    headers: typing.Optional[typing.Dict[str, typing.Any]] | None = None,
+    headers: dict[str, Any] | None = None,
     allow_redirects: bool | None = None,
     verify_ssl: bool | None = None
 ) -> tuple[bool, int | None, str | None]:
@@ -132,6 +138,7 @@ def check_url_valid(
     except requests.exceptions.Timeout:
         return False, None, "timeout"
 
-    # Covers DNS errors, connection failures, SSL issues, invalid URLs, etc.
+    # Covers DNS errors, connection failures,
+    # SSL issues, invalid URLs, etc.
     except requests.exceptions.RequestException as exc:
         return False, None, str(exc)

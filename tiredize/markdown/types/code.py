@@ -1,8 +1,11 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
 
 
 @dataclass(frozen=False)
@@ -24,7 +27,7 @@ class CodeBlock:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["CodeBlock"]:
+    def extract(text: str, base_offset: int = 0) -> list[CodeBlock]:
         """
         Extract fenced codeblocks from markdown text.
         """
@@ -71,7 +74,7 @@ class CodeInline:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["CodeInline"]:
+    def extract(text: str, base_offset: int = 0) -> list[CodeInline]:
         """
         Extract inline code from markdown text.
         """

@@ -1,8 +1,11 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
 
 
 @dataclass(frozen=False)
@@ -10,7 +13,7 @@ class InlineImage:
     text: str
     position: Position
     string: str
-    title: typing.Optional[str]
+    title: str | None
     url: str
 
     RE_INLINE_IMAGE = r"""
@@ -26,7 +29,7 @@ class InlineImage:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["InlineImage"]:
+    def extract(text: str, base_offset: int = 0) -> list[InlineImage]:
         """
         Extract markdown images from text.
         """

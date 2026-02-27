@@ -1,9 +1,12 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
 
 
 @dataclass(frozen=False)
@@ -21,7 +24,7 @@ class QuoteBlock:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["QuoteBlock"]:
+    def extract(text: str, base_offset: int = 0) -> list[QuoteBlock]:
         text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(QuoteBlock.RE_QUOTEBLOCK, text_sanitized)
 

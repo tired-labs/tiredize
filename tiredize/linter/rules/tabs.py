@@ -1,19 +1,22 @@
+# Standard library
 from __future__ import annotations
+from typing import Any
+
+# Local
 from tiredize.core_types import Position
 from tiredize.core_types import RuleResult
 from tiredize.linter.utils import get_config_bool
 from tiredize.markdown.types.document import Document
-import typing
 
 
 def validate(
     document: Document,
-    config: typing.Dict[str, typing.Any],
-) -> typing.List[RuleResult]:
+    config: dict[str, Any],
+) -> list[RuleResult]:
     """
     Validate document meets tab usage requirements.
     """
-    results: typing.List[RuleResult] = []
+    results: list[RuleResult] = []
     text = document.string
     cursor = 0
 

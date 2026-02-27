@@ -1,18 +1,19 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
-import typing
 
 
 @dataclass(frozen=False)
 class List:
     end: int
-    items: typing.List[str]
+    items: list[str]
     match: str
     start: int
-    sublists: typing.List["List"]
+    sublists: list[List]
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["List"]:
+    def extract(text: str, base_offset: int = 0) -> list[List]:
         if len(text) == 0:
             return []
-        result: typing.List[List] = []
+        result: list[List] = []
         return result

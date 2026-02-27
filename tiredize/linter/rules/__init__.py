@@ -1,14 +1,18 @@
+# Standard library
 from __future__ import annotations
 from dataclasses import dataclass
-from tiredize.core_types import RuleResult
-from tiredize.markdown.types.document import Document
-from typing import Any, Callable, Dict, List
+from typing import Any
+from typing import Callable
 import importlib
 import inspect
 import pkgutil
 
+# Local
+from tiredize.core_types import RuleResult
+from tiredize.markdown.types.document import Document
 
-RuleFunc = Callable[[Document, Dict[str, Any]], List[RuleResult]]
+
+RuleFunc = Callable[[Document, dict[str, Any]], list[RuleResult]]
 
 
 @dataclass(frozen=True)
@@ -21,7 +25,7 @@ class Rule:
     description: str | None = None
 
 
-def _iter_rule_modules(package_name: str) -> List[str]:
+def _iter_rule_modules(package_name: str) -> list[str]:
     """
     Return fully qualified module names for all rule modules.
 
@@ -32,7 +36,7 @@ def _iter_rule_modules(package_name: str) -> List[str]:
         # Not a package, nothing to iterate
         return []
 
-    module_names: List[str] = []
+    module_names: list[str] = []
 
     prefix = package.__name__ + "."
     for _, name, ispkg in pkgutil.iter_modules(package.__path__, prefix):
@@ -69,7 +73,7 @@ def _rule_id(module_name: str, func_name: str) -> str:
     return f"{short_module}"
 
 
-def discover_rules(package: str | None = None) -> Dict[str, Rule]:
+def discover_rules(package: str | None = None) -> dict[str, Rule]:
     """
     Import all rule modules and return a mapping of rule_id to definitions.
 
@@ -78,9 +82,9 @@ def discover_rules(package: str | None = None) -> Dict[str, Rule]:
     that contains rule modules.
     """
     package_name = package or __name__
-    rules: Dict[str, Rule] = {}
+    rules: dict[str, Rule] = {}
 
-    module_names: List[str] = _iter_rule_modules(package_name)
+    module_names: list[str] = _iter_rule_modules(package_name)
     for module_name in module_names:
         module = importlib.import_module(module_name)
 

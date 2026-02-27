@@ -1,4 +1,8 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
@@ -13,35 +17,34 @@ from tiredize.markdown.types.reference import ImageReference
 from tiredize.markdown.types.reference import LinkReference
 from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.types.table import Table
-import typing
 
 
 @dataclass(frozen=False)
 class Section:
-    code_block: typing.List["CodeBlock"]
-    code_inline: typing.List["CodeInline"]
-    header: "Header"
-    images_inline: typing.List["InlineImage"]
-    images_reference: typing.List["ImageReference"]
-    links_bare: typing.List["BareLink"]
-    links_bracket: typing.List["BracketLink"]
-    links_inline: typing.List["InlineLink"]
-    links_reference: typing.List["LinkReference"]
-    lists: typing.List["List"]
+    code_block: list[CodeBlock]
+    code_inline: list[CodeInline]
+    header: Header
+    images_inline: list[InlineImage]
+    images_reference: list[ImageReference]
+    links_bare: list[BareLink]
+    links_bracket: list[BracketLink]
+    links_inline: list[InlineLink]
+    links_reference: list[LinkReference]
+    lists: list[List]
     position: Position
-    quoteblocks: typing.List["QuoteBlock"]
-    reference_definitions: typing.List["ReferenceDefinition"]
+    quoteblocks: list[QuoteBlock]
+    reference_definitions: list[ReferenceDefinition]
     string: str
     string_safe: str
-    subsections: typing.List["Section"]
-    tables: typing.List["Table"]
+    subsections: list[Section]
+    tables: list[Table]
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["Section"]:
+    def extract(text: str, base_offset: int = 0) -> list[Section]:
         """
         Extract sections from markdown.
         """
-        result: typing.List[Section] = []
+        result: list[Section] = []
 
         headers = Header.extract(text=text, base_offset=base_offset)
         if len(headers) == 0:
@@ -80,7 +83,7 @@ class Section:
         string: str,
         position: Position,
         base_offset: int = 0
-    ) -> "Section":
+    ) -> Section:
 
         header = None
         headers = Header.extract(text=string, base_offset=base_offset)
@@ -155,7 +158,7 @@ class Section:
         return section
 
     @staticmethod
-    def _map_subsections(sections: typing.List["Section"]) -> None:
+    def _map_subsections(sections: list[Section]) -> None:
         i = 0
         next_i = i + 1
         while len(sections) > i:

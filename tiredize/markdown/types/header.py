@@ -1,10 +1,13 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+import re
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import re
-import typing
 
 
 @dataclass(frozen=False)
@@ -23,7 +26,7 @@ class Header:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["Header"]:
+    def extract(text: str, base_offset: int = 0) -> list[Header]:
         """
         Extract markdown titles from a section.
         As we are expecting a section's text to be the input, this must be the
@@ -69,7 +72,7 @@ class Header:
     @staticmethod
     def slugify_header(
         title: str,
-        existing: typing.Optional[list[str]] = None
+        existing: list[str] | None = None
     ) -> str:
         """
         Generate GitHub-Flavored Markdown (GFM) anchor slugs for all headings.
@@ -99,7 +102,7 @@ class Header:
         slug = slug.strip("-")
         slug = f"#{slug}"
 
-        seen: typing.Dict[str, int] = {}
+        seen: dict[str, int] = {}
         for e in (existing or []):
             if e not in seen:
                 seen[e] = 1

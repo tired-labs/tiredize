@@ -1,16 +1,19 @@
+# Standard library
+from __future__ import annotations
 from dataclasses import dataclass
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
-import typing
 
 
 @dataclass(frozen=False)
 class Table:
-    divider: typing.List[str]
-    header: typing.List[str]
+    divider: list[str]
+    header: list[str]
     position: Position
-    rows: typing.List[typing.List[str]]
+    rows: list[list[str]]
     string: str
 
     RE_TABLE = r"""
@@ -32,7 +35,7 @@ class Table:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> typing.List["Table"]:
+    def extract(text: str, base_offset: int = 0) -> list[Table]:
         """
         Extract table from markdown text.
         """
@@ -62,7 +65,7 @@ class Table:
             divider = divider.split("|")
             divider = [cell.strip() for cell in divider]
 
-            rows: typing.List[typing.List[str]] = []
+            rows: list[list[str]] = []
             row_matches = match.group("rows").splitlines()
             for row in row_matches:
                 row = row.strip()

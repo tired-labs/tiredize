@@ -1,12 +1,18 @@
+# Standard library
 from __future__ import annotations
 from pathlib import Path
+from typing import Any
+import argparse
+import sys
+
+# Third-party
+import yaml
+
+# Local
+from tiredize.core_types import RuleNotFoundError
 from tiredize.core_types import RuleResult
 from tiredize.linter.engine import run_linter
 from tiredize.markdown.types.document import Document
-from typing import Any, Dict, List
-import argparse
-import sys
-import yaml
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -40,26 +46,26 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _load_yaml(path: Path) -> Dict[str, Any]:
+def _load_yaml(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
-        data: Dict[str, Any] = yaml.safe_load(f) or {}
+        data: dict[str, Any] = yaml.safe_load(f) or {}
     return data
 
 
 def _run_rules(
     doc: Document,
     rules_config_path: Path,
-) -> List[RuleResult]:
+) -> list[RuleResult]:
     raw_config = _load_yaml(rules_config_path)
 
-    results: List[RuleResult] = run_linter(
+    results: list[RuleResult] = run_linter(
         document=doc,
         rule_configs=raw_config
     )
     return results
 
 
-def _run_markdown_schema(doc: Document, schema_path: Path) -> List[RuleResult]:
+def _run_markdown_schema(doc: Document, schema_path: Path) -> list[RuleResult]:
     # Placeholder for now. Eventually this will:
     #   - load the markdown schema
     #   - compare Document.sections to provided schema
@@ -70,7 +76,7 @@ def _run_markdown_schema(doc: Document, schema_path: Path) -> List[RuleResult]:
 
 def _run_frontmatter_schema(
         doc: Document,
-        schema_path: Path) -> List[RuleResult]:
+        schema_path: Path) -> list[RuleResult]:
     # Placeholder for now. Eventually this will:
     #   - load the frontmatter schema
     #   - compare Document.frontmatter to provided schema
@@ -100,14 +106,21 @@ def main(argv: list[str] | None = None) -> int:
         doc = Document()
         doc.load(path=Path(path_str))
 
-        all_results: List[RuleResult] = []
+        all_results: list[RuleResult] = []
 
         if args.rules_path:
-            all_results.extend(
-                _run_rules(
-                    doc, Path(args.rules_path)
+            try:
+                all_results.extend(
+                    _run_rules(
+                        doc, Path(args.rules_path)
+                    )
                 )
-            )
+            except RuleNotFoundError as exc:
+                print(
+                    f"error: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
 
         if args.markdown_schema_path:
             all_results.extend(

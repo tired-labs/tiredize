@@ -1,8 +1,14 @@
+# Standard library
+from __future__ import annotations
+import datetime
+from typing import Any
+
+# Third-party
+import yaml
+
+# Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.frontmatter import FrontMatter
-import datetime
-import typing
-import yaml
 
 md_section = """{}# Markdown Test Section - Lorem Ipsum
 
@@ -67,7 +73,7 @@ def test_no_frontmatter():
 
 
 def test_single_frontmatter_normal():
-    actual_data: typing.Dict[str, typing.Any] = {
+    actual_data: dict[str, Any] = {
         'title': 'Markdown Frontmatter Example',
         'id': 4444,
         'publication_date': datetime.datetime.now(),
@@ -90,7 +96,7 @@ def test_single_frontmatter_normal():
 
 
 def test_six_frontmatters_repeated():
-    actual_data: typing.Dict[str, typing.Any] = {
+    actual_data: dict[str, Any] = {
         'title': 'Markdown Frontmatter Example',
         'id': 4444,
         'publication_date': datetime.datetime.now(),

@@ -1,17 +1,20 @@
+# Standard library
 from __future__ import annotations
 from dataclasses import replace
-from tiredize.core_types import RuleResult
-from tiredize.linter.rules import Rule, discover_rules
-from tiredize.markdown.types.document import Document
 from typing import Any
-from typing import Dict
-from typing import List
+
+# Local
+from tiredize.core_types import RuleNotFoundError
+from tiredize.core_types import RuleResult
+from tiredize.linter.rules import Rule
+from tiredize.linter.rules import discover_rules
+from tiredize.markdown.types.document import Document
 
 
 def _select_rules(
-    rules: Dict[str, Rule],
-    rule_configs: Dict[str, Dict[str, Dict[str, Any]]] | None,
-) -> Dict[str, Dict[str, Rule | Dict[str, Any]]]:
+    rules: dict[str, Rule],
+    rule_configs: dict[str, dict[str, Any]] | None,
+) -> dict[str, dict[str, Rule | dict[str, Any]]]:
     """
     Filter rules by id.
 
@@ -20,11 +23,10 @@ def _select_rules(
     if rule_configs is None:
         return dict()
 
-    enabled_set: Dict[str, Dict[str, Dict[str, Any] | Rule]] = dict()
+    enabled_set: dict[str, dict[str, dict[str, Any] | Rule]] = dict()
     for rule_id in rule_configs.keys():
         if rule_id not in rules:
-            continue
-            raise ValueError(f"Unknown rule id: {rule_id}")
+            raise RuleNotFoundError(f"Unknown rule id: {rule_id}")
         if rule_id not in enabled_set:
             enabled_set[rule_id] = dict()
         rule_config = rule_configs[rule_id]
@@ -36,8 +38,8 @@ def _select_rules(
 
 def run_linter(
     document: Document,
-    rule_configs: Dict[str, Dict[str, Dict[str, Any]]] | None = None
-) -> List[RuleResult]:
+    rule_configs: dict[str, dict[str, Any]] | None = None
+) -> list[RuleResult]:
     """
     Run lint rules against a document and return normalized results.
 
@@ -49,7 +51,7 @@ def run_linter(
     all_rules = discover_rules()
     active_rules = _select_rules(all_rules, rule_configs)
 
-    all_results: List[RuleResult] = []
+    all_results: list[RuleResult] = []
     for rule_id in active_rules.keys():
         rule_config = active_rules[rule_id]["config"]
         if not isinstance(rule_config, dict):
