@@ -167,7 +167,12 @@ class Section:
                     break
                 if sections[i].header.level < sections[next_i].header.level:
                     sections[i].subsections.append(sections[next_i])
+                    child_level = sections[next_i].header.level
                     next_i += 1
+                    while (next_i < len(sections)
+                           and sections[next_i].header.level
+                           > child_level):
+                        next_i += 1
                 else:
                     break
             i += 1

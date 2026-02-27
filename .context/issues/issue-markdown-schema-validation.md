@@ -220,11 +220,30 @@ None at this time.
   same module. Handles level inference (parent + 1), repeat
   normalization, and schema self-validation (name/pattern conflicts,
   invalid child levels). 100% test coverage.
+- **Parser bugfix:** Fixed `Section._map_subsections` to build a clean
+  tree — grandchildren no longer leak into grandparent subsections.
+  Added 6 tests in `tests/markdown/types/test_section.py`.
+- **Document validation — ordered mode:** `validate(document, schema)`
+  in `tiredize/validators/markdown_schema.py`. Recursive two-pointer
+  walk that matches document sections against schema sections at each
+  nesting level. Handles missing, unexpected, out-of-order, wrong
+  level, and repeat bound violations.
+- **Document validation — unordered mode:** `_validate_unordered` in
+  the same module. Iterates schema entries, claims matching doc
+  sections via index set, checks required/unexpected/repeat bounds.
+  Recurses into children for both repeat and non-repeat entries.
+- **Ambiguity detection:** `AmbiguityError` raised in both ordered and
+  unordered modes when a document section matches multiple sibling
+  schema entries (e.g., a catch-all pattern alongside a specific
+  name). Fails fast before any validation logic runs.
+- **Full requirements coverage audit:** 34 tests in
+  `tests/validators/test_markdown_schema.py` covering all issue
+  requirements across both modes, including matching rule edge cases
+  (case sensitivity, full-match regex). 99% coverage (1 unreachable
+  defensive line).
 
 ### Next
 
-- Document validation — ordered mode (`enforce_order: true`)
-- Document validation — unordered mode (`enforce_order: false`)
 - CLI integration (wire into `_run_markdown_schema()` stub)
 
 ## Out of Scope

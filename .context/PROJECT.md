@@ -197,3 +197,6 @@ Tracked next steps for the project:
 - [ ] Design and implement the markdown schema configuration format
 - [ ] Design and implement the frontmatter schema configuration format
 - [ ] Finalize the configuration file strategy (single file vs separate)
+- [ ] Fix Document._parse slug update to propagate
+      dataclasses.replace() through subsection references. Currently
+      subsections point to stale pre-replace objects.
