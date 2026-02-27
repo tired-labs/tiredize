@@ -117,6 +117,11 @@ sections:
 
 ### Ordered Mode (`enforce_order: true`)
 
+Ordering is enforced among sibling sections under the same parent,
+not across nesting levels. When the validator matches a parent
+section, it recurses into that parent's children and validates them
+independently.
+
 Walk the document sections and schema sections in parallel using two
 pointers:
 
@@ -203,6 +208,24 @@ file:line:col: [schema.markdown.<error_type>] <message>
 ## Open Questions
 
 None at this time.
+
+## Progress
+
+### Completed
+
+- **Data model:** `SchemaConfig` and `SchemaSection` frozen dataclasses
+  in `tiredize/markdown/types/schema.py`. Nested `sections` field
+  mirrors the document's recursive `subsections` structure.
+- **Schema loader:** `load_schema(yaml_string) -> SchemaConfig` in the
+  same module. Handles level inference (parent + 1), repeat
+  normalization, and schema self-validation (name/pattern conflicts,
+  invalid child levels). 100% test coverage.
+
+### Next
+
+- Document validation — ordered mode (`enforce_order: true`)
+- Document validation — unordered mode (`enforce_order: false`)
+- CLI integration (wire into `_run_markdown_schema()` stub)
 
 ## Out of Scope
 
