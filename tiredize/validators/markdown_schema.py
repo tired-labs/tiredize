@@ -96,12 +96,11 @@ def _validate_ordered(
                 position=doc_section.header.position,
                 rule_id="schema.markdown.out_of_order",
             ))
-            if skipped_schema.sections:
-                _validate_ordered(
-                    doc_section.subsections,
-                    skipped_schema.sections,
-                    document, results, allow_extra,
-                )
+            _validate_ordered(
+                doc_section.subsections,
+                skipped_schema.sections,
+                document, results, allow_extra,
+            )
             doc_ptr += 1
             continue
 
@@ -152,12 +151,11 @@ def _validate_ordered(
                 )
             else:
                 # Non-repeating match
-                if schema_entry.sections:
-                    _validate_ordered(
-                        doc_section.subsections,
-                        schema_entry.sections,
-                        document, results, allow_extra,
-                    )
+                _validate_ordered(
+                    doc_section.subsections,
+                    schema_entry.sections,
+                    document, results, allow_extra,
+                )
                 doc_ptr += 1
 
             schema_ptr += 1
@@ -224,12 +222,11 @@ def _consume_repeating(
                doc_sections[ptr], schema_entry
            )):
         doc_section = doc_sections[ptr]
-        if schema_entry.sections:
-            _validate_ordered(
-                doc_section.subsections,
-                schema_entry.sections,
-                document, results, allow_extra,
-            )
+        _validate_ordered(
+            doc_section.subsections,
+            schema_entry.sections,
+            document, results, allow_extra,
+        )
         count += 1
         ptr += 1
     return count
@@ -374,12 +371,11 @@ def _validate_unordered(
                             "schema.markdown.wrong_level"
                         ),
                     ))
-                if schema_entry.sections:
-                    _validate_unordered(
-                        ds.subsections,
-                        schema_entry.sections,
-                        document, results, allow_extra,
-                    )
+                _validate_unordered(
+                    ds.subsections,
+                    schema_entry.sections,
+                    document, results, allow_extra,
+                )
             _check_repeat_bounds(
                 schema_entry, count, results
             )
@@ -424,12 +420,11 @@ def _validate_unordered(
                             "schema.markdown.wrong_level"
                         ),
                     ))
-                if schema_entry.sections:
-                    _validate_unordered(
-                        first_ds.subsections,
-                        schema_entry.sections,
-                        document, results, allow_extra,
-                    )
+                _validate_unordered(
+                    first_ds.subsections,
+                    schema_entry.sections,
+                    document, results, allow_extra,
+                )
                 for i, ds in matches[1:]:
                     if not allow_extra:
                         results.append(RuleResult(

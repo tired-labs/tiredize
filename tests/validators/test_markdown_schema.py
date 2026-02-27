@@ -1034,3 +1034,156 @@ def test_unordered_ambiguity_raises():
     )
     with pytest.raises(AmbiguityError, match="Procedures"):
         validate(doc, schema)
+
+
+# --- Undefined children ---
+
+
+def test_ordered_undefined_children_rejected():
+    doc = Document()
+    doc.load(text=(
+        "# Spellbook\n\n"
+        "## Fireball\n\n"
+        "### Casting Instructions\n\n"
+        "Wave your hands dramatically.\n"
+    ))
+    schema = SchemaConfig(
+        sections=[
+            SchemaSection(
+                name="Spellbook",
+                sections=[
+                    SchemaSection(level=2, name="Fireball"),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    rule_ids = [r.rule_id for r in results]
+    assert "schema.markdown.unexpected_section" in rule_ids
+
+
+def test_ordered_undefined_children_allowed_when_extras_enabled():
+    doc = Document()
+    doc.load(text=(
+        "# Spellbook\n\n"
+        "## Fireball\n\n"
+        "### Casting Instructions\n\n"
+        "Wave your hands dramatically.\n"
+    ))
+    schema = SchemaConfig(
+        allow_extra_sections=True,
+        sections=[
+            SchemaSection(
+                name="Spellbook",
+                sections=[
+                    SchemaSection(level=2, name="Fireball"),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    assert len(results) == 0
+
+
+def test_unordered_undefined_children_rejected():
+    doc = Document()
+    doc.load(text=(
+        "# Spellbook\n\n"
+        "## Fireball\n\n"
+        "### Casting Instructions\n\n"
+        "Wave your hands dramatically.\n"
+    ))
+    schema = SchemaConfig(
+        enforce_order=False,
+        sections=[
+            SchemaSection(
+                name="Spellbook",
+                sections=[
+                    SchemaSection(level=2, name="Fireball"),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    rule_ids = [r.rule_id for r in results]
+    assert "schema.markdown.unexpected_section" in rule_ids
+
+
+def test_unordered_undefined_children_allowed_when_extras_enabled():
+    doc = Document()
+    doc.load(text=(
+        "# Spellbook\n\n"
+        "## Fireball\n\n"
+        "### Casting Instructions\n\n"
+        "Wave your hands dramatically.\n"
+    ))
+    schema = SchemaConfig(
+        allow_extra_sections=True,
+        enforce_order=False,
+        sections=[
+            SchemaSection(
+                name="Spellbook",
+                sections=[
+                    SchemaSection(level=2, name="Fireball"),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    assert len(results) == 0
+
+
+def test_repeating_undefined_children_rejected():
+    doc = Document()
+    doc.load(text=(
+        "# Spellbook\n\n"
+        "## Spell A: Fireball\n\n"
+        "### Secret Ingredient\n\n"
+        "Dragon breath.\n\n"
+        "## Spell B: Ice Storm\n\n"
+        "### Secret Ingredient\n\n"
+        "Penguin tears.\n"
+    ))
+    schema = SchemaConfig(
+        sections=[
+            SchemaSection(
+                name="Spellbook",
+                sections=[
+                    SchemaSection(
+                        level=2,
+                        pattern="Spell [A-Z]: .+",
+                        repeat_min=1,
+                    ),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    rule_ids = [r.rule_id for r in results]
+    assert "schema.markdown.unexpected_section" in rule_ids
+
+
+def test_out_of_order_undefined_children_rejected():
+    doc = Document()
+    doc.load(text=(
+        "# Spellbook\n\n"
+        "## Ingredients\n\n"
+        "## Fireball\n\n"
+        "### Casting Instructions\n\n"
+        "Wave your hands dramatically.\n"
+    ))
+    schema = SchemaConfig(
+        sections=[
+            SchemaSection(
+                name="Spellbook",
+                sections=[
+                    SchemaSection(level=2, name="Fireball"),
+                    SchemaSection(level=2, name="Ingredients"),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    rule_ids = [r.rule_id for r in results]
+    assert "schema.markdown.out_of_order" in rule_ids
+    assert "schema.markdown.unexpected_section" in rule_ids
