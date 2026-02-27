@@ -1,0 +1,224 @@
+# Implement Markdown Schema Validation
+
+## Summary
+
+Add the ability to validate a markdown document's structure against a
+user-defined schema. The schema defines which sections must exist, their
+heading levels, their ordering, and whether they are required or optional.
+
+This feature replaces the structural validation half of the existing
+Go-based `trrlint` in the TIRED Labs techniques repository, while being
+general-purpose enough for any markdown document that follows a
+predictable structure.
+
+## Motivation
+
+- Contributors to TIRED Labs TRRs frequently forget sections, misname
+  them, or add sections that don't belong. Schema validation catches
+  these issues before peer review.
+- The tool is not TRR-specific. Any team producing structured markdown
+  (red team deliverables, internal documentation, runbooks) benefits
+  from enforcing consistent structure.
+- Linting for structure issues early in the workflow eliminates 90% of
+  formatting feedback during review.
+
+## Design Principles
+
+- **Schema validates structure, linter rules validate content.** The
+  schema engine checks that sections exist, are in the right order, at
+  the right heading level. Anything about what's *inside* a section
+  (table contents, link formats, required fields) belongs in a linter
+  rule.
+- **Start with section-level validation (Option A), design for child
+  element validation (Option B) later.** The initial implementation
+  validates sections only. The architecture should not preclude adding
+  "this section must contain a table" or "this section must contain a
+  bulleted list" in a future iteration.
+- **Content validation (Option C) is out of scope.** Checking specific
+  values inside tables or correlating content across sections is linter
+  rule territory.
+
+## Schema File Format
+
+The schema is a YAML file passed to the CLI via `--markdown-schema`.
+
+### Top-Level Properties
+
+| Property               | Type | Default | Description                    |
+|------------------------|------|---------|--------------------------------|
+| `enforce_order`        | bool | `true`  | Validate section ordering      |
+| `allow_extra_sections` | bool | `false` | Allow sections not in schema   |
+| `sections`             | list | —       | Ordered list of section defs   |
+
+### Section Definition Properties
+
+| Property   | Type        | Default | Description                     |
+|------------|-------------|---------|---------------------------------|
+| `name`     | string      | —       | Exact section header match      |
+| `pattern`  | string      | —       | Regex pattern for header match  |
+| `level`    | int         | —       | Required heading level (1-6)    |
+| `required` | bool        | `true`  | Section must be present         |
+| `repeat`   | bool or map | —       | Section may appear repeatedly   |
+
+**Constraints:**
+
+- Exactly one of `name` or `pattern` must be present. Both or neither
+  is an error.
+- `level` is always required.
+- When `required` is omitted, it defaults to `true`.
+- `repeat: true` means one or more occurrences with no upper bound.
+- `repeat: {min: N, max: N}` sets explicit bounds. `min` defaults to 1
+  if omitted. `max` defaults to no limit if omitted.
+- Sections not declared in the schema are considered unexpected. When
+  `allow_extra_sections: false` (default), unexpected sections produce
+  an error.
+
+### Example: TRR Schema
+
+```yaml
+enforce_order: true
+allow_extra_sections: false
+sections:
+  - pattern: ".+"
+    level: 1
+    required: true
+
+  - name: "Metadata"
+    level: 2
+    required: true
+
+  - name: "Scope Statement"
+    level: 3
+    required: false
+
+  - name: "Technique Overview"
+    level: 2
+    required: true
+
+  - name: "Technical Background"
+    level: 2
+    required: true
+
+  - name: "Procedures"
+    level: 2
+    required: true
+
+  - pattern: "Procedure [A-Z]: .+"
+    level: 3
+    repeat: true
+
+  - name: "Detection Data Model"
+    level: 4
+    required: true
+
+  - name: "Available Emulation Tests"
+    level: 2
+    required: true
+
+  - name: "References"
+    level: 2
+    required: true
+```
+
+## Validation Algorithm
+
+### Ordered Mode (`enforce_order: true`)
+
+Walk the document sections and schema sections in parallel using two
+pointers:
+
+1. If the current document section matches the current schema entry,
+   advance both pointers.
+2. If the current document section matches a *later* schema entry and
+   all skipped schema entries are `required: false`, skip the optional
+   entries and advance to the match.
+3. If the current document section matches a later schema entry but a
+   skipped entry is `required: true`, emit an error for the missing
+   required section.
+4. If the current document section matches nothing in the schema and
+   `allow_extra_sections: false`, emit an error for the unexpected
+   section.
+5. At end of document, emit errors for any remaining `required: true`
+   schema entries not yet matched.
+6. At end of document, remaining `required: false` entries are silently
+   accepted.
+
+For `repeat` sections: when a match occurs, keep the schema pointer on
+the same entry until the next document section no longer matches. Then
+check that the match count satisfies `min`/`max` bounds before
+advancing.
+
+**Nested repeat groups:** Children of a repeating section inherit the
+repetition. Each instance of the parent must independently satisfy all
+child section requirements. For example, if Procedure (H3) repeats 3
+times and has a required Detection Data Model (H4) child, the
+validator expects 3 DDMs — one per Procedure instance. A child is
+defined as any schema entry at a deeper level that follows the
+repeating entry before the next entry at the same or shallower level.
+
+### Unordered Mode (`enforce_order: false`)
+
+1. Check that every `required: true` schema entry has at least one
+   matching section in the document.
+2. If `allow_extra_sections: false`, check that every document section
+   matches at least one schema entry.
+3. For `repeat` entries, validate match count against `min`/`max`.
+
+### Matching Rules
+
+- `name`: case-sensitive exact match against the section header title.
+- `pattern`: full-match regex against the section header title.
+- `level`: heading level must match exactly.
+
+## Error Output
+
+All errors follow the existing linter output format:
+
+```
+file:line:col: [schema.markdown.<error_type>] <message>
+```
+
+### Error Types
+
+| Rule ID                                | Trigger                        |
+|----------------------------------------|--------------------------------|
+| `schema.markdown.missing_section`      | Required section not found     |
+| `schema.markdown.unexpected_section`   | Section not defined in schema  |
+| `schema.markdown.wrong_level`          | Heading level mismatch         |
+| `schema.markdown.out_of_order`         | Section in wrong position      |
+| `schema.markdown.repeat_below_minimum` | Fewer occurrences than min     |
+| `schema.markdown.repeat_above_maximum` | More occurrences than max      |
+
+## Integration Points
+
+- **CLI:** The `--markdown-schema` flag already exists with a
+  placeholder in `_run_markdown_schema()`. The implementation replaces
+  the placeholder.
+- **Output:** Results are returned as `list[RuleResult]` and rendered
+  by the same `file:line:col` formatting as linter rules.
+- **Document model:** The parsed `Document` already provides
+  `document.sections` with `section.header.title`,
+  `section.header.level`, and `section.header.position` — all needed
+  for validation.
+
+## Open Questions
+
+- **Schema validation:** Should the tool validate the schema file
+  itself (e.g., reject a schema with both `name` and `pattern`)
+  before running document validation? Likely yes, with clear error
+  messages.
+
+## Out of Scope
+
+- Content validation within sections (table fields, link formats).
+  These belong in linter rules.
+- Frontmatter schema validation (separate feature, separate flag).
+- Cross-section content correlation (e.g., Procedures table rows
+  matching subsection names). This is linter rule territory.
+
+## References
+
+- TRR format specification: `/home/user/techniques/docs/TECHNIQUE-RESEARCH-REPORT.md`
+- TRR template: `/home/user/techniques/docs/examples/trr0000/win/README.md`
+- TRR style guide: `/home/user/techniques/docs/STYLE-GUIDE.md`
+- Existing Go linter: `/home/user/techniques/tools/trrlint/main.go`
