@@ -35,4 +35,5 @@ jobs:
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2
-        fail-on-error: false
+        with:
+          fail-on-error: false
