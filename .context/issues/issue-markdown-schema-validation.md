@@ -52,23 +52,30 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
 
 ### Section Definition Properties
 
-| Property   | Type        | Default | Description                     |
-|------------|-------------|---------|---------------------------------|
-| `name`     | string      | —       | Exact section header match      |
-| `pattern`  | string      | —       | Regex pattern for header match  |
-| `level`    | int         | —       | Required heading level (1-6)    |
-| `required` | bool        | `true`  | Section must be present         |
-| `repeat`   | bool or map | —       | Section may appear repeatedly   |
+| Property   | Type        | Default        | Description                     |
+|------------|-------------|----------------|---------------------------------|
+| `name`     | string      | —              | Exact section header match      |
+| `pattern`  | string      | —              | Regex pattern for header match  |
+| `level`    | int         | parent + 1     | Required heading level (1-6)    |
+| `required` | bool        | `true`         | Section must be present         |
+| `repeat`   | bool or map | —              | Section may appear repeatedly   |
+| `sections` | list        | —              | Nested child section defs       |
 
 **Constraints:**
 
 - Exactly one of `name` or `pattern` must be present. Both or neither
   is an error.
-- `level` is always required.
+- `level` is optional. When omitted, it is inferred as the parent
+  section's level + 1. Top-level sections with no parent default to 1.
+  When present, the loader validates it is consistent with nesting
+  depth.
 - When `required` is omitted, it defaults to `true`.
 - `repeat: true` means one or more occurrences with no upper bound.
 - `repeat: {min: N, max: N}` sets explicit bounds. `min` defaults to 1
   if omitted. `max` defaults to no limit if omitted.
+- `sections` defines child sections nested under this section. Children
+  are validated within the scope of their parent. Nesting in the schema
+  mirrors nesting in the document.
 - Sections not declared in the schema are considered unexpected. When
   `allow_extra_sections: false` (default), unexpected sections produce
   an error.
@@ -80,44 +87,30 @@ enforce_order: true
 allow_extra_sections: false
 sections:
   - pattern: ".+"
-    level: 1
-    required: true
-
-  - name: "Metadata"
-    level: 2
-    required: true
-
-  - name: "Scope Statement"
-    level: 3
-    required: false
-
-  - name: "Technique Overview"
-    level: 2
-    required: true
-
-  - name: "Technical Background"
-    level: 2
-    required: true
-
-  - name: "Procedures"
-    level: 2
-    required: true
-
-  - pattern: "Procedure [A-Z]: .+"
-    level: 3
-    repeat: true
-
-  - name: "Detection Data Model"
-    level: 4
-    required: true
-
-  - name: "Available Emulation Tests"
-    level: 2
-    required: true
-
-  - name: "References"
-    level: 2
-    required: true
+    sections:
+      - name: "Metadata"
+        level: 2
+        sections:
+          - name: "Scope Statement"
+            level: 3
+            required: false
+      - name: "Technique Overview"
+        level: 2
+      - name: "Technical Background"
+        level: 2
+      - name: "Procedures"
+        level: 2
+        sections:
+          - pattern: "Procedure [A-Z]: .+"
+            level: 3
+            repeat: true
+            sections:
+              - name: "Detection Data Model"
+                level: 4
+      - name: "Available Emulation Tests"
+        level: 2
+      - name: "References"
+        level: 2
 ```
 
 ## Validation Algorithm
@@ -148,13 +141,12 @@ the same entry until the next document section no longer matches. Then
 check that the match count satisfies `min`/`max` bounds before
 advancing.
 
-**Nested repeat groups:** Children of a repeating section inherit the
-repetition. Each instance of the parent must independently satisfy all
-child section requirements. For example, if Procedure (H3) repeats 3
-times and has a required Detection Data Model (H4) child, the
-validator expects 3 DDMs — one per Procedure instance. A child is
-defined as any schema entry at a deeper level that follows the
-repeating entry before the next entry at the same or shallower level.
+**Nested repeat groups:** Children of a repeating section are defined
+via the `sections` field on that entry. Each instance of the parent
+must independently satisfy all child section requirements. For
+example, if Procedure (H3) repeats 3 times and has a required
+Detection Data Model (H4) child, the validator expects 3 DDMs — one
+per Procedure instance.
 
 ### Unordered Mode (`enforce_order: false`)
 
@@ -198,15 +190,19 @@ file:line:col: [schema.markdown.<error_type>] <message>
   by the same `file:line:col` formatting as linter rules.
 - **Document model:** The parsed `Document` already provides
   `document.sections` with `section.header.title`,
-  `section.header.level`, and `section.header.position` — all needed
-  for validation.
+  `section.header.level`, `section.header.position`, and
+  `section.subsections` — the recursive structure mirrors the nested
+  schema, allowing the validator to walk both trees in parallel.
+
+## Design Decisions
+
+- **Schema self-validation:** The loader validates the schema file
+  itself (e.g., rejects a schema with both `name` and `pattern`)
+  before running document validation, with clear error messages.
 
 ## Open Questions
 
-- **Schema validation:** Should the tool validate the schema file
-  itself (e.g., reject a schema with both `name` and `pattern`)
-  before running document validation? Likely yes, with clear error
-  messages.
+None at this time.
 
 ## Out of Scope
 

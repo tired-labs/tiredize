@@ -35,8 +35,6 @@ section name matching (exact or regex). Intended validations include:
 - Unexpected section raises an error
 - Section appearing more times than allowed raises an error
 - Section appearing fewer times than required raises an error
-- Sections can require specific child elements (tables, lists, etc.)
-- Tables and lists within sections can enforce required keys/values/items
 
 This is not yet implemented (the handler in `cli.py` is a stub).
 

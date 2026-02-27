@@ -79,7 +79,8 @@ Per PEP 8:
 ## Imports
 
 Per PEP 8, use one import per line. Prefer `from` imports for specific names.
-Group imports in this order with a blank line between each group:
+Imports within each group are alphabetized by module path. Group imports in
+this order with a blank line between each group:
 
 1. Standard library
 2. Third-party packages
@@ -103,3 +104,23 @@ from tiredize.core_types import RuleResult
 
 Prefer dataclasses for data types. Value types that should not be mutated use
 `frozen=True`. Types that are built up incrementally use `frozen=False`.
+
+Fields in dataclasses are alphabetized by name.
+
+## Ordering
+
+Functions at module level are alphabetized by name.
+
+Methods within a class are grouped in the following order, with a comment
+before each group. Methods are alphabetized within each group. Empty groups
+are omitted (no comment for a group with no methods).
+
+1. `# Dunder methods`
+2. `# Public methods`
+3. `# Private methods`
+4. `# Class methods`
+5. `# Static methods`
+
+Decorators `@classmethod` and `@staticmethod` take precedence over
+public/private when determining group placement. A private static method
+belongs in "Static methods", not "Private methods".
