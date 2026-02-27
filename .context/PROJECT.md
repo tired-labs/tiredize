@@ -194,7 +194,7 @@ Tracked next steps for the project:
       against GitHub-Flavored Markdown rendering rules
 - [ ] Migrate existing code to PEP 8 import grouping (blank lines between
       stdlib, third-party, and local groups with section comments)
-- [ ] Design and implement the markdown schema configuration format
+- [x] Design and implement the markdown schema configuration format
 - [ ] Design and implement the frontmatter schema configuration format
 - [ ] Finalize the configuration file strategy (single file vs separate)
 - [ ] Fix Document._parse slug update to propagate

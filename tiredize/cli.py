@@ -13,6 +13,9 @@ from tiredize.core_types import RuleNotFoundError
 from tiredize.core_types import RuleResult
 from tiredize.linter.engine import run_linter
 from tiredize.markdown.types.document import Document
+from tiredize.markdown.types.schema import load_schema
+from tiredize.validators.markdown_schema import AmbiguityError
+from tiredize.validators.markdown_schema import validate
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -66,12 +69,8 @@ def _run_rules(
 
 
 def _run_markdown_schema(doc: Document, schema_path: Path) -> list[RuleResult]:
-    # Placeholder for now. Eventually this will:
-    #   - load the markdown schema
-    #   - compare Document.sections to provided schema
-    #   - return RuleResults with appropriate rule_ids, e.g.
-    #       "schema.markdown.missing_section"
-    return []
+    schema = load_schema(schema_path.read_text())
+    return validate(doc, schema)
 
 
 def _run_frontmatter_schema(
@@ -123,11 +122,18 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
 
         if args.markdown_schema_path:
-            all_results.extend(
-                _run_markdown_schema(
-                    doc, Path(args.markdown_schema_path)
+            try:
+                all_results.extend(
+                    _run_markdown_schema(
+                        doc, Path(args.markdown_schema_path)
+                    )
                 )
-            )
+            except (ValueError, AmbiguityError) as exc:
+                print(
+                    f"error: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
 
         if args.frontmatter_schema_path:
             all_results.extend(

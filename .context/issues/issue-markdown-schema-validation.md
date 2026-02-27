@@ -242,9 +242,16 @@ None at this time.
   (case sensitivity, full-match regex). 99% coverage (1 unreachable
   defensive line).
 
+- **CLI integration:** `_run_markdown_schema()` in `tiredize/cli.py`
+  wired up. Reads the schema file, calls `load_schema()` and
+  `validate()`, returns results. Invalid schemas (`ValueError`) and
+  ambiguous schemas (`AmbiguityError`) are caught gracefully — printed
+  to stderr with exit code 1. Validation errors print all results in
+  the standard `file:line:col: [rule_id] message` format.
+
 ### Next
 
-- CLI integration (wire into `_run_markdown_schema()` stub)
+- Feature complete. No remaining implementation work.
 
 ## Out of Scope
 
