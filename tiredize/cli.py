@@ -103,7 +103,15 @@ def main(argv: list[str] | None = None) -> int:
 
     for path_str in args.paths:
         doc = Document()
-        doc.load(path=Path(path_str))
+        try:
+            doc.load(path=Path(path_str))
+        except FileNotFoundError as exc:
+            print(
+                f"error: {exc}",
+                file=sys.stderr,
+            )
+            exit_code = 1
+            continue
 
         all_results: list[RuleResult] = []
 
@@ -114,7 +122,11 @@ def main(argv: list[str] | None = None) -> int:
                         doc, Path(args.rules_path)
                     )
                 )
-            except RuleNotFoundError as exc:
+            except (
+                RuleNotFoundError,
+                FileNotFoundError,
+                yaml.YAMLError,
+            ) as exc:
                 print(
                     f"error: {exc}",
                     file=sys.stderr,
@@ -128,7 +140,12 @@ def main(argv: list[str] | None = None) -> int:
                         doc, Path(args.markdown_schema_path)
                     )
                 )
-            except (ValueError, AmbiguityError) as exc:
+            except (
+                ValueError,
+                AmbiguityError,
+                FileNotFoundError,
+                yaml.YAMLError,
+            ) as exc:
                 print(
                     f"error: {exc}",
                     file=sys.stderr,
