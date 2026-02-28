@@ -1,4 +1,4 @@
-Status: ready
+Status: active
 Parent: test-coverage-audit.md
 
 # Test Coverage: Markdown Element Types
@@ -21,8 +21,8 @@ the test coverage audit (`test-coverage-audit.md`).
       InlineLink (see test matrix below)
 - [ ] `tests/markdown/types/test_reference.py` -- ReferenceDefinition,
       LinkReference, ImageReference (see test matrix below)
-- [ ] `tests/markdown/types/test_list.py` -- characterization test
-      confirming List.extract() returns empty list (stub behavior)
+- [ ] `tests/markdown/types/test_list.py` -- stub behavior tests
+      confirming List.extract() returns empty list (not yet implemented)
 
 ### Sanitize method coverage (no direct tests today)
 
@@ -128,14 +128,14 @@ fix the parser (sanitization chain fixes belong in
       tests are complete (already at 100% but check for logical gaps).
       Add missing tests.
 
-### Boundary and degenerate inputs (audit point 6)
+### Boundary and degenerate inputs
 
 - [ ] For every extract() method: empty string, single-character input,
       input that is entirely one match, input with no trailing newline
 - [ ] For every sanitize() method: empty string, single-character input,
       input where the entire string matches the pattern
 
-### Idempotency (audit point 7)
+### Idempotency
 
 - [ ] For every sanitize() method: `sanitize(sanitize(text))` produces
       the same result as `sanitize(text)` and preserves string length.
@@ -145,7 +145,7 @@ fix the parser (sanitization chain fixes belong in
       building): calling extract twice on the same input produces
       identical results
 
-### State mutation (audit point 8)
+### State mutation
 
 - [ ] Section.extract() does not mutate the input text string
 - [ ] Section._extract() does not corrupt shared state between
@@ -153,7 +153,7 @@ fix the parser (sanitization chain fixes belong in
 - [ ] Document.load() called twice on the same Document -- verify
       second call cleanly replaces state rather than accumulating
 
-### Unicode and non-ASCII (audit point 9)
+### Unicode and non-ASCII
 
 - [ ] Headers with emoji and accented characters -- verify position
       offsets and slugification are correct
@@ -168,10 +168,10 @@ fix the parser (sanitization chain fixes belong in
 ### Syntax variant coverage (regex audit)
 
 For each element type, test all GFM-valid syntax variants against the
-actual regex patterns. BROKEN variants are documented as characterization
-tests -- assert the current (incorrect) behavior with a comment noting
-the GFM spec gap. Do not fix regexes in this issue; regex fixes belong
-in a separate parser improvement issue.
+actual regex patterns. Tests assert GFM-spec-correct behavior. When
+the code does not match the spec, the test is marked with
+`@pytest.mark.skip(reason="...")` referencing the tracking issue.
+Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 
 #### CodeBlock
 
@@ -355,14 +355,12 @@ this issue are strictly forbidden. Do not refactor adjacent code, update
 unrelated files, or extend scope beyond what is specified here.
 
 - Sanitization chain ordering or fixes (covered by
-  `parser-sanitization-audit.md`). If cross-type tests reveal false
-  positives, document them as characterization tests with comments
-  noting the known gap. Do not modify extractor code.
-- Regex fixes for BROKEN syntax variants. Tests document the broken
-  behavior; fixes belong in `gfm-parity.md`.
+  `parser-sanitization-audit.md`). Do not modify extractor code.
+- Regex fixes for BROKEN syntax variants. Fixes belong in
+  `gfm-parity.md`.
 - Implementing unsupported GFM variants (tracked by `gfm-parity.md`).
-- List.extract() implementation (it is a stub; only characterization
-  test required here)
+- List.extract() implementation (it is a stub; only stub behavior
+  tests required here)
 - Writing new tests for `tiredize/markdown/utils.py` (covered by
   `test-coverage-markdown-utils.md`)
 - get_position_from_match() dead code (covered by
@@ -386,20 +384,21 @@ document in test files as known limitations when encountered:
 
 ## Design Decisions
 
-- Cross-type interaction tests document actual behavior, not ideal
-  behavior. When the parser produces a false positive due to missing
-  sanitization, the test asserts the false positive with a comment
-  explaining the gap. This prevents the test from breaking when the
-  sanitization audit later fixes the chain, while preserving the
-  documentation of current behavior. The sanitization audit issue
-  should update these tests to assert correct behavior after fixes.
+- Tests assert specification-correct behavior (GFM spec), not current
+  code behavior. When a test fails because the code is broken, the test
+  is marked with `@pytest.mark.skip(reason="...")` referencing the issue
+  that tracks the fix. The skip is removed when the fix lands.
 
-- Syntax variant tests follow the same characterization test pattern.
-  BROKEN variants are tested by asserting the current (incorrect)
-  behavior and commenting the GFM spec gap. This documents what the
-  parser actually does, prevents regressions during future regex fixes,
-  and provides a clear list of behaviors to update when the parser is
-  improved. Regex fixes belong in a separate issue, not this test
+- Cross-type interaction tests assert what SHOULD happen per GFM spec.
+  When the parser produces a false positive due to missing sanitization,
+  the test asserts the correct (no false positive) behavior and is
+  skipped with an issue reference if the code is broken. The
+  sanitization audit issue removes the skip when the fix lands.
+
+- Syntax variant tests assert GFM-spec-correct behavior. When the parser
+  does not match a valid GFM variant or produces wrong results, the test
+  asserts what correct behavior would be and is skipped with a reference
+  to `gfm-parity.md`. Regex fixes belong in that issue, not this test
   coverage work.
 
 ## Open Questions

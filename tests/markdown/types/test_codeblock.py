@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
@@ -151,3 +154,132 @@ def test_five_codeblocks_repeated():
             position=positions[i],
             string=exp_string
         )
+
+
+# =========================================================================
+#  Sanitize method
+# =========================================================================
+
+
+def test_codeblock_sanitize_preserves_length():
+    text = "Before\n```python\nprint('hello')\n```\nAfter"
+    sanitized = CodeBlock.sanitize(text)
+    assert len(sanitized) == len(text)
+    assert "print" not in sanitized
+
+
+def test_codeblock_sanitize_no_code_blocks():
+    text = "Just text, no code blocks here."
+    sanitized = CodeBlock.sanitize(text)
+    assert sanitized == text
+
+
+def test_codeblock_sanitize_idempotent():
+    text = "Before\n```python\nprint('hello')\n```\nAfter"
+    first = CodeBlock.sanitize(text)
+    second = CodeBlock.sanitize(first)
+    assert first == second
+    assert len(second) == len(text)
+
+
+# =========================================================================
+#  Edge cases
+# =========================================================================
+
+
+def test_codeblock_four_backticks():
+    """Four backtick delimiter should match with four backtick closing."""
+    text = "````\ncode\n````"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].delimiter == "````"
+
+
+def test_codeblock_no_language():
+    text = "```\nplain code\n```"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].language == ""
+
+
+def test_codeblock_base_offset():
+    text = "```\ncode\n```"
+    results = CodeBlock.extract(text, base_offset=50)
+    assert len(results) == 1
+    assert results[0].position.offset == 50
+
+
+# =========================================================================
+#  Syntax variant tests (GFM spec compliance)
+# =========================================================================
+
+
+@pytest.mark.skip(reason="gfm-parity: tilde-fenced code blocks not supported")
+def test_codeblock_tilde_fence():
+    """GFM supports ~~~ fences. Should match like backtick fences."""
+    text = "~~~\ncode\n~~~"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].code == "code"
+
+
+def test_codeblock_closing_with_extra_backticks():
+    """GFM allows closing fence >= opening length. The backreference
+    finds the 3-backtick substring within the 5-backtick closing,
+    so this correctly matches."""
+    text = "```\ncode\n`````"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].code == "code"
+
+
+@pytest.mark.skip(reason="gfm-parity: indented code fences not supported")
+def test_codeblock_indented_fence():
+    """GFM allows 1-3 spaces before opening/closing fence."""
+    text = "   ```\ncode\n   ```"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].code == "code"
+
+
+# ===================================================================
+#  Boundary and degenerate inputs
+# ===================================================================
+
+
+def test_codeblock_extract_empty_string():
+    assert CodeBlock.extract("") == []
+
+
+def test_codeblock_extract_single_char():
+    assert CodeBlock.extract("`") == []
+
+
+# ===================================================================
+#  State mutation
+# ===================================================================
+
+
+def test_codeblock_extract_does_not_mutate_input():
+    text = "```\ncode\n```"
+    original = text
+    CodeBlock.extract(text)
+    assert text == original
+
+
+# ===================================================================
+#  Unicode
+# ===================================================================
+
+
+def test_codeblock_unicode_content():
+    text = "```\n日本語コード = 42\ncafé = True\n```"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert "日本語コード" in results[0].code
+
+
+def test_codeblock_sanitize_unicode_preserves_length():
+    text = "```\nvar café = '☕'\n```"
+    sanitized = CodeBlock.sanitize(text)
+    assert len(sanitized) == len(text)

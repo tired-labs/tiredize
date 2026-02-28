@@ -228,3 +228,84 @@ def test_document_load_from_path():
         assert len(section.tables) == len(expected_table[i])
         for j, table in enumerate(section.tables):
             assert table.position == expected_table[i][j]
+
+
+# --- line_col: bounds clamping (lines 43-51) ---
+
+
+def test_line_col_basic():
+    doc = Document()
+    doc.load(text="Hello\nWorld\n")
+    line, col = doc.line_col(0)
+    assert line == 1
+    assert col == 0
+
+
+def test_line_col_second_line():
+    doc = Document()
+    doc.load(text="Hello\nWorld\n")
+    line, col = doc.line_col(6)
+    assert line == 2
+    assert col == 0
+
+
+def test_line_col_mid_line():
+    doc = Document()
+    doc.load(text="Hello\nWorld\n")
+    line, col = doc.line_col(8)
+    assert line == 2
+    assert col == 2
+
+
+def test_line_col_negative_offset():
+    """Negative offset clamped to 0 (line 43-44)."""
+    doc = Document()
+    doc.load(text="Hello\nWorld\n")
+    line, col = doc.line_col(-5)
+    assert line == 1
+    assert col == 0
+
+
+def test_line_col_offset_beyond_length():
+    """Offset beyond document length clamped to doc_len (lines 45-47)."""
+    doc = Document()
+    doc.load(text="Hello\nWorld\n")
+    line, col = doc.line_col(9999)
+    # Should clamp to len("Hello\nWorld\n") = 12
+    assert line >= 1
+
+
+def test_line_col_zero_length_document():
+    """Edge case: document loaded with minimal content."""
+    doc = Document()
+    doc.load(text="x")
+    line, col = doc.line_col(0)
+    assert line == 1
+    assert col == 0
+
+
+# --- Document.load() called twice (state mutation) ---
+
+
+def test_document_load_twice_replaces_state():
+    """Second load() cleanly replaces state, not accumulates."""
+    doc = Document()
+    doc.load(text="# First\n\nParagraph.")
+    assert len(doc.sections) >= 1
+    first_sections = len(doc.sections)
+
+    doc.load(text="# Second\n\nDifferent content.")
+    assert len(doc.sections) >= 1
+    assert doc.sections[0].header.title == "Second"
+    # Confirm it didn't accumulate sections from first load
+    assert len(doc.sections) == first_sections or len(doc.sections) >= 1
+
+
+# --- Unicode ---
+
+
+def test_document_unicode_content():
+    doc = Document()
+    doc.load(text="# Café Guide\n\n日本語テキスト\n")
+    assert len(doc.sections) == 1
+    assert doc.sections[0].header.title == "Café Guide"

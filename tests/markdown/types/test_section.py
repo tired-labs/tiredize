@@ -118,3 +118,87 @@ def test_table_inside_code_block_not_extracted():
     sections = Section.extract(md)
     assert len(sections) == 1
     assert sections[0].tables == []
+
+
+# --- No headers in text (lines 51-60) ---
+
+
+def test_no_headers_creates_single_section():
+    """Text with no headers produces one section with level-0 header."""
+    md = "Just a paragraph.\n\nAnother paragraph.\n"
+    sections = Section.extract(md)
+
+    assert len(sections) == 1
+    assert sections[0].header.level == 0
+    assert sections[0].header.title == ""
+    assert sections[0].position.offset == 0
+    assert sections[0].position.length == len(md)
+    assert sections[0].string == md
+
+
+def test_no_headers_level_zero_breaks_map_subsections():
+    """Level-0 headers cause _map_subsections to break (line 167).
+    Verify no subsections are created for level-0 sections."""
+    md = "No headers here."
+    sections = Section.extract(md)
+    assert len(sections) == 1
+    assert sections[0].subsections == []
+
+
+# --- Section._extract with no header (line 93) ---
+
+
+def test_extract_text_without_header():
+    """Text without a header at the start gets a dummy level-0 header."""
+    md = "Paragraph text without any header."
+    sections = Section.extract(md)
+    assert len(sections) == 1
+    assert sections[0].header.level == 0
+    assert sections[0].header.slug == ""
+
+
+# --- Idempotency ---
+
+
+def test_extract_idempotent():
+    md = "# Alpha\n\n## Bravo\n\n# Charlie\n"
+    first = Section.extract(md)
+    second = Section.extract(md)
+    assert len(first) == len(second)
+    for a, b in zip(first, second):
+        assert a.header.title == b.header.title
+        assert a.position == b.position
+
+
+# --- State mutation ---
+
+
+def test_extract_does_not_mutate_input():
+    md = "# Title\n\nBody text.\n"
+    original = md
+    Section.extract(md)
+    assert md == original
+
+
+# --- Boundary inputs ---
+
+
+def test_extract_empty_string():
+    sections = Section.extract("")
+    assert len(sections) == 1
+    assert sections[0].header.level == 0
+
+
+def test_extract_single_char():
+    sections = Section.extract("x")
+    assert len(sections) == 1
+
+
+# --- Unicode ---
+
+
+def test_extract_unicode_content():
+    md = "# Résumé\n\nCafé text with 日本語.\n"
+    sections = Section.extract(md)
+    assert len(sections) == 1
+    assert sections[0].header.title == "Résumé"

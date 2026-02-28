@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.header import Header
@@ -238,3 +241,139 @@ def test_six_headers_repeated():
             string=exp_string,
             title=actual_text
         )
+
+
+# ===================================================================
+#  Sanitize method (line 70)
+# ===================================================================
+
+
+def test_header_sanitize_preserves_length():
+    text = "# Big Title\n\nParagraph below."
+    sanitized = Header.sanitize(text)
+    assert len(sanitized) == len(text)
+    assert "Big Title" not in sanitized
+
+
+def test_header_sanitize_no_headers():
+    text = "Just a paragraph, no headers."
+    sanitized = Header.sanitize(text)
+    assert sanitized == text
+
+
+def test_header_sanitize_idempotent():
+    text = "# Title\n\n## Subtitle\n"
+    first = Header.sanitize(text)
+    second = Header.sanitize(first)
+    assert first == second
+    assert len(second) == len(text)
+
+
+# ===================================================================
+#  slugify_header -- empty title (line 96)
+# ===================================================================
+
+
+def test_slugify_empty_title():
+    """Empty string title falls back to 'section'."""
+    slug = Header.slugify_header("")
+    assert slug == "#section"
+
+
+def test_slugify_special_characters():
+    """Punctuation removed except hyphens."""
+    slug = Header.slugify_header("Hello, World! (2024)")
+    assert slug == "#hello-world-2024"
+
+
+def test_slugify_multiple_hyphens_collapsed():
+    slug = Header.slugify_header("a - - - b")
+    assert slug == "#a-b"
+
+
+def test_slugify_duplicate_tracking():
+    slug = Header.slugify_header("Title", existing=["Title"])
+    assert slug == "#title-1"
+
+
+def test_slugify_multiple_duplicates():
+    slug = Header.slugify_header("Title", existing=["Title", "Title"])
+    assert slug == "#title-2"
+
+
+# ===================================================================
+#  Edge cases
+# ===================================================================
+
+
+def test_header_seven_hashes_not_matched():
+    """GFM only supports 1-6 hashes. Regex \\#{1,6} correctly rejects this."""
+    text = "####### Too Many Hashes"
+    matches = Header.extract(text)
+    assert len(matches) == 0
+
+
+def test_header_no_space_after_hash_not_matched():
+    """GFM requires space after hashes. Correctly rejected."""
+    text = "#NoSpace"
+    matches = Header.extract(text)
+    assert len(matches) == 0
+
+
+@pytest.mark.skip(reason="gfm-parity: closing hashes not stripped from title")
+def test_header_closing_hashes_stripped():
+    """GFM strips trailing # characters from heading titles."""
+    text = "# Title ##"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].title == "Title"
+
+
+# ===================================================================
+#  Boundary and degenerate inputs
+# ===================================================================
+
+
+def test_header_extract_empty_string():
+    assert Header.extract("") == []
+
+
+def test_header_extract_single_char():
+    assert Header.extract("#") == []
+
+
+# ===================================================================
+#  State mutation
+# ===================================================================
+
+
+def test_header_extract_does_not_mutate_input():
+    text = "# Hello World\n\nParagraph."
+    original = text
+    Header.extract(text)
+    assert text == original
+
+
+# ===================================================================
+#  Unicode
+# ===================================================================
+
+
+def test_header_unicode_title():
+    text = "# Café Résumé"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].title == "Café Résumé"
+
+
+def test_header_emoji_title():
+    text = "# Welcome to the Party 🎉"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert "🎉" in matches[0].title
+
+
+def test_header_unicode_slug():
+    """Non-ASCII stripped by [^a-z0-9 \\-] in slugify."""
+    slug = Header.slugify_header("Café Résumé")
+    assert slug == "#caf-rsum"

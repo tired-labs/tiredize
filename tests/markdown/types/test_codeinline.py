@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeInline
@@ -123,3 +126,123 @@ def test_five_codeinlines_repeated():
             position=positions[i],
             string=exp_string
         )
+
+
+# ===================================================================
+#  Sanitize method
+# ===================================================================
+
+
+def test_codeinline_sanitize_preserves_length():
+    text = "Run `tiredize --help` to see options."
+    sanitized = CodeInline.sanitize(text)
+    assert len(sanitized) == len(text)
+    assert "tiredize" not in sanitized
+
+
+def test_codeinline_sanitize_no_inline_code():
+    text = "No inline code here."
+    sanitized = CodeInline.sanitize(text)
+    assert sanitized == text
+
+
+def test_codeinline_sanitize_idempotent():
+    text = "Use `cmd` and `flag` options."
+    first = CodeInline.sanitize(text)
+    second = CodeInline.sanitize(first)
+    assert first == second
+    assert len(second) == len(text)
+
+
+# ===================================================================
+#  Edge cases
+# ===================================================================
+
+
+def test_codeinline_multiple_on_same_line():
+    text = "Use `foo` or `bar` or `baz` commands."
+    matches = CodeInline.extract(text)
+    assert len(matches) == 3
+    assert matches[0].code == "foo"
+    assert matches[1].code == "bar"
+    assert matches[2].code == "baz"
+
+
+def test_codeinline_base_offset():
+    text = "`code`"
+    matches = CodeInline.extract(text, base_offset=25)
+    assert len(matches) == 1
+    assert matches[0].position.offset == 25
+
+
+# ===================================================================
+#  Syntax variant tests (GFM spec compliance)
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: double-backtick inline code not supported"
+)
+def test_codeinline_double_backtick():
+    """GFM supports `` code `` for inline code with preserved spaces."""
+    text = "`` code ``"
+    matches = CodeInline.extract(text)
+    assert len(matches) == 1
+    assert matches[0].code == " code "
+
+
+@pytest.mark.skip(reason="gfm-parity: multiline inline code not supported")
+def test_codeinline_multiline():
+    """GFM allows inline code to span lines."""
+    text = "`first line\nsecond line`"
+    matches = CodeInline.extract(text)
+    assert len(matches) == 1
+    assert matches[0].code == "first line\nsecond line"
+
+
+# ===================================================================
+#  Boundary and degenerate inputs
+# ===================================================================
+
+
+def test_codeinline_extract_empty_string():
+    assert CodeInline.extract("") == []
+
+
+def test_codeinline_extract_single_char():
+    assert CodeInline.extract("`") == []
+
+
+def test_codeinline_empty_backticks():
+    """`` (empty inline code) not matched -- [^\\n`]+ requires content."""
+    assert CodeInline.extract("``") == []
+
+
+# ===================================================================
+#  State mutation
+# ===================================================================
+
+
+def test_codeinline_extract_does_not_mutate_input():
+    text = "Use `cmd` here."
+    original = text
+    CodeInline.extract(text)
+    assert text == original
+
+
+# ===================================================================
+#  Unicode
+# ===================================================================
+
+
+def test_codeinline_unicode_content():
+    text = "`café = True`"
+    matches = CodeInline.extract(text)
+    assert len(matches) == 1
+    assert matches[0].code == "café = True"
+
+
+def test_codeinline_sanitize_unicode_preserves_length():
+    text = "Use `日本語` in code."
+    sanitized = CodeInline.sanitize(text)
+    assert len(sanitized) == len(text)

@@ -52,8 +52,8 @@ for them to achieve closer GFM parity.
 - [ ] Each variant is evaluated for implementation feasibility and
       priority
 - [ ] Regex patterns updated to handle accepted variants
-- [ ] Existing characterization tests (from test coverage audit)
-      updated to assert correct behavior after fixes
+- [ ] Existing skipped spec tests (from test coverage audit)
+      unskipped after fixes land and tests pass
 - [ ] New tests added for each newly supported variant
 - [ ] Parser specification updated to reflect supported syntax
 
