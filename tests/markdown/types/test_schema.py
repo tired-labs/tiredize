@@ -447,3 +447,170 @@ sections:
 """
     with pytest.raises(ValueError, match="mapping"):
         load_schema(yaml_str)
+
+
+# --- Loader: field type validation ---
+
+
+def test_load_allow_extra_sections_wrong_type():
+    yaml_str = """
+allow_extra_sections: "yes please"
+sections:
+  - name: "Gullible"
+"""
+    with pytest.raises(ValueError, match="bool"):
+        load_schema(yaml_str)
+
+
+def test_load_enforce_order_wrong_type():
+    yaml_str = """
+enforce_order: 42
+sections:
+  - name: "Chaotic"
+"""
+    with pytest.raises(ValueError, match="bool"):
+        load_schema(yaml_str)
+
+
+def test_load_name_wrong_type():
+    yaml_str = """
+sections:
+  - name: 404
+"""
+    with pytest.raises(ValueError, match="string"):
+        load_schema(yaml_str)
+
+
+def test_load_pattern_wrong_type():
+    yaml_str = """
+sections:
+  - pattern:
+      - "not"
+      - "a"
+      - "string"
+"""
+    with pytest.raises(ValueError, match="string"):
+        load_schema(yaml_str)
+
+
+def test_load_level_wrong_type():
+    yaml_str = """
+sections:
+  - name: "Confused"
+    level: "two"
+"""
+    with pytest.raises(ValueError, match="integer"):
+        load_schema(yaml_str)
+
+
+def test_load_level_rejects_bool():
+    yaml_str = """
+sections:
+  - name: "Sneaky"
+    level: true
+"""
+    with pytest.raises(ValueError, match="integer"):
+        load_schema(yaml_str)
+
+
+def test_load_required_wrong_type():
+    yaml_str = """
+sections:
+  - name: "Indecisive"
+    required: "maybe"
+"""
+    with pytest.raises(ValueError, match="bool"):
+        load_schema(yaml_str)
+
+
+# --- Loader: repeat value validation ---
+
+
+def test_load_repeat_false_rejected():
+    yaml_str = """
+sections:
+  - name: "Deceptive"
+    repeat: false
+"""
+    with pytest.raises(ValueError, match="repeat"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_integer_rejected():
+    yaml_str = """
+sections:
+  - name: "Wishful Thinking"
+    repeat: 3
+"""
+    with pytest.raises(ValueError, match="repeat"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_string_rejected():
+    yaml_str = """
+sections:
+  - name: "Hopeful"
+    repeat: "yes"
+"""
+    with pytest.raises(ValueError, match="repeat"):
+        load_schema(yaml_str)
+
+
+# --- Loader: unknown key validation ---
+
+
+def test_load_unknown_top_level_key():
+    yaml_str = """
+allow_extra_section: true
+sections:
+  - name: "Typo Victim"
+"""
+    with pytest.raises(ValueError, match="allow_extra_section"):
+        load_schema(yaml_str)
+
+
+def test_load_unknown_section_key():
+    yaml_str = """
+sections:
+  - name: "Oops"
+    repat: true
+"""
+    with pytest.raises(ValueError, match="repat"):
+        load_schema(yaml_str)
+
+
+def test_load_unknown_repeat_key():
+    yaml_str = """
+sections:
+  - name: "Close But No Cigar"
+    repeat:
+      minimum: 2
+"""
+    with pytest.raises(ValueError, match="minimum"):
+        load_schema(yaml_str)
+
+
+# --- Loader: repeat bound bool rejection ---
+
+
+def test_load_repeat_min_bool_rejected():
+    yaml_str = """
+sections:
+  - name: "Tricky"
+    repeat:
+      min: true
+"""
+    with pytest.raises(ValueError, match="integer"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_max_bool_rejected():
+    yaml_str = """
+sections:
+  - name: "Sneaky Bounds"
+    repeat:
+      min: 1
+      max: false
+"""
+    with pytest.raises(ValueError, match="integer"):
+        load_schema(yaml_str)

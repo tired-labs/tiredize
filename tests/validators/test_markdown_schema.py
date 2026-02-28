@@ -746,8 +746,12 @@ def test_unordered_duplicate_without_repeat():
         ]
     )
     results = validate(doc, schema)
-    rule_ids = [r.rule_id for r in results]
-    assert "schema.markdown.unexpected_section" in rule_ids
+    unexpected = [
+        r for r in results
+        if r.rule_id == "schema.markdown.unexpected_section"
+    ]
+    assert len(unexpected) == 1
+    assert "Procedures" in unexpected[0].message
 
 
 # --- Ambiguity ---

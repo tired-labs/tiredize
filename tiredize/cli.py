@@ -51,7 +51,14 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 def _load_yaml(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
-        data: dict[str, Any] = yaml.safe_load(f) or {}
+        data = yaml.safe_load(f)
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Expected YAML mapping in {path}, "
+            f"got {type(data).__name__}."
+        )
     return data
 
 
@@ -76,11 +83,10 @@ def _run_markdown_schema(doc: Document, schema_path: Path) -> list[RuleResult]:
 def _run_frontmatter_schema(
         doc: Document,
         schema_path: Path) -> list[RuleResult]:
-    # Placeholder for now. Eventually this will:
-    #   - load the frontmatter schema
-    #   - compare Document.frontmatter to provided schema
-    #   - return RuleResults with appropriate rule_ids, e.g.
-    #       "schema.frontmatter.missing_field"
+    # Validate the file exists now so users don't get silent success
+    # with a nonexistent path. The actual schema logic is not yet
+    # implemented.
+    schema_path.read_text(encoding="utf-8")
     return []
 
 
@@ -125,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
             except (
                 RuleNotFoundError,
                 FileNotFoundError,
+                ValueError,
                 yaml.YAMLError,
             ) as exc:
                 print(
@@ -153,11 +160,22 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
 
         if args.frontmatter_schema_path:
-            all_results.extend(
-                _run_frontmatter_schema(
-                    doc, Path(args.frontmatter_schema_path)
+            try:
+                all_results.extend(
+                    _run_frontmatter_schema(
+                        doc, Path(args.frontmatter_schema_path)
+                    )
                 )
-            )
+            except (
+                ValueError,
+                FileNotFoundError,
+                yaml.YAMLError,
+            ) as exc:
+                print(
+                    f"error: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
 
         for res in all_results:
             pos = res.position

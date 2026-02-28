@@ -178,7 +178,6 @@ def _skip_schema_entries(
     start,
     end,
     skipped_required,
-    results,
 ):
     for k in range(start, end):
         entry = schema_sections[k]
@@ -310,7 +309,6 @@ def _validate_ordered(
                 _skip_schema_entries(
                     schema_sections, schema_ptr,
                     found_later, skipped_required,
-                    results,
                 )
                 schema_ptr = found_later
             else:
@@ -441,6 +439,7 @@ def _validate_unordered(
                     results, allow_extra,
                 )
                 for i, ds in matches[1:]:
+                    claimed.add(i)
                     if not allow_extra:
                         results.append(RuleResult(
                             message=(
