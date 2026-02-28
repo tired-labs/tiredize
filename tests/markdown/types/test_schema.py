@@ -295,6 +295,50 @@ sections:
         load_schema(yaml_str)
 
 
+def test_load_rejects_level_zero():
+    yaml_str = """
+sections:
+  - name: "Underground"
+    level: 0
+"""
+    with pytest.raises(ValueError, match="between 1 and 6"):
+        load_schema(yaml_str)
+
+
+def test_load_rejects_level_negative():
+    yaml_str = """
+sections:
+  - name: "Subterranean"
+    level: -1
+"""
+    with pytest.raises(ValueError, match="between 1 and 6"):
+        load_schema(yaml_str)
+
+
+def test_load_rejects_level_seven():
+    yaml_str = """
+sections:
+  - name: "Too Deep"
+    level: 7
+"""
+    with pytest.raises(ValueError, match="between 1 and 6"):
+        load_schema(yaml_str)
+
+
+def test_load_accepts_level_six():
+    yaml_str = """
+sections:
+  - name: "Parent"
+    level: 5
+    sections:
+      - name: "Deepest Valid"
+        level: 6
+"""
+    config = load_schema(yaml_str)
+    child = config.sections[0].sections[0]
+    assert child.level == 6
+
+
 def test_load_rejects_child_level_equal_to_parent():
     yaml_str = """
 sections:

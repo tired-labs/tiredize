@@ -110,7 +110,7 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
 |------------|-------------|----------------|---------------------------------|
 | `name`     | string      | --             | Exact section header match      |
 | `pattern`  | string      | --             | Regex pattern for header match  |
-| `level`    | int         | parent + 1     | Required heading level (1-6)    |
+| `level`    | int         | parent + 1     | Required heading level (1-6, must be greater than parent level) |
 | `required` | bool        | `true`         | Section must be present         |
 | `repeat`   | bool or map | --             | Section may appear repeatedly   |
 | `sections` | list        | --             | Nested child section defs       |
@@ -121,8 +121,9 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
   is an error.
 - `level` is optional. When omitted, it is inferred as the parent
   section's level + 1. Top-level sections with no parent default to 1.
-  When present, the loader validates it is consistent with nesting
-  depth.
+  When present, the loader validates it is between 1 and 6 and
+  strictly greater than the parent level. Explicit levels may skip
+  levels (e.g., parent level 1, child level 3 is valid).
 - When `required` is omitted, it defaults to `true`.
 - `repeat: true` means one or more occurrences with no upper bound.
 - `repeat: {min: N, max: N}` sets explicit bounds. `min` defaults to 1

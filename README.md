@@ -26,14 +26,15 @@ validation modes.
 **Linter rules** -- A pluggable rule engine for style and formatting
 checks. Built-in rules cover line length, tab usage, trailing
 whitespace, and link validation (including HTTP checks, anchor
-resolution, and relative file path verification). Users can add custom
-rules by dropping a Python module into a rules package.
+resolution, and relative file path verification). Advanced users can
+add custom rules by modifying the built-in rules package (for example,
+via an editable install or project fork).
 
 **Markdown parser** -- A regex-based parser that extracts headers,
 sections, code blocks (fenced and inline), links (inline,
 reference-style, bracket, and bare), images, tables, block quotes,
-lists, and frontmatter into typed dataclass elements with accurate
-position tracking.
+and frontmatter into typed dataclass elements with accurate position
+tracking. List extraction is planned but not yet implemented.
 
 **Frontmatter schema validation** -- Planned. The CLI flag exists but
 the handler is a stub.
@@ -171,9 +172,11 @@ add a custom rule:
        return results
    ```
 
-2. Place the module in a package alongside the built-in rules, or in
-   your own package that follows the same convention (non-private
-   modules exposing a `validate` function).
+2. Place the module in the built-in rules package
+   (`tiredize/linter/rules/`). This requires an editable install
+   (`pip install -e .`) or a project fork. The module must be
+   non-private (no leading underscore) and expose a `validate`
+   function.
 
 The rule ID is derived from the module filename (e.g., `my_rule.py`
 produces rule ID `my_rule`). Configuration values for your rule are
@@ -188,5 +191,5 @@ and available configuration helpers.
 
 [TIRED Labs]: https://www.tired-labs.org/
 [TRR]: https://github.com/tired-labs/techniques
-[spec-validator]: .context/specifications/markdown-schema-validator.md
-[spec-linter]: .context/specifications/linter.md
+[spec-validator]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/markdown-schema-validator.md
+[spec-linter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/linter.md

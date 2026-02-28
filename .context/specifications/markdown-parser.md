@@ -26,8 +26,8 @@ class Document:
 
 `Document.load()` reads a file (via `path`) or accepts raw text (via
 `text`), then calls `_parse()` to populate `sections`, `frontmatter`,
-and computed fields. `line_col()` converts a document-root byte offset
-to a 1-based `(line, column)` tuple.
+and computed fields. `line_col()` converts a character offset to a
+`(line, column)` tuple where line is 1-based and column is 0-based.
 
 ### Shared Types
 
@@ -39,8 +39,8 @@ class Position:
 ```
 
 Defined in `tiredize/core_types.py`. All parsed elements carry a
-`Position` where `offset` is relative to the document root (byte 0 of
-the original file content).
+`Position` where `offset` is a character index relative to the
+document root (character 0 of the original file content).
 
 ### Element Type Pattern
 
@@ -51,7 +51,7 @@ Every markdown element type follows this pattern:
 - A `@staticmethod extract(text: str, base_offset: int = 0) -> list[T]`
   method that finds all instances in the given text.
 - A `@staticmethod sanitize(text: str) -> str` method that replaces
-  matched regions with whitespace, preserving byte offsets for
+  matched regions with whitespace, preserving character offsets for
   downstream extractors.
 
 The `base_offset` parameter threads position tracking through nested
@@ -70,8 +70,8 @@ def sanitize_text(pattern: str, text: str) -> str
 
 `search_all_re` wraps `re.finditer` with `re.VERBOSE`. `sanitize_text`
 replaces pattern matches with whitespace to preserve offsets.
-`get_position_from_match` returns `(offset, length, line_count)` for
-a regex match.
+`get_position_from_match` returns `(line_number, column_offset,
+match_length)` for a regex match.
 
 ## File Layout
 
