@@ -151,7 +151,7 @@ class Section:
             ),
             subsections=[],
             tables=Table.extract(
-                text=string,
+                text=CodeBlock.sanitize(string),
                 base_offset=base_offset
             )
         )

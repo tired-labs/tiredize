@@ -102,3 +102,19 @@ def test_skipped_levels():
     assert root.subsections[0].header.title == "Skipped To Three"
 
     assert sections[1].subsections == []
+
+
+def test_table_inside_code_block_not_extracted():
+    """Tables inside code fences must not appear in section.tables."""
+    md = (
+        "# Spell Components\n\n"
+        "Here is an example table:\n\n"
+        "```markdown\n"
+        "| Ingredient | Quantity |\n"
+        "|------------|----------|\n"
+        "| Bat wings  | 3        |\n"
+        "```\n"
+    )
+    sections = Section.extract(md)
+    assert len(sections) == 1
+    assert sections[0].tables == []
