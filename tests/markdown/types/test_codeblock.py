@@ -283,3 +283,100 @@ def test_codeblock_sanitize_unicode_preserves_length():
     text = "```\nvar café = '☕'\n```"
     sanitized = CodeBlock.sanitize(text)
     assert len(sanitized) == len(text)
+
+
+# ===================================================================
+#  Additional syntax variant tests
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: closing fence with trailing spaces not matched"
+)
+def test_codeblock_closing_fence_trailing_spaces():
+    """GFM allows trailing spaces after closing fence."""
+    text = "```\ncode\n```   "
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].code == "code"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: empty code block not matched"
+)
+def test_codeblock_empty():
+    """GFM allows empty code blocks with no content lines."""
+    text = "```\n```"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].code == ""
+
+
+def test_codeblock_after_pipe_char():
+    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
+    Code fence after | produces a false positive match."""
+    text = "|```\ncode\n```"
+    results = CodeBlock.extract(text)
+    # Per GFM, | before ``` should not start a code block.
+    # The anchor (?<![^|\\n]) means "preceding char must be |
+    # or \\n (or start of string)", so | is accepted.
+    # This is a false positive.
+    assert len(results) == 1  # documents actual behavior
+
+
+# ===================================================================
+#  Cross-type: nested code
+# ===================================================================
+
+
+def test_inline_code_inside_code_block():
+    """Inline code backticks inside a fenced code block should not
+    produce CodeInline matches when CodeInline sanitizes CodeBlock
+    first (which it doesn't -- CodeInline has no sanitization)."""
+    from tiredize.markdown.types.code import CodeInline
+    text = "```\n`inline` code\n```"
+    results = CodeInline.extract(text)
+    # CodeInline does NOT sanitize CodeBlock, so it finds `inline`
+    # inside the fence. This is a false positive.
+    # We document actual behavior: it matches.
+    assert len(results) == 1
+    assert results[0].code == "inline"
+
+
+def test_code_block_fence_inside_inline_code():
+    """Fenced code markers inside backticks should not produce
+    CodeBlock matches. This is an edge case."""
+    text = "Use ```` to start code."
+    results = CodeBlock.extract(text)
+    assert len(results) == 0
+
+
+# ===================================================================
+#  Cross-cutting: CRLF line endings
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: CRLF line endings not supported"
+)
+def test_codeblock_crlf():
+    """Code blocks with CRLF line endings should match."""
+    text = "```\r\ncode\r\n```"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1
+    assert results[0].code == "code"
+
+
+# ===================================================================
+#  Cross-cutting: leading indentation
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: indented code fences not supported"
+)
+def test_codeblock_one_space_indent():
+    """GFM allows 1 space before opening fence."""
+    text = " ```\ncode\n ```"
+    results = CodeBlock.extract(text)
+    assert len(results) == 1

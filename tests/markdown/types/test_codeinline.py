@@ -246,3 +246,64 @@ def test_codeinline_sanitize_unicode_preserves_length():
     text = "Use `日本語` in code."
     sanitized = CodeInline.sanitize(text)
     assert len(sanitized) == len(text)
+
+
+# ===================================================================
+#  Additional syntax variant tests
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: triple-backtick inline code not supported"
+)
+def test_codeinline_triple_backtick():
+    """GFM supports ``` code ``` for inline code."""
+    text = "``` code ```"
+    matches = CodeInline.extract(text)
+    assert len(matches) == 1
+    assert matches[0].code == " code "
+
+
+@pytest.mark.skip(
+    reason=(
+        "gfm-parity: inline code containing "
+        "backtick via multi-backtick wrapper not supported"
+    )
+)
+def test_codeinline_containing_backtick():
+    """GFM allows `` foo`bar `` to include a backtick in content."""
+    text = "`` foo`bar ``"
+    matches = CodeInline.extract(text)
+    assert len(matches) == 1
+    assert matches[0].code == "foo`bar"
+
+
+# ===================================================================
+#  Cross-cutting: CRLF line endings
+# ===================================================================
+
+
+# ===================================================================
+#  Cross-cutting: escaped characters
+# ===================================================================
+
+
+def test_codeinline_escaped_backtick():
+    r"""Backslash-escaped backticks are not handled by the regex.
+    \`text\` is still matched as inline code because [^\n`]+
+    treats \ as a regular character."""
+    text = r"Use \`not code\` here."
+    matches = CodeInline.extract(text)
+    # The regex matches `not code\` (backslash before closing
+    # backtick is captured as content)
+    assert len(matches) == 1
+
+
+def test_codeinline_crlf_in_content():
+    """CodeInline regex excludes \\n but not \\r.
+    A \\r character would be captured in the code field."""
+    text = "`code\rmore`"
+    matches = CodeInline.extract(text)
+    # The regex [^\\n`]+ does not exclude \\r, so it matches
+    assert len(matches) == 1
+    assert "\r" in matches[0].code  # documents actual behavior

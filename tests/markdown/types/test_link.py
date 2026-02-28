@@ -546,3 +546,109 @@ def test_bare_link_unicode_url():
     results = BareLink.extract(text)
     assert len(results) == 1
     assert "über-cool" in results[0].url
+
+
+# ===================================================================
+#  Cross-type: links inside tables
+# ===================================================================
+
+
+def test_inline_link_inside_table_cell():
+    """Links in table cells are real links per GFM and should be
+    extracted. InlineLink does not sanitize Table."""
+    text = "| [link](https://example.com) |\n|---|\n| data |\n"
+    results = InlineLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+def test_bracket_link_inside_table_cell():
+    """Bracket links in table cells should be extracted."""
+    text = "| <https://example.com> |\n|---|\n| data |\n"
+    results = BracketLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+def test_bare_link_inside_table_cell():
+    """Bare links in table cells should be extracted."""
+    text = "| https://example.com |\n|---|\n| data |\n"
+    results = BareLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+# ===================================================================
+#  Cross-type: links inside quote blocks
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="QuoteBlock sanitize removes content containing links"
+)
+def test_bracket_link_inside_quote_block():
+    """Per GFM, links inside blockquotes are real links."""
+    text = "> <https://example.com>"
+    results = BracketLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+@pytest.mark.skip(
+    reason="QuoteBlock sanitize removes content containing links"
+)
+def test_bare_link_inside_quote_block():
+    """Per GFM, links inside blockquotes are real links."""
+    text = "> https://example.com"
+    results = BareLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+# ===================================================================
+#  InlineLink -- additional syntax variants
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: parenthesis title delimiters not supported"
+)
+def test_inline_link_parens_title():
+    """GFM allows (title) as title delimiter."""
+    text = "[link](https://example.com (A Title))"
+    results = InlineLink.extract(text)
+    assert len(results) == 1
+    assert results[0].title == "A Title"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: angle-bracket URLs not supported"
+)
+def test_inline_link_angle_bracket_url():
+    """GFM allows <url with spaces> in inline links."""
+    text = "[link](<https://example.com/path with spaces>)"
+    results = InlineLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com/path with spaces"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: nested brackets in link text not handled"
+)
+def test_inline_link_nested_brackets():
+    """GFM handles nested brackets in link text."""
+    text = "[text [nested]](https://example.com)"
+    results = InlineLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: escaped quote in title truncates match"
+)
+def test_inline_link_escaped_quote_in_title():
+    r"""GFM handles \" inside double-quoted titles."""
+    text = r'[link](https://example.com "title \" here")'
+    results = InlineLink.extract(text)
+    assert len(results) == 1
+    assert results[0].title == r'title " here'

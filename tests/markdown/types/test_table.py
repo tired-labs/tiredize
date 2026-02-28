@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.table import Table
@@ -343,3 +346,60 @@ def test_table_unicode_cells():
     results = Table.extract(text)
     assert len(results) == 1
     assert results[0].header == ["Café", "Résumé"]
+
+
+# ===================================================================
+#  Syntax variant tests (GFM spec compliance)
+# ===================================================================
+
+
+def test_table_over_greedy_row_matching():
+    """The rows pattern ([^\\n]+(\\n|$))* consumes all non-empty
+    lines after the divider, including non-table content."""
+    text = (
+        "| A |\n"
+        "|---|\n"
+        "| 1 |\n"
+        "This is not a table row.\n"
+    )
+    results = Table.extract(text)
+    assert len(results) == 1
+    # The regex greedily captures "This is not a table row."
+    # as a row because it matches [^\n]+
+    assert len(results[0].rows) == 2  # documents actual behavior
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: escaped pipes in cells not handled"
+)
+def test_table_escaped_pipes():
+    r"""GFM supports \| to include literal pipes in cells."""
+    text = r"| A \| B | C |" + "\n|---|---|\n| 1 | 2 |\n"
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].header == [r"A \| B", "C"]
+
+
+def test_table_header_only_no_data_rows():
+    """Table with only header and divider, no data rows.
+    The rows group may match empty string."""
+    text = "| A | B |\n|---|---|\n"
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].header == ["A", "B"]
+
+
+# ===================================================================
+#  Cross-cutting: CRLF line endings
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: CRLF line endings not supported in tables"
+)
+def test_table_crlf():
+    """Tables with CRLF line endings should match."""
+    text = "| A |\r\n|---|\r\n| 1 |\r\n"
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].header == ["A"]

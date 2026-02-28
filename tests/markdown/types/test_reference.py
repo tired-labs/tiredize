@@ -459,3 +459,131 @@ def test_image_reference_unicode():
     results = ImageReference.extract(text)
     assert len(results) == 1
     assert results[0].text == "日本語テスト"
+
+
+# ===================================================================
+#  Cross-type: references inside quote blocks
+# ===================================================================
+
+
+def test_reference_definition_inside_quote_block():
+    """ReferenceDefinition does not sanitize QuoteBlock.
+    The start-of-line anchor prevents matching because > precedes [."""
+    text = "> [ref]: https://example.com"
+    results = ReferenceDefinition.extract(text)
+    assert len(results) == 0
+
+
+def test_link_reference_inside_quote_block():
+    """LinkReference does not sanitize QuoteBlock.
+    The > prefix doesn't interfere with the regex, so LinkReference
+    may or may not match depending on how the lookbehind works."""
+    text = "> [text][ref]"
+    results = LinkReference.extract(text)
+    # The > and space are removed by CodeBlock sanitize but not
+    # QuoteBlock sanitize. Since LinkReference doesn't sanitize
+    # QuoteBlock, the text is unchanged. The lookbehind (?<!(!|\]))
+    # checks the char before [. The char before [ is space, which
+    # passes. So this should match as a false positive.
+    # Per GFM, link references in blockquotes ARE valid, so matching
+    # is actually correct behavior.
+    assert len(results) >= 1
+
+
+def test_image_reference_inside_quote_block():
+    """ImageReference does not sanitize QuoteBlock.
+    The > prefix doesn't interfere since the regex looks for ![ ."""
+    text = "> ![alt][ref]"
+    results = ImageReference.extract(text)
+    assert len(results) >= 1
+
+
+# ===================================================================
+#  ReferenceDefinition -- additional syntax variants
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: angle-bracket URLs not supported"
+)
+def test_reference_definition_angle_bracket_url():
+    """GFM allows <url> in reference definitions."""
+    text = "[ref]: <https://example.com>"
+    results = ReferenceDefinition.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://example.com"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: ] in label breaks match"
+)
+def test_reference_definition_label_with_bracket():
+    """GFM handles escaped ] in reference labels."""
+    text = r"[ref \] name]: https://example.com"
+    results = ReferenceDefinition.extract(text)
+    assert len(results) == 1
+
+
+# ===================================================================
+#  LinkReference -- additional syntax variants
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: ] in reference label breaks match"
+)
+def test_link_reference_label_with_bracket():
+    """GFM handles escaped ] in reference labels."""
+    text = r"[text][ref \] name]"
+    results = LinkReference.extract(text)
+    assert len(results) == 1
+
+
+# ===================================================================
+#  ImageReference -- additional syntax variants
+# ===================================================================
+
+
+def test_reference_definition_after_pipe_char():
+    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
+    Reference definition after | produces a false positive match."""
+    text = "|[ref]: https://example.com"
+    results = ReferenceDefinition.extract(text)
+    # Per GFM, |[ref]: is not a reference definition.
+    # The anchor accepts | as a valid predecessor.
+    assert len(results) == 1  # documents actual behavior
+
+
+def test_image_reference_dead_lookbehind():
+    """The lookbehind (?<!(\\])) checks whether ! is ].
+    Since ! is never ], the lookbehind always passes and provides
+    no filtering. This test confirms the lookbehind is a no-op."""
+    text = "]![alt][ref]"
+    results = ImageReference.extract(text)
+    assert len(results) == 1
+
+
+@pytest.mark.skip(
+    reason=(
+        "gfm-parity: collapsed image reference "
+        "![alt][] not handled correctly"
+    )
+)
+def test_image_reference_collapsed():
+    """GFM collapsed image reference ![alt][] should set text and
+    reference to the same value."""
+    text = "![photo][]"
+    results = ImageReference.extract(text)
+    assert len(results) == 1
+    assert results[0].text == "photo"
+    assert results[0].reference == "photo"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: ] in reference label breaks match"
+)
+def test_image_reference_label_with_bracket():
+    """GFM handles escaped ] in reference labels."""
+    text = r"![alt][ref \] name]"
+    results = ImageReference.extract(text)
+    assert len(results) == 1

@@ -259,3 +259,63 @@ def test_quoteblock_unicode_content():
     assert len(matches) == 1
     assert "Café" in matches[0].quote
     assert "日本語" in matches[0].quote
+
+
+# ===================================================================
+#  Additional syntax variant tests
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: indented block quotes not supported"
+)
+def test_quoteblock_indented():
+    """GFM allows 1-3 spaces before > in block quotes."""
+    text = "   > Indented quote"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert matches[0].quote == "Indented quote"
+
+
+def test_quoteblock_after_pipe_char():
+    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
+    > after | produces a false positive match."""
+    text = "|> Not a real quote"
+    matches = QuoteBlock.extract(text)
+    # Per GFM, |> is not a blockquote.
+    # The anchor accepts | as a valid predecessor.
+    assert len(matches) == 1  # documents actual behavior
+
+
+def test_quoteblock_depth_three():
+    """Triple-depth block quote."""
+    text = ">>> Deep quote"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert matches[0].depth == 3
+    assert matches[0].quote == "Deep quote"
+
+
+def test_quoteblock_empty_lines_between():
+    """Adjacent quote blocks separated by blank line should be
+    separate matches, not merged."""
+    text = "> First\n\n> Second"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 2
+    assert matches[0].quote == "First"
+    assert matches[1].quote == "Second"
+
+
+# ===================================================================
+#  Cross-cutting: CRLF line endings
+# ===================================================================
+
+
+def test_quoteblock_crlf_in_content():
+    """QuoteBlock regex [^\\n]* stops at \\n, so \\r would be
+    captured as part of the quote content."""
+    text = "> Quote\r\nMore text"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    # \\r is captured because [^\\n]* does not exclude \\r
+    assert matches[0].quote == "Quote\r"  # documents actual behavior

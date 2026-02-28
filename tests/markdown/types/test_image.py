@@ -342,3 +342,68 @@ def test_image_unicode_url():
     results = InlineImage.extract(text)
     assert len(results) == 1
     assert "café" in results[0].url
+
+
+# ===================================================================
+#  Cross-type: images inside quote blocks
+# ===================================================================
+
+
+def test_image_inside_quote_block():
+    """InlineImage does not sanitize QuoteBlock.
+    Per GFM, images inside blockquotes are real images.
+    InlineImage does NO sanitization at all, so this should match
+    -- but the ! may be preceded by > whitespace which doesn't
+    interfere with the regex."""
+    text = "> ![alt](https://img.com/pic.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://img.com/pic.png"
+
+
+# ===================================================================
+#  InlineImage -- additional syntax variants
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: single-quote titles not supported"
+)
+def test_image_single_quote_title():
+    """GFM allows single-quote titles in images."""
+    text = "![alt](https://img.com/pic.png 'A Title')"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].title == "A Title"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: angle-bracket URLs not supported"
+)
+def test_image_angle_bracket_url():
+    """GFM allows <url with spaces> in images."""
+    text = "![alt](<https://img.com/path with spaces.png>)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: ] in alt text breaks match"
+)
+def test_image_alt_text_with_bracket():
+    """GFM handles escaped ] in alt text."""
+    text = r"![alt \] text](https://img.com/pic.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://img.com/pic.png"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: escaped quote in title truncates match"
+)
+def test_image_escaped_quote_in_title():
+    r"""GFM handles \" inside double-quoted titles."""
+    text = r'![alt](https://img.com/pic.png "title \" here")'
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].title == r'title " here'
