@@ -1,70 +1,68 @@
 # Project Context
 
-Project-specific context for the tiredize repository.
+Project-specific context for the tiredize repository. This file is the
+primary reference for project-level overview and architecture.
+Specification files in `.context/specifications/` contain the technical
+depth.
 
 ## Project Overview
 
-Tiredize is a schema-driven markdown validation and linting tool. It parses
-markdown documents into a structured representation and runs configurable lint
-rules against them. The project is in active early development.
+**What it does:**
+Tiredize is a schema-driven markdown validation and linting tool. It
+parses markdown documents into a structured representation and runs
+configurable lint rules against them.
 
-The tool was created to enforce quality control on Technique Research Reports
-(TRRs) published by TIRED Labs, a cybersecurity research collective focused on
-adversary behavior analysis, emulation, and detection. TRRs follow a rigid
-document structure (specific sections in a specific order, required frontmatter
-fields, consistent formatting) and no existing markdown linter supported
-enforcing that kind of structural schema.
+**What problem it solves:**
+Technique Research Reports (TRRs) published by TIRED Labs follow a
+rigid document structure (specific sections in a specific order,
+required frontmatter fields, consistent formatting) and no existing
+markdown linter supported enforcing that kind of structural schema.
 
-While the primary use case is TIRED Labs documentation, tiredize is designed to
-be general-purpose. The document structure is defined via external configuration
-files so that any project with structured markdown documentation can use it.
-The tool is open-source and intended for broad adoption.
+**Who it's for:**
+Primary audience is TIRED Labs contributors and reviewers. Designed as
+general-purpose -- the document structure is defined via external
+configuration files so that any project with structured markdown
+documentation can use it. Open-source and intended for broad adoption.
 
-## Design Intent
+**Design boundaries:**
+The tool validates document structure and style, not document content.
+Structural checks (sections exist, correct order, correct level) belong
+in the schema validator. Style and formatting checks (line length,
+whitespace, link validity) belong in linter rules. Content correlation
+across sections is out of scope.
 
-The CLI accepts up to three configuration inputs, each targeting a different
-validation concern. The final configuration format is still being designed.
+## Architecture
 
-### Markdown Schema (`--markdown-schema`)
+The CLI (`tiredize/cli.py`) accepts up to three configuration inputs,
+each targeting a different validation concern. It orchestrates three
+subsystems:
 
-Defines the expected section structure of a document: which sections must be
-present, their required order, whether sections are optional or repeating, and
-section name matching (exact or regex). Intended validations include:
+1. **Markdown Parser** (`tiredize/markdown/`) -- Parses raw markdown
+   into typed dataclass elements. Owns the document model.
+   Spec: `specifications/markdown-parser.md`.
 
-- Missing required section raises an error
-- Unexpected section raises an error
-- Section appearing more times than allowed raises an error
-- Section appearing fewer times than required raises an error
+2. **Linter** (`tiredize/linter/`) -- Pluggable rule engine for style
+   and formatting checks. Owns rule discovery and execution.
+   Spec: `specifications/linter.md`.
 
-This is implemented. The schema loader (with input validation for YAML
-structure, sections list/element types, repeat bounds, and regex
-patterns), validator (ordered and unordered modes), and CLI integration
-are complete. See `.context/issues/issue-markdown-schema-validation.md`
-for full details.
+3. **Markdown Schema Validator** (`tiredize/validators/`) -- Validates
+   document structure against a YAML schema. Owns structural
+   validation. Spec: `specifications/markdown-schema-validator.md`.
 
-### Frontmatter Schema (`--frontmatter-schema`)
+**Boundary rule:** Structural checks belong in the schema validator,
+not in linter rules. Content checks belong in linter rules, not in
+the schema validator.
 
-Defines required frontmatter fields, accepted types, and accepted values. The
-goal is to make TRRs programmatically parsable for presentation via web
-frontends (e.g., Hugo) where metadata like tactics, techniques, procedures,
-and ID numbers are used for search, indexing, and display.
+**Frontmatter schema** (`--frontmatter-schema`) is a planned fourth
+concern: validating required frontmatter fields, accepted types, and
+accepted values. The handler in `cli.py` is a stub. See issue
+`frontmatter-schema.md`.
 
-This is not yet implemented (the handler in `cli.py` is a stub).
-
-### Linter Rules (`--rules`)
-
-A pluggable rule engine for style and formatting checks: line length, whitespace
-usage, link validation, list style (dash vs plus vs asterisk), table formatting,
-link style (reference vs inline), and more. Users can add custom rules by
-following the module naming convention. This subsystem is functional and is the
-most developed part of the tool.
-
-### Configuration File Strategy
-
-There is an open question about whether to consolidate all three configs into a
-single file or keep them separate. Separate files have the advantage that style
-rules can be shared across projects while schemas differ per project. This
-decision has not been finalized.
+**Configuration file strategy** is an open question: whether to
+consolidate all configs into a single file or keep them separate.
+Separate files have the advantage that style rules can be shared
+across projects while schemas differ per project. See issue
+`configuration-strategy.md`.
 
 ## Entry Point
 
@@ -74,14 +72,17 @@ decision has not been finalized.
 
 Production dependencies are declared in `pyproject.toml`:
 
-- `PyYAML` — YAML parsing (frontmatter, config files)
-- `requests` — HTTP requests (link validation)
+- `PyYAML` -- YAML parsing (frontmatter, config files)
+- `requests` -- HTTP requests (link validation)
 
-Development dependencies are installed manually (not declared in pyproject):
+Development dependencies are not declared in `pyproject.toml` and must
+be installed manually. This is a known gap -- see issue
+`tooling-migration.md`.
 
-- `pytest` — test runner
-- `pytest-cov` — coverage reporting
-- `flake8` — linter
+- `pytest` -- test runner
+- `pytest-cov` -- coverage reporting
+- `flake8` -- linter
+- `coveralls` -- coverage reporting to coveralls.io
 
 ## Project Structure
 
@@ -89,146 +90,30 @@ Development dependencies are installed manually (not declared in pyproject):
 tiredize/                  # Main package
 ├── core_types.py          # Shared dataclasses: Position, RuleResult
 ├── cli.py                 # CLI entry point (argparse)
-├── linter/                # Linting engine
-│   ├── engine.py          # Rule discovery, selection, and execution
-│   ├── rules/             # Auto-discovered rule modules
-│   │   ├── line_length.py
-│   │   ├── links.py
-│   │   ├── tabs.py
-│   │   └── trailing_whitespace.py
-│   └── utils.py           # Config helpers, URL validation
+├── linter/                # Linting engine and rule modules
+│   └── rules/             # Auto-discovered rule modules
 ├── markdown/              # Markdown parser
-│   ├── types/             # Dataclass-based element types
-│   │   ├── code.py        # CodeBlock, CodeInline
-│   │   ├── document.py    # Document (top-level container)
-│   │   ├── frontmatter.py # FrontMatter
-│   │   ├── header.py      # Header
-│   │   ├── image.py       # InlineImage
-│   │   ├── link.py        # InlineLink, BracketLink, BareLink
-│   │   ├── list.py        # List
-│   │   ├── quoteblock.py  # QuoteBlock
-│   │   ├── reference.py   # LinkReference, ImageReference, ReferenceDefinition
-│   │   ├── schema.py      # SchemaConfig, SchemaSection, load_schema
-│   │   ├── section.py     # Section
-│   │   └── table.py       # Table
-│   └── utils.py           # Regex helpers: search_all_re, sanitize_text
+│   └── types/             # Dataclass-based element types
 └── validators/            # Validation engines
-    └── markdown_schema.py # Schema validator (ordered/unordered modes)
 
 tests/                     # Mirrors source structure
-├── linter/rules/          # Engine and rule loader tests
-├── markdown/types/        # Per-type parser tests (including schema loader)
-├── validators/            # Validator tests (markdown schema)
-└── test_cases/            # Fixture data (markdown files, example rules)
+├── linter/rules/          # Engine and rule tests
+├── markdown/types/        # Per-type parser tests
+├── validators/            # Validator tests
+└── test_cases/            # Fixture data
 ```
 
-## Code Conventions
-
-### Docstrings
-
-Do not add docstrings to existing code. The project API is still stabilizing
-and documenting moving targets creates maintenance burden. Docstrings will be
-added when the interfaces are stable and the markdown module is ready for
-external consumers.
-
-### Regex Constants
-
-Regex patterns are class-level constants prefixed with `RE_` (e.g.,
-`RE_HEADER`, `RE_CODEBLOCK`) and use `re.VERBOSE` syntax.
-
-### Position Tracking
-
-All parsed elements carry a `Position(offset, length)` where `offset` is
-relative to the document root (byte 0 of the original file content). The
-`base_offset` parameter threads this through nested extraction calls.
-
-### Markdown Type Pattern
-
-Each markdown element type follows this pattern:
-
-- A frozen or mutable dataclass with a `position: Position` field
-- A class-level regex constant (`RE_*`) using `re.VERBOSE` syntax
-- A `@staticmethod extract(text: str, base_offset: int = 0) -> list[T]`
-  method that finds all instances in the given text
-- A `@staticmethod sanitize(text: str) -> str` method that replaces matched
-  regions with whitespace (preserving offsets for downstream extractors)
-
-### Sanitize Chain
-
-Extractors call `sanitize()` on higher-precedence types before running their
-own regex to avoid false matches. For example, link extraction sanitizes out
-code blocks and inline code first because a URL inside a fenced code block is
-not a rendered link.
-
-The precedence order was determined empirically by testing against GitHub's
-markdown rendering behavior. It is not yet exhaustive — edge cases remain and
-the ordering should be validated with unit tests against GitHub-Flavored
-Markdown (GFM) rendering rules.
-
-**Known gap (partially fixed):** `Table.extract()` in `section.py` was
-previously called on raw unsanitized text. This caused both false table
-matches inside code fences and catastrophic regex backtracking when code
-blocks contained long dash sequences. Fixed by computing
-`code_block_safe = CodeBlock.sanitize(string)` once in `_extract()` and
-reusing it for both `Table.extract(text=code_block_safe)` and
-`string_safe = CodeInline.sanitize(code_block_safe)`. Other extractors
-in `Section._extract()` (images, links, quoteblocks, reference
-definitions) still receive raw `string` — some do their own internal
-sanitization, but the pattern is inconsistent. A full audit of which
-extractors need pre-sanitized input has not been done.
-
-### Linter Rule Pattern
-
-Each rule is a Python module under `tiredize/linter/rules/`. Rules are
-auto-discovered at runtime. A valid rule module must:
-
-1. Be a non-private module (filename must not start with `_`)
-2. Expose a `validate(document, config) -> list[RuleResult]` function
-3. Return `RuleResult` instances with `rule_id=None` (the engine fills this in)
-
-The rule ID is derived from the module filename (e.g., `line_length.py`
-produces rule ID `line_length`).
-
-Rule configuration values are accessed through typed helpers in
-`tiredize/linter/utils.py`: `get_config_int`, `get_config_str`,
-`get_config_bool`, `get_config_dict`, `get_config_list`.
+Individual file listings are in the relevant specification files under
+`.context/specifications/`.
 
 ## CI
 
 GitHub Actions runs on every push (`.github/workflows/ci.yaml`):
 
-1. Install dependencies (`pytest`, `pytest-cov`, `flake8`)
+1. Install dependencies (`pytest`, `pytest-cov`, `flake8`, `coveralls`)
 2. Install tiredize in editable mode (`pip install -e .`)
 3. Lint with flake8
 4. Run tests with coverage
+5. Upload coverage to Coveralls
 
 A separate workflow handles publishing to TestPyPI on version tags.
-
-## TODO
-
-Tracked next steps for the project:
-
-- [ ] Investigate replacing flake8 with Ruff as the project linter
-- [x] Add missing `__init__.py` files in test subdirectories
-- [ ] Write unit tests to validate the sanitize chain precedence order
-      against GitHub-Flavored Markdown rendering rules
-- [ ] Audit all extractors in `Section._extract()` for sanitization
-      gaps. `Table.extract()` was fixed to receive sanitized input,
-      but other extractors (images, links, quoteblocks, reference
-      definitions) may also need pre-sanitized input to avoid false
-      matches inside code blocks. See "Sanitize Chain" in Code
-      Conventions for details.
-- [ ] Stress test all regex patterns in `markdown/types/` against
-      adversarial input (long strings, deeply nested constructs,
-      repeated special characters). The table divider regex had
-      catastrophic backtracking and was fixed, but other patterns
-      (particularly `RE_URL` in `link.py` which uses `\S+`) have not
-      been audited for similar vulnerabilities.
-- [ ] Migrate existing code to PEP 8 import grouping (blank lines between
-      stdlib, third-party, and local groups with section comments)
-- [x] Design and implement the markdown schema configuration format
-- [ ] Design and implement the frontmatter schema configuration format
-- [ ] Finalize the configuration file strategy (single file vs separate)
-- [ ] Fix Document._parse slug update to propagate
-      dataclasses.replace() through subsection references. Currently
-      subsections point to stale pre-replace objects.

@@ -118,6 +118,10 @@ def _load_section(raw: dict, parent_level: int) -> SchemaSection:
             f"'level' must be an integer, "
             f"got {type(level).__name__}."
         )
+    if level < 1 or level > 6:
+        raise ValueError(
+            f"Section level {level} must be between 1 and 6."
+        )
     if level <= parent_level:
         raise ValueError(
             f"Section level {level} must be greater than "
