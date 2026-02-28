@@ -32,4 +32,8 @@ unrelated files, or extend scope beyond what is specified here.
 
 ## Design Decisions
 
+- Relative URLs without a leading `.` (e.g., `sibling.md`) fall through
+  to the HTTP validation path. This is pre-existing behavior and out of
+  scope for this fix. Could be addressed in `test-coverage-audit.md`.
+
 ## Open Questions
