@@ -4,8 +4,10 @@ Status: draft
 
 ## Summary
 
-Evaluate replacing flake8 with Ruff as the project linter and migrate
-existing code to PEP 8 import grouping with section comments.
+Evaluate replacing flake8 with Ruff as the project linter, migrate
+existing code to PEP 8 import grouping with section comments, and
+declare development dependencies in `pyproject.toml` so they can be
+installed via `pip install -e ".[dev]"`.
 
 ## Acceptance Criteria
 
@@ -16,6 +18,9 @@ existing code to PEP 8 import grouping with section comments.
 - [ ] Migrate all source and test files to PEP 8 import grouping
       (blank lines between stdlib, third-party, and local groups with
       section comments)
+- [ ] Declare development dependencies in `pyproject.toml` under
+      `[project.optional-dependencies]` or `[tool.hatch.envs]` so
+      `pip install -e ".[dev]"` works
 
 ## Out of Scope
 

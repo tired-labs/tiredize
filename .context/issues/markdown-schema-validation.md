@@ -1,3 +1,5 @@
+Status: completed
+
 # Implement Markdown Schema Validation
 
 ## Summary

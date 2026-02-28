@@ -75,11 +75,14 @@ Production dependencies are declared in `pyproject.toml`:
 - `PyYAML` -- YAML parsing (frontmatter, config files)
 - `requests` -- HTTP requests (link validation)
 
-Development dependencies are installed manually (not declared in pyproject):
+Development dependencies are not declared in `pyproject.toml` and must
+be installed manually. This is a known gap -- see issue
+`tooling-migration.md`.
 
 - `pytest` -- test runner
 - `pytest-cov` -- coverage reporting
 - `flake8` -- linter
+- `coveralls` -- coverage reporting to coveralls.io
 
 ## Project Structure
 
@@ -107,9 +110,10 @@ Individual file listings are in the relevant specification files under
 
 GitHub Actions runs on every push (`.github/workflows/ci.yaml`):
 
-1. Install dependencies (`pytest`, `pytest-cov`, `flake8`)
+1. Install dependencies (`pytest`, `pytest-cov`, `flake8`, `coveralls`)
 2. Install tiredize in editable mode (`pip install -e .`)
 3. Lint with flake8
 4. Run tests with coverage
+5. Upload coverage to Coveralls
 
 A separate workflow handles publishing to TestPyPI on version tags.
