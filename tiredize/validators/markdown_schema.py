@@ -75,6 +75,19 @@ def _consume_repeating(
                doc_sections[ptr], schema_entry
            )):
         doc_section = doc_sections[ptr]
+        if (doc_section.header.level
+                != schema_entry.level):
+            results.append(RuleResult(
+                message=(
+                    f"Section "
+                    f"'{doc_section.header.title}' "
+                    f"is level "
+                    f"{doc_section.header.level}, "
+                    f"expected {schema_entry.level}"
+                ),
+                position=doc_section.header.position,
+                rule_id="schema.markdown.wrong_level",
+            ))
         _validate_ordered(
             doc_section.subsections,
             schema_entry.sections,
@@ -247,21 +260,6 @@ def _validate_ordered(
         schema_entry = schema_sections[schema_ptr]
 
         if _name_matches(doc_section, schema_entry):
-            # Check level
-            if (doc_section.header.level
-                    != schema_entry.level):
-                results.append(RuleResult(
-                    message=(
-                        f"Section "
-                        f"'{doc_section.header.title}' "
-                        f"is level "
-                        f"{doc_section.header.level}, "
-                        f"expected {schema_entry.level}"
-                    ),
-                    position=doc_section.header.position,
-                    rule_id="schema.markdown.wrong_level",
-                ))
-
             # Repeating section
             if schema_entry.repeat_min is not None:
                 count = _consume_repeating(
@@ -274,7 +272,25 @@ def _validate_ordered(
                     schema_entry, count, results
                 )
             else:
-                # Non-repeating match
+                # Non-repeating match — check level
+                if (doc_section.header.level
+                        != schema_entry.level):
+                    results.append(RuleResult(
+                        message=(
+                            f"Section "
+                            f"'{doc_section.header.title}'"
+                            f" is level "
+                            f"{doc_section.header.level},"
+                            f" expected "
+                            f"{schema_entry.level}"
+                        ),
+                        position=(
+                            doc_section.header.position
+                        ),
+                        rule_id=(
+                            "schema.markdown.wrong_level"
+                        ),
+                    ))
                 _validate_ordered(
                     doc_section.subsections,
                     schema_entry.sections,

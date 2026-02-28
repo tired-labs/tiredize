@@ -406,3 +406,44 @@ sections:
 """
     with pytest.raises(ValueError, match="Invalid regex"):
         load_schema(yaml_str)
+
+
+# --- Loader: sections field type validation ---
+
+
+def test_load_top_level_sections_not_a_list():
+    yaml_str = """
+sections: "just a string, not a list"
+"""
+    with pytest.raises(ValueError, match="list"):
+        load_schema(yaml_str)
+
+
+def test_load_top_level_sections_element_not_a_dict():
+    yaml_str = """
+sections:
+  - 42
+"""
+    with pytest.raises(ValueError, match="mapping"):
+        load_schema(yaml_str)
+
+
+def test_load_nested_sections_not_a_list():
+    yaml_str = """
+sections:
+  - name: "Root"
+    sections: "surprise"
+"""
+    with pytest.raises(ValueError, match="list"):
+        load_schema(yaml_str)
+
+
+def test_load_nested_sections_element_not_a_dict():
+    yaml_str = """
+sections:
+  - name: "Root"
+    sections:
+      - 99
+"""
+    with pytest.raises(ValueError, match="mapping"):
+        load_schema(yaml_str)

@@ -37,9 +37,10 @@ section name matching (exact or regex). Intended validations include:
 - Section appearing fewer times than required raises an error
 
 This is implemented. The schema loader (with input validation for YAML
-structure, repeat bounds, and regex patterns), validator (ordered and
-unordered modes), and CLI integration are complete. See
-`.context/issues/issue-markdown-schema-validation.md` for full details.
+structure, sections list/element types, repeat bounds, and regex
+patterns), validator (ordered and unordered modes), and CLI integration
+are complete. See `.context/issues/issue-markdown-schema-validation.md`
+for full details.
 
 ### Frontmatter Schema (`--frontmatter-schema`)
 
@@ -167,12 +168,14 @@ Markdown (GFM) rendering rules.
 **Known gap (partially fixed):** `Table.extract()` in `section.py` was
 previously called on raw unsanitized text. This caused both false table
 matches inside code fences and catastrophic regex backtracking when code
-blocks contained long dash sequences. Fixed by passing
-`CodeBlock.sanitize(string)` to `Table.extract()`. Other extractors in
-`Section._extract()` (images, links, quoteblocks, reference definitions)
-also receive raw `string` — some do their own internal sanitization, but
-the pattern is inconsistent. A full audit of which extractors need
-pre-sanitized input has not been done.
+blocks contained long dash sequences. Fixed by computing
+`code_block_safe = CodeBlock.sanitize(string)` once in `_extract()` and
+reusing it for both `Table.extract(text=code_block_safe)` and
+`string_safe = CodeInline.sanitize(code_block_safe)`. Other extractors
+in `Section._extract()` (images, links, quoteblocks, reference
+definitions) still receive raw `string` — some do their own internal
+sanitization, but the pattern is inconsistent. A full audit of which
+extractors need pre-sanitized input has not been done.
 
 ### Linter Rule Pattern
 

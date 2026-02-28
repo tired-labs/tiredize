@@ -34,17 +34,27 @@ def load_schema(yaml_string: str) -> SchemaConfig:
         raise ValueError(
             f"Schema must be a YAML mapping, got {type(raw).__name__}."
         )
+    raw_sections = raw.get('sections', [])
+    if not isinstance(raw_sections, list):
+        raise ValueError(
+            "'sections' must be a list."
+        )
     return SchemaConfig(
         allow_extra_sections=raw.get('allow_extra_sections', False),
         enforce_order=raw.get('enforce_order', True),
         sections=[
             _load_section(s, parent_level=0)
-            for s in raw.get('sections', [])
+            for s in raw_sections
         ],
     )
 
 
 def _load_section(raw: dict, parent_level: int) -> SchemaSection:
+    if not isinstance(raw, dict):
+        raise ValueError(
+            f"Each section must be a YAML mapping, "
+            f"got {type(raw).__name__}."
+        )
     name = raw.get('name')
     pattern = raw.get('pattern')
 
@@ -97,6 +107,11 @@ def _load_section(raw: dict, parent_level: int) -> SchemaSection:
             f"repeat.min ({repeat_min})."
         )
 
+    raw_sections = raw.get('sections', [])
+    if not isinstance(raw_sections, list):
+        raise ValueError(
+            "'sections' must be a list."
+        )
     return SchemaSection(
         level=level,
         name=name,
@@ -106,6 +121,6 @@ def _load_section(raw: dict, parent_level: int) -> SchemaSection:
         required=raw.get('required', True),
         sections=[
             _load_section(s, parent_level=level)
-            for s in raw.get('sections', [])
+            for s in raw_sections
         ],
     )

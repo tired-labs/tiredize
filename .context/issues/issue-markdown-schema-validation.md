@@ -255,12 +255,12 @@ None at this time.
   unordered modes when a document section matches multiple sibling
   schema entries (e.g., a catch-all pattern alongside a specific
   name). Fails fast before any validation logic runs.
-- **Full requirements coverage audit:** 42 tests in
+- **Full requirements coverage audit:** 43 tests in
   `tests/validators/test_markdown_schema.py` covering all issue
   requirements across both modes, including matching rule edge cases
-  (case sensitivity, full-match regex), undefined children, and
-  out-of-order repeating sections. 99% coverage (1 unreachable
-  defensive line).
+  (case sensitivity, full-match regex), undefined children,
+  out-of-order repeating sections, and repeating section level
+  consistency. 99% coverage (1 unreachable defensive line).
 
 - **CLI integration:** `_run_markdown_schema()` in `tiredize/cli.py`
   wired up. Reads the schema file, calls `load_schema()` and
@@ -299,11 +299,14 @@ None at this time.
 - **Schema loader hardening:** `load_schema()` now handles
   `yaml.safe_load()` returning `None` (empty string input) by
   normalizing to `{}`, and rejects non-mapping YAML (e.g., bare
-  scalars) with `ValueError`. Repeat bounds are validated for type
-  (must be int), sign (must not be negative), and consistency (max
-  must not be less than min). Regex patterns are compiled at load
-  time — invalid patterns raise `ValueError` instead of crashing
-  with `re.error` during validation. 8 new tests in
+  scalars) with `ValueError`. The `sections` field is validated to
+  be a list (at both top level and nested), and each element must be
+  a dict — both in `load_schema()` and recursively in
+  `_load_section()`. Repeat bounds are validated for type (must be
+  int), sign (must not be negative), and consistency (max must not
+  be less than min). Regex patterns are compiled at load time —
+  invalid patterns raise `ValueError` instead of crashing with
+  `re.error` during validation. 12 new tests in
   `tests/markdown/types/test_schema.py`. 100% coverage.
 
 - **Validator cleanup:** Removed unused `document` parameter from
@@ -321,6 +324,13 @@ None at this time.
   reports `out_of_order` (and consumes all consecutive matches). If
   it never appears, it reports `repeat_below_minimum` at end of
   validation. 2 new tests added.
+
+- **Repeating section level check consistency:** Previously, ordered
+  mode only checked heading level on the first occurrence of a
+  repeating section. Subsequent matches had their children validated
+  but never emitted `wrong_level`. Fixed by moving the level check
+  into `_consume_repeating` so every iteration validates heading
+  level, consistent with unordered mode behavior. 1 new test added.
 
 - **CLI encoding:** `_run_markdown_schema()` now passes
   `encoding="utf-8"` to `schema_path.read_text()` for explicit

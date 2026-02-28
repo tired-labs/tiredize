@@ -98,6 +98,8 @@ class Section:
                 title=""
             )
 
+        code_block_safe = CodeBlock.sanitize(string)
+
         section = Section(
             code_block=CodeBlock.extract(
                 text=string,
@@ -146,12 +148,10 @@ class Section:
                 base_offset=base_offset
             ),
             string=string,
-            string_safe=CodeBlock.sanitize(
-                CodeInline.sanitize(string)
-            ),
+            string_safe=CodeInline.sanitize(code_block_safe),
             subsections=[],
             tables=Table.extract(
-                text=CodeBlock.sanitize(string),
+                text=code_block_safe,
                 base_offset=base_offset
             )
         )

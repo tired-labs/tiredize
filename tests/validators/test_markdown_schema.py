@@ -1250,3 +1250,36 @@ def test_ordered_skipped_repeat_never_found():
     results = validate(doc, schema)
     rule_ids = [r.rule_id for r in results]
     assert "schema.markdown.repeat_below_minimum" in rule_ids
+
+
+# --- Repeating section level check consistency ---
+
+
+def test_ordered_repeat_wrong_level_all_occurrences():
+    doc = Document()
+    doc.load(text=(
+        "# Bestiary\n\n"
+        "## Dragon: Fire\n\n"
+        "## Dragon: Ice\n\n"
+        "## Dragon: Storm\n\n"
+    ))
+    schema = SchemaConfig(
+        sections=[
+            SchemaSection(
+                name="Bestiary",
+                sections=[
+                    SchemaSection(
+                        level=3,
+                        pattern="Dragon: .+",
+                        repeat_min=1,
+                    ),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    wrong_level = [
+        r for r in results
+        if r.rule_id == "schema.markdown.wrong_level"
+    ]
+    assert len(wrong_level) == 3
