@@ -48,6 +48,24 @@ unrelated files, or extend scope beyond what is specified here.
 - Sanitization chain audit (covered by `parser-sanitization-audit.md`)
 - Code changes beyond what is needed to fix bugs found during audit
 
+## Known Gaps Discovered Before Audit
+
+These gaps were found during other work and should be verified and
+addressed as part of the audit:
+
+- `tiredize/linter/utils.py` -- `check_url_valid()` had zero test
+  coverage prior to `fix-relative-url-resolution`. The relative URL
+  path now has 3 tests; anchor validation, HTTP validation,
+  `get_config_*` helpers, timeout handling, and connection error paths
+  remain untested (lines 20-75, 103-106, 118-144).
+- `tiredize/linter/utils.py` -- Relative URLs without a `./` or `../`
+  prefix (e.g., `sibling.md`) fall through to the HTTP branch. See
+  issue `relative-url-prefix-handling.md`.
+- `tiredize/markdown/types/schema.py` -- Level bounds validation
+  (`1 <= level <= 6`) was added as a bug fix during Copilot review
+  feedback. Four tests exist but should be reviewed for completeness
+  during the audit.
+
 ## Design Decisions
 
 ## Open Questions
