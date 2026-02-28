@@ -243,8 +243,11 @@ def test_sanitize_text_idempotent():
     text = "keep **bold** and **more** keep"
     pattern = r"\*\*[^*]+\*\*"
     first = sanitize_text(pattern, text)
+    assert "keep" in first
+    assert "and" in first
     second = sanitize_text(pattern, first)
     assert second == first
+    assert len(second) == len(text)
     assert len(second) == len(text)
 
 
