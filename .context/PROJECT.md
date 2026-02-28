@@ -36,7 +36,9 @@ section name matching (exact or regex). Intended validations include:
 - Section appearing more times than allowed raises an error
 - Section appearing fewer times than required raises an error
 
-This is not yet implemented (the handler in `cli.py` is a stub).
+This is implemented. The schema loader, validator (ordered and unordered
+modes), and CLI integration are complete. See
+`.context/issues/issue-markdown-schema-validation.md` for full details.
 
 ### Frontmatter Schema (`--frontmatter-schema`)
 
@@ -157,6 +159,16 @@ markdown rendering behavior. It is not yet exhaustive — edge cases remain and
 the ordering should be validated with unit tests against GitHub-Flavored
 Markdown (GFM) rendering rules.
 
+**Known gap (partially fixed):** `Table.extract()` in `section.py` was
+previously called on raw unsanitized text. This caused both false table
+matches inside code fences and catastrophic regex backtracking when code
+blocks contained long dash sequences. Fixed by passing
+`CodeBlock.sanitize(string)` to `Table.extract()`. Other extractors in
+`Section._extract()` (images, links, quoteblocks, reference definitions)
+also receive raw `string` — some do their own internal sanitization, but
+the pattern is inconsistent. A full audit of which extractors need
+pre-sanitized input has not been done.
+
 ### Linter Rule Pattern
 
 Each rule is a Python module under `tiredize/linter/rules/`. Rules are
@@ -192,6 +204,18 @@ Tracked next steps for the project:
 - [x] Add missing `__init__.py` files in test subdirectories
 - [ ] Write unit tests to validate the sanitize chain precedence order
       against GitHub-Flavored Markdown rendering rules
+- [ ] Audit all extractors in `Section._extract()` for sanitization
+      gaps. `Table.extract()` was fixed to receive sanitized input,
+      but other extractors (images, links, quoteblocks, reference
+      definitions) may also need pre-sanitized input to avoid false
+      matches inside code blocks. See "Sanitize Chain" in Code
+      Conventions for details.
+- [ ] Stress test all regex patterns in `markdown/types/` against
+      adversarial input (long strings, deeply nested constructs,
+      repeated special characters). The table divider regex had
+      catastrophic backtracking and was fixed, but other patterns
+      (particularly `RE_URL` in `link.py` which uses `\S+`) have not
+      been audited for similar vulnerabilities.
 - [ ] Migrate existing code to PEP 8 import grouping (blank lines between
       stdlib, third-party, and local groups with section comments)
 - [x] Design and implement the markdown schema configuration format
