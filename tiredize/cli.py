@@ -69,7 +69,7 @@ def _run_rules(
 
 
 def _run_markdown_schema(doc: Document, schema_path: Path) -> list[RuleResult]:
-    schema = load_schema(schema_path.read_text())
+    schema = load_schema(schema_path.read_text(encoding="utf-8"))
     return validate(doc, schema)
 
 

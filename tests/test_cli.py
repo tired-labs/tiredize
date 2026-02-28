@@ -284,3 +284,20 @@ def test_nonexistent_rules_path(capsys, tmp_path):
     assert result == 1
     captured = capsys.readouterr()
     assert "error:" in captured.err
+
+
+def test_invalid_regex_schema_prints_error(capsys, tmp_path):
+    doc = tmp_path / "victim.md"
+    doc.write_text("# Whatever\n")
+    schema = tmp_path / "broken_regex_schema.yaml"
+    schema.write_text(
+        "sections:\n"
+        "  - pattern: '['    \n"
+    )
+    result = main([
+        "--markdown-schema", str(schema),
+        str(doc),
+    ])
+    assert result == 1
+    captured = capsys.readouterr()
+    assert "error:" in captured.err

@@ -218,8 +218,11 @@ file:line:col: [schema.markdown.<error_type>] <message>
 ## Design Decisions
 
 - **Schema self-validation:** The loader validates the schema file
-  itself (e.g., rejects a schema with both `name` and `pattern`)
-  before running document validation, with clear error messages.
+  itself before running document validation, with clear error messages.
+  Validated constraints: `name`/`pattern` mutual exclusivity, child
+  level consistency, repeat bound types (must be int), repeat bound
+  values (must not be negative, max must not be less than min), and
+  regex pattern syntax (compiled at load time via `re.compile()`).
 
 ## Open Questions
 
@@ -252,10 +255,11 @@ None at this time.
   unordered modes when a document section matches multiple sibling
   schema entries (e.g., a catch-all pattern alongside a specific
   name). Fails fast before any validation logic runs.
-- **Full requirements coverage audit:** 40 tests in
+- **Full requirements coverage audit:** 42 tests in
   `tests/validators/test_markdown_schema.py` covering all issue
   requirements across both modes, including matching rule edge cases
-  (case sensitivity, full-match regex). 99% coverage (1 unreachable
+  (case sensitivity, full-match regex), undefined children, and
+  out-of-order repeating sections. 99% coverage (1 unreachable
   defensive line).
 
 - **CLI integration:** `_run_markdown_schema()` in `tiredize/cli.py`
@@ -285,20 +289,54 @@ None at this time.
   guards removed across `_validate_ordered`, `_consume_repeating`,
   and `_validate_unordered`. 6 new tests added.
 
-- **TRR schema created and validated:** `trr_schema.yaml` at project
-  root. Tested against all 19 TRRs in the techniques repository.
-  15 pass, 4 fail with legitimate violations (extra subsections
-  under procedure sections that aren't Detection Data Model).
-  Technical Background uses optional repeating catch-all patterns
-  (levels 3-5) to allow arbitrary depth subsections.
+- **TRR schema created and validated:** `trr_schema.yaml` in the
+  techniques repository (`~/techniques/trr_schema.yaml`). Tested
+  against all 19 TRRs. 15 pass, 4 fail with legitimate violations
+  (extra subsections under procedure sections that aren't Detection
+  Data Model). Technical Background uses optional repeating catch-all
+  patterns (levels 3-5) to allow arbitrary depth subsections.
+
+- **Schema loader hardening:** `load_schema()` now handles
+  `yaml.safe_load()` returning `None` (empty string input) by
+  normalizing to `{}`, and rejects non-mapping YAML (e.g., bare
+  scalars) with `ValueError`. Repeat bounds are validated for type
+  (must be int), sign (must not be negative), and consistency (max
+  must not be less than min). Regex patterns are compiled at load
+  time — invalid patterns raise `ValueError` instead of crashing
+  with `re.error` during validation. 8 new tests in
+  `tests/markdown/types/test_schema.py`. 100% coverage.
+
+- **Validator cleanup:** Removed unused `document` parameter from
+  internal functions `_validate_ordered`, `_consume_repeating`, and
+  `_validate_unordered`. The public `validate(document, schema)` API
+  is unchanged — it extracts root sections from the document and
+  passes only the section list to internal functions. Helper functions
+  alphabetized for readability.
+
+- **Ordered-mode out-of-order repeating sections:** Previously, when
+  the ordered validator skipped past a repeating schema entry to
+  match a later entry, it immediately emitted `repeat_below_minimum`.
+  Now skipped repeating entries are deferred to the `skipped_required`
+  list. If the repeating section appears later in the document, it
+  reports `out_of_order` (and consumes all consecutive matches). If
+  it never appears, it reports `repeat_below_minimum` at end of
+  validation. 2 new tests added.
+
+- **CLI encoding:** `_run_markdown_schema()` now passes
+  `encoding="utf-8"` to `schema_path.read_text()` for explicit
+  encoding instead of relying on platform defaults.
+
+- **CLI unit tests:** 16 tests in `tests/test_cli.py` (was 15).
+  Added test for invalid regex pattern in schema producing graceful
+  error output.
 
 ### Next
 
 - Feature complete. No remaining implementation work for the schema
   validator itself.
-- The TRR schema file (`trr_schema.yaml`) lives in the tiredize
-  repo root for now. It should eventually move to the techniques
-  repository when tiredize is added to its CI/CD pipeline.
+- The TRR schema file lives in the techniques repository
+  (`~/techniques/trr_schema.yaml`). It will be used by CI/CD when
+  tiredize is added to the techniques pipeline.
 - The 4 failing TRRs (trr0013, trr0015, trr0019, trr0020) have
   subsections under procedures that aren't Detection Data Model.
   These are true positives per the TRR format specification.

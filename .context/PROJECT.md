@@ -36,8 +36,9 @@ section name matching (exact or regex). Intended validations include:
 - Section appearing more times than allowed raises an error
 - Section appearing fewer times than required raises an error
 
-This is implemented. The schema loader, validator (ordered and unordered
-modes), and CLI integration are complete. See
+This is implemented. The schema loader (with input validation for YAML
+structure, repeat bounds, and regex patterns), validator (ordered and
+unordered modes), and CLI integration are complete. See
 `.context/issues/issue-markdown-schema-validation.md` for full details.
 
 ### Frontmatter Schema (`--frontmatter-schema`)
@@ -95,24 +96,28 @@ tiredize/                  # Main package
 │   │   ├── tabs.py
 │   │   └── trailing_whitespace.py
 │   └── utils.py           # Config helpers, URL validation
-└── markdown/              # Markdown parser
-    ├── types/             # Dataclass-based element types
-    │   ├── code.py        # CodeBlock, CodeInline
-    │   ├── document.py    # Document (top-level container)
-    │   ├── frontmatter.py # FrontMatter
-    │   ├── header.py      # Header
-    │   ├── image.py       # InlineImage
-    │   ├── link.py        # InlineLink, BracketLink, BareLink
-    │   ├── list.py        # List
-    │   ├── quoteblock.py  # QuoteBlock
-    │   ├── reference.py   # LinkReference, ImageReference, ReferenceDefinition
-    │   ├── section.py     # Section
-    │   └── table.py       # Table
-    └── utils.py           # Regex helpers: search_all_re, sanitize_text
+├── markdown/              # Markdown parser
+│   ├── types/             # Dataclass-based element types
+│   │   ├── code.py        # CodeBlock, CodeInline
+│   │   ├── document.py    # Document (top-level container)
+│   │   ├── frontmatter.py # FrontMatter
+│   │   ├── header.py      # Header
+│   │   ├── image.py       # InlineImage
+│   │   ├── link.py        # InlineLink, BracketLink, BareLink
+│   │   ├── list.py        # List
+│   │   ├── quoteblock.py  # QuoteBlock
+│   │   ├── reference.py   # LinkReference, ImageReference, ReferenceDefinition
+│   │   ├── schema.py      # SchemaConfig, SchemaSection, load_schema
+│   │   ├── section.py     # Section
+│   │   └── table.py       # Table
+│   └── utils.py           # Regex helpers: search_all_re, sanitize_text
+└── validators/            # Validation engines
+    └── markdown_schema.py # Schema validator (ordered/unordered modes)
 
 tests/                     # Mirrors source structure
 ├── linter/rules/          # Engine and rule loader tests
-├── markdown/types/        # Per-type parser tests
+├── markdown/types/        # Per-type parser tests (including schema loader)
+├── validators/            # Validator tests (markdown schema)
 └── test_cases/            # Fixture data (markdown files, example rules)
 ```
 

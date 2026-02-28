@@ -1187,3 +1187,66 @@ def test_out_of_order_undefined_children_rejected():
     rule_ids = [r.rule_id for r in results]
     assert "schema.markdown.out_of_order" in rule_ids
     assert "schema.markdown.unexpected_section" in rule_ids
+
+
+# --- Skipped repeating entries in ordered mode ---
+
+
+def test_ordered_skipped_repeat_found_later_out_of_order():
+    doc = Document()
+    doc.load(text=(
+        "# Cookbook\n\n"
+        "## Desserts\n\n"
+        "## Recipe A: Pancakes\n\n"
+        "## Recipe B: Waffles\n\n"
+    ))
+    schema = SchemaConfig(
+        sections=[
+            SchemaSection(
+                name="Cookbook",
+                sections=[
+                    SchemaSection(
+                        level=2,
+                        pattern="Recipe [A-Z]: .+",
+                        repeat_min=1,
+                    ),
+                    SchemaSection(
+                        level=2,
+                        name="Desserts",
+                    ),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    rule_ids = [r.rule_id for r in results]
+    assert "schema.markdown.out_of_order" in rule_ids
+
+
+def test_ordered_skipped_repeat_never_found():
+    doc = Document()
+    doc.load(text=(
+        "# Cookbook\n\n"
+        "## Desserts\n\n"
+    ))
+    schema = SchemaConfig(
+        sections=[
+            SchemaSection(
+                name="Cookbook",
+                sections=[
+                    SchemaSection(
+                        level=2,
+                        pattern="Recipe [A-Z]: .+",
+                        repeat_min=1,
+                    ),
+                    SchemaSection(
+                        level=2,
+                        name="Desserts",
+                    ),
+                ],
+            )
+        ]
+    )
+    results = validate(doc, schema)
+    rule_ids = [r.rule_id for r in results]
+    assert "schema.markdown.repeat_below_minimum" in rule_ids

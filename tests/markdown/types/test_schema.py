@@ -318,3 +318,91 @@ sections:
 """
     with pytest.raises(ValueError):
         load_schema(yaml_str)
+
+
+# --- Loader: None / non-dict handling ---
+
+
+def test_load_empty_string():
+    config = load_schema("")
+    assert config.sections == []
+    assert config.enforce_order is True
+    assert config.allow_extra_sections is False
+
+
+def test_load_scalar_rejected():
+    with pytest.raises(ValueError, match="YAML mapping"):
+        load_schema("42")
+
+
+# --- Loader: repeat bound validation ---
+
+
+def test_load_repeat_min_negative():
+    yaml_str = """
+sections:
+  - name: "Cursed"
+    repeat:
+      min: -1
+"""
+    with pytest.raises(ValueError, match="negative"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_max_negative():
+    yaml_str = """
+sections:
+  - name: "Doomed"
+    repeat:
+      min: 0
+      max: -5
+"""
+    with pytest.raises(ValueError, match="negative"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_min_non_integer():
+    yaml_str = """
+sections:
+  - name: "Confused"
+    repeat:
+      min: "three"
+"""
+    with pytest.raises(ValueError, match="integer"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_max_non_integer():
+    yaml_str = """
+sections:
+  - name: "Baffled"
+    repeat:
+      min: 1
+      max: "plenty"
+"""
+    with pytest.raises(ValueError, match="integer"):
+        load_schema(yaml_str)
+
+
+def test_load_repeat_max_less_than_min():
+    yaml_str = """
+sections:
+  - name: "Backwards"
+    repeat:
+      min: 5
+      max: 2
+"""
+    with pytest.raises(ValueError, match="less than"):
+        load_schema(yaml_str)
+
+
+# --- Loader: regex pattern validation ---
+
+
+def test_load_invalid_regex_pattern():
+    yaml_str = """
+sections:
+  - pattern: "["
+"""
+    with pytest.raises(ValueError, match="Invalid regex"):
+        load_schema(yaml_str)
