@@ -1,4 +1,9 @@
-Status: draft
+Status: active
+Sub-issues:
+  - test-coverage-markdown-types.md
+  - test-coverage-markdown-utils.md
+  - test-coverage-linter-rules.md
+  - test-coverage-linter-utils-engine.md
 
 # Test Coverage Audit for Linter and Markdown Packages
 
@@ -9,32 +14,37 @@ completeness. The original tests were written manually without
 systematic coverage analysis. This issue ensures every code path has
 proper base case, edge case, and boundary coverage.
 
+This is a parent issue. The work is split into four sub-issues. This
+issue is not closed until all sub-issues are complete and every test
+file in the linter and markdown packages has been reviewed.
+
+## Sub-Issues
+
+- `test-coverage-markdown-types.md` -- Element type tests: new test
+  files for links, references, list stub; sanitize method tests;
+  cross-type interaction tests; review of all existing element type
+  test files
+- `test-coverage-markdown-utils.md` -- Direct tests for search_all_re
+  and sanitize_text
+- `test-coverage-linter-rules.md` -- Full test suites for links, tabs,
+  trailing_whitespace rules; CRLF gap in line_length; review of
+  existing engine and loader tests
+- `test-coverage-linter-utils-engine.md` -- Config helper tests;
+  check_url_valid anchor/HTTP paths; engine gaps; review of existing
+  relative URL tests
+
 ## Acceptance Criteria
 
-- [ ] Audit `tiredize/markdown/types/` tests -- for each element type,
-      verify tests cover: basic extraction, multiple matches, no
-      matches, edge cases (empty input, malformed syntax, nested
-      constructs), and sanitize method correctness
-- [ ] Audit `tiredize/markdown/utils.py` tests -- verify
-      `search_all_re`, `get_position_from_match`, and `sanitize_text`
-      have base case, edge case, and error path coverage
-- [ ] Audit `tiredize/markdown/types/document.py` tests -- verify
-      `Document.load()`, `Document.line_col()`, and `_parse()` cover
-      file loading, text loading, empty documents, and position
-      accuracy
-- [ ] Audit `tiredize/linter/engine.py` tests -- verify `run_linter`
-      and `_select_rules` cover: no rules, all rules, subset of
-      rules, invalid rule IDs, empty configs, None configs
-- [ ] Audit `tiredize/linter/rules/` tests -- for each rule module,
-      verify tests cover: violation detected, no violation, boundary
-      values, missing config keys, wrong config types
-- [ ] Audit `tiredize/linter/utils.py` tests -- verify config helpers
-      cover: correct type, wrong type, missing key; verify
-      `check_url_valid` covers: anchors, relative paths, HTTP URLs,
-      timeouts, connection errors
-- [ ] Run coverage and identify untested lines; add tests or document
-      why lines are unreachable
+- [ ] All four sub-issues completed
+- [ ] Every existing test file in `tests/linter/` and
+      `tests/markdown/` has been reviewed for completeness and updated
+      where gaps were found (not just new test files -- existing tests
+      must be audited too)
+- [ ] 100% coverage across `tiredize/linter/` and
+      `tiredize/markdown/`, or documented exclusions for unreachable
+      lines
 - [ ] Fix any bugs discovered during the audit
+- [ ] Final coverage report comparing before and after
 
 ## Out of Scope
 
@@ -68,10 +78,17 @@ addressed as part of the audit:
 
 ## Design Decisions
 
-## Open Questions
+- Tests are written to match specification behavior, not current code
+  behavior. If code doesn't match the spec, fix the code as part of
+  this audit (within the "fix bugs found during audit" criterion).
+- Target is 100% coverage with documented exclusions for unreachable
+  lines. No lower bar.
+- Full test suites for undertested rule modules, not just gap-filling.
+- HTTP mocking uses `unittest.mock` (standard library), no new
+  dependencies.
+- Cross-type interaction tests in the markdown types sub-issue
+  document actual parser behavior. False positives caused by missing
+  sanitization are asserted with comments noting the known gap, not
+  fixed (sanitization fixes belong in `parser-sanitization-audit.md`).
 
-- Should tests that are found missing be written to match the existing
-  code behavior (characterization tests), or should they be written to
-  match the intended behavior from the specifications?
-- What is the target coverage threshold? 100% with documented
-  exclusions, or a lower bar?
+## Open Questions
