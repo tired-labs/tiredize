@@ -35,10 +35,12 @@ section name matching (exact or regex). Intended validations include:
 - Unexpected section raises an error
 - Section appearing more times than allowed raises an error
 - Section appearing fewer times than required raises an error
-- Sections can require specific child elements (tables, lists, etc.)
-- Tables and lists within sections can enforce required keys/values/items
 
-This is not yet implemented (the handler in `cli.py` is a stub).
+This is implemented. The schema loader (with input validation for YAML
+structure, sections list/element types, repeat bounds, and regex
+patterns), validator (ordered and unordered modes), and CLI integration
+are complete. See `.context/issues/issue-markdown-schema-validation.md`
+for full details.
 
 ### Frontmatter Schema (`--frontmatter-schema`)
 
@@ -95,24 +97,28 @@ tiredize/                  # Main package
 │   │   ├── tabs.py
 │   │   └── trailing_whitespace.py
 │   └── utils.py           # Config helpers, URL validation
-└── markdown/              # Markdown parser
-    ├── types/             # Dataclass-based element types
-    │   ├── code.py        # CodeBlock, CodeInline
-    │   ├── document.py    # Document (top-level container)
-    │   ├── frontmatter.py # FrontMatter
-    │   ├── header.py      # Header
-    │   ├── image.py       # InlineImage
-    │   ├── link.py        # InlineLink, BracketLink, BareLink
-    │   ├── list.py        # List
-    │   ├── quoteblock.py  # QuoteBlock
-    │   ├── reference.py   # LinkReference, ImageReference, ReferenceDefinition
-    │   ├── section.py     # Section
-    │   └── table.py       # Table
-    └── utils.py           # Regex helpers: search_all_re, sanitize_text
+├── markdown/              # Markdown parser
+│   ├── types/             # Dataclass-based element types
+│   │   ├── code.py        # CodeBlock, CodeInline
+│   │   ├── document.py    # Document (top-level container)
+│   │   ├── frontmatter.py # FrontMatter
+│   │   ├── header.py      # Header
+│   │   ├── image.py       # InlineImage
+│   │   ├── link.py        # InlineLink, BracketLink, BareLink
+│   │   ├── list.py        # List
+│   │   ├── quoteblock.py  # QuoteBlock
+│   │   ├── reference.py   # LinkReference, ImageReference, ReferenceDefinition
+│   │   ├── schema.py      # SchemaConfig, SchemaSection, load_schema
+│   │   ├── section.py     # Section
+│   │   └── table.py       # Table
+│   └── utils.py           # Regex helpers: search_all_re, sanitize_text
+└── validators/            # Validation engines
+    └── markdown_schema.py # Schema validator (ordered/unordered modes)
 
 tests/                     # Mirrors source structure
 ├── linter/rules/          # Engine and rule loader tests
-├── markdown/types/        # Per-type parser tests
+├── markdown/types/        # Per-type parser tests (including schema loader)
+├── validators/            # Validator tests (markdown schema)
 └── test_cases/            # Fixture data (markdown files, example rules)
 ```
 
@@ -159,6 +165,18 @@ markdown rendering behavior. It is not yet exhaustive — edge cases remain and
 the ordering should be validated with unit tests against GitHub-Flavored
 Markdown (GFM) rendering rules.
 
+**Known gap (partially fixed):** `Table.extract()` in `section.py` was
+previously called on raw unsanitized text. This caused both false table
+matches inside code fences and catastrophic regex backtracking when code
+blocks contained long dash sequences. Fixed by computing
+`code_block_safe = CodeBlock.sanitize(string)` once in `_extract()` and
+reusing it for both `Table.extract(text=code_block_safe)` and
+`string_safe = CodeInline.sanitize(code_block_safe)`. Other extractors
+in `Section._extract()` (images, links, quoteblocks, reference
+definitions) still receive raw `string` — some do their own internal
+sanitization, but the pattern is inconsistent. A full audit of which
+extractors need pre-sanitized input has not been done.
+
 ### Linter Rule Pattern
 
 Each rule is a Python module under `tiredize/linter/rules/`. Rules are
@@ -194,8 +212,23 @@ Tracked next steps for the project:
 - [x] Add missing `__init__.py` files in test subdirectories
 - [ ] Write unit tests to validate the sanitize chain precedence order
       against GitHub-Flavored Markdown rendering rules
+- [ ] Audit all extractors in `Section._extract()` for sanitization
+      gaps. `Table.extract()` was fixed to receive sanitized input,
+      but other extractors (images, links, quoteblocks, reference
+      definitions) may also need pre-sanitized input to avoid false
+      matches inside code blocks. See "Sanitize Chain" in Code
+      Conventions for details.
+- [ ] Stress test all regex patterns in `markdown/types/` against
+      adversarial input (long strings, deeply nested constructs,
+      repeated special characters). The table divider regex had
+      catastrophic backtracking and was fixed, but other patterns
+      (particularly `RE_URL` in `link.py` which uses `\S+`) have not
+      been audited for similar vulnerabilities.
 - [ ] Migrate existing code to PEP 8 import grouping (blank lines between
       stdlib, third-party, and local groups with section comments)
-- [ ] Design and implement the markdown schema configuration format
+- [x] Design and implement the markdown schema configuration format
 - [ ] Design and implement the frontmatter schema configuration format
 - [ ] Finalize the configuration file strategy (single file vs separate)
+- [ ] Fix Document._parse slug update to propagate
+      dataclasses.replace() through subsection references. Currently
+      subsections point to stale pre-replace objects.

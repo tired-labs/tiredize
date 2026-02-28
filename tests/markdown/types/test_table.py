@@ -175,6 +175,49 @@ def test_five_tables_repeated():
         )
 
 
+# --- Regression: backtracking and code block content ---
+
+
+def test_long_dashes_no_backtracking():
+    """Long dash sequences without pipes must not cause backtracking."""
+    text = (
+        "Some heading context\n"
+        " " + "-" * 50 + "\n"
+        "More text after the dashes.\n"
+    )
+    results = Table.extract(text)
+    assert len(results) == 0
+
+
+def test_dashes_inside_code_block_text():
+    """Table regex must not match table-like content inside code fences."""
+    text = (
+        "# Results\n\n"
+        "```text\n"
+        " SignerCertificate Status Path\n"
+        " ----------------- ------ ----\n"
+        " D8FB0CC66A08061B Valid mshta.exe\n"
+        "```\n"
+    )
+    results = Table.extract(text)
+    assert len(results) == 0
+
+
+def test_aligned_divider():
+    """Colon-aligned dividers should still be recognized as tables."""
+    text = (
+        "| Left | Center | Right |\n"
+        "|:-----|:------:|------:|\n"
+        "| a    | b      | c     |\n"
+    )
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].divider == [":-----", ":------:", "------:"]
+
+
+# --- Original tests ---
+
+
 def test_vomit_table():
     actual_rows: list[str] = [
         "| A | B",
