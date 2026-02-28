@@ -179,8 +179,10 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       Regex only handles backtick fences.
 - [x] Closing fence with trailing spaces (`` ``` ``) -- not matched.
       Backreference `\1` requires exact delimiter match.
-- [x] Closing fence with MORE backticks than opening -- not matched.
-      GFM allows closing fence >= opening length; `\1` demands exact.
+- [x] Closing fence with MORE backticks than opening -- investigated
+      and found to match. The regex engine finds the `\1` backreference
+      as a substring within the longer closing fence. Prediction was
+      wrong. Test documents actual (correct) behavior.
 - [x] Indented code fences (1-3 spaces before `` ``` ``) -- not
       matched. Start-of-line anchor requires no leading whitespace.
 - [x] Empty code block (zero content lines: `` ```\n``` ``) -- not

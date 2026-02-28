@@ -557,8 +557,9 @@ def test_reference_definition_after_pipe_char():
 def test_image_reference_dead_lookbehind():
     """The lookbehind (?<!(\\])) checks whether ! is ].
     Since ! is never ], the lookbehind always passes and provides
-    no filtering. This test confirms the lookbehind is a no-op."""
-    text = "]![alt][ref]"
+    no filtering. This test confirms the lookbehind is a no-op
+    by verifying it doesn't filter even with ]] preceding !."""
+    text = "]]![alt][ref]"
     results = ImageReference.extract(text)
     assert len(results) == 1
 

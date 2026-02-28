@@ -271,8 +271,9 @@ def test_line_col_offset_beyond_length():
     doc = Document()
     doc.load(text="Hello\nWorld\n")
     line, col = doc.line_col(9999)
-    # Should clamp to len("Hello\nWorld\n") = 12
-    assert line >= 1
+    # Clamped to len("Hello\nWorld\n") = 12, which is line 3, col 0
+    assert line == 3
+    assert col == 0
 
 
 def test_line_col_zero_length_document():
@@ -298,7 +299,7 @@ def test_document_load_twice_replaces_state():
     assert len(doc.sections) >= 1
     assert doc.sections[0].header.title == "Second"
     # Confirm it didn't accumulate sections from first load
-    assert len(doc.sections) == first_sections or len(doc.sections) >= 1
+    assert len(doc.sections) == first_sections
 
 
 # --- Unicode ---
