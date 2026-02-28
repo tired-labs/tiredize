@@ -1,4 +1,4 @@
-Status: ready
+Status: active
 Parent: test-coverage-audit.md
 
 # Test Coverage: Markdown Utils
@@ -11,37 +11,37 @@ test coverage audit (`test-coverage-audit.md`).
 
 ## Acceptance Criteria
 
-- [ ] `tests/markdown/test_utils.py` -- direct tests for
+- [x] `tests/markdown/test_utils.py` -- direct tests for
       `search_all_re` covering: basic pattern match, multiple matches,
       no matches, empty string, re.VERBOSE syntax with comments
-- [ ] `tests/markdown/test_utils.py` -- direct tests for
+- [x] `tests/markdown/test_utils.py` -- direct tests for
       `sanitize_text` covering: single match replaced with whitespace,
       multiple matches, no matches, empty string, verify string length
       is preserved after sanitization
 ### Boundary and degenerate inputs (audit point 6)
 
-- [ ] `search_all_re` with single-character input, input that is
+- [x] `search_all_re` with single-character input, input that is
       entirely one match, input with overlapping potential matches
-- [ ] `sanitize_text` with input where the entire string matches the
+- [x] `sanitize_text` with input where the entire string matches the
       pattern, input with adjacent back-to-back matches
 
 ### Idempotency (audit point 7)
 
-- [ ] `sanitize_text` called twice with the same pattern and text --
+- [x] `sanitize_text` called twice with the same pattern and text --
       verify result is identical to a single call and string length is
       still preserved
 
 ### Unicode and non-ASCII (audit point 9)
 
-- [ ] `search_all_re` with pattern matching non-ASCII content (emoji,
+- [x] `search_all_re` with pattern matching non-ASCII content (emoji,
       accented characters) -- verify match positions are correct
-- [ ] `sanitize_text` replacing a match containing multi-byte
+- [x] `sanitize_text` replacing a match containing multi-byte
       characters -- verify length is preserved in characters (Python
       str length), not bytes
 
 ### Coverage target
 
-- [ ] 100% coverage on `tiredize/markdown/utils.py`, excluding
+- [x] 100% coverage on `tiredize/markdown/utils.py`, excluding
       `get_position_from_match` (dead code, tracked by
       `dead-code-cleanup.md`)
 
