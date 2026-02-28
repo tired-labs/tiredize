@@ -101,8 +101,8 @@ exceptions; all failures are returned in the tuple. Handles three URL
 types:
 
 - `#anchor` -- checks against `document.sections[*].header.slug`.
-- `./relative` -- resolves relative to `document.path` and checks
-  file existence.
+- `./relative` -- resolves relative to the document's directory
+  (`document.path.parent`) and checks file existence.
 - `http(s)://` -- makes an HTTP request with the given options.
 
 ## File Layout
