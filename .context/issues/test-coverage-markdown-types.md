@@ -17,29 +17,29 @@ the test coverage audit (`test-coverage-audit.md`).
 
 ### New test files (zero coverage today)
 
-- [ ] `tests/markdown/types/test_link.py` -- BareLink, BracketLink,
+- [x] `tests/markdown/types/test_link.py` -- BareLink, BracketLink,
       InlineLink (see test matrix below)
-- [ ] `tests/markdown/types/test_reference.py` -- ReferenceDefinition,
+- [x] `tests/markdown/types/test_reference.py` -- ReferenceDefinition,
       LinkReference, ImageReference (see test matrix below)
-- [ ] `tests/markdown/types/test_list.py` -- stub behavior tests
+- [x] `tests/markdown/types/test_list.py` -- stub behavior tests
       confirming List.extract() returns empty list (not yet implemented)
 
 ### Sanitize method coverage (no direct tests today)
 
-- [ ] Direct sanitize() tests for: Header, FrontMatter, Table,
+- [x] Direct sanitize() tests for: Header, FrontMatter, Table,
       BareLink, BracketLink, InlineLink, ReferenceDefinition,
       LinkReference, ImageReference. Each test verifies matched regions
       are replaced with whitespace and total string length is preserved.
 
 ### Edge case coverage (partially tested today)
 
-- [ ] FrontMatter.extract() with malformed YAML (lines 52-53:
+- [x] FrontMatter.extract() with malformed YAML (lines 52-53:
       exception handler path)
-- [ ] Header.slugify_header() with empty title (line 96: fallback to
+- [x] Header.slugify_header() with empty title (line 96: fallback to
       "section")
-- [ ] Section.extract() with no headers in text (lines 51-60: creates
+- [x] Section.extract() with no headers in text (lines 51-60: creates
       single section with full text)
-- [ ] Document.line_col() with negative offset and offset beyond
+- [x] Document.line_col() with negative offset and offset beyond
       document length (lines 44, 47: bounds clamping)
 
 ### Cross-type interaction tests
@@ -51,119 +51,119 @@ what GitHub-Flavored Markdown renders, note it in a comment but do not
 fix the parser (sanitization chain fixes belong in
 `parser-sanitization-audit.md`).
 
-- [ ] **Links inside code blocks** -- InlineLink, BracketLink,
+- [x] **Links inside code blocks** -- InlineLink, BracketLink,
       BareLink, LinkReference inside a fenced code block. Verify links
       that do internal sanitization correctly exclude these. Verify
       links that don't sanitize (if any) produce false positives and
       document the behavior.
-- [ ] **Links inside inline code** -- `[text](url)`, `<url>`,
+- [x] **Links inside inline code** -- `[text](url)`, `<url>`,
       `http://...`, `[text][ref]` inside backtick spans. Same
       verification as above.
-- [ ] **Links inside quote blocks** -- Links inside `> ` prefixed
+- [x] **Links inside quote blocks** -- Links inside `> ` prefixed
       lines. In rendered markdown these ARE real links. Verify whether
       the parser extracts them. Document behavior either way.
-- [ ] **Links inside tables** -- Links in table cells. In rendered
+- [x] **Links inside tables** -- Links in table cells. In rendered
       markdown these ARE real links. Verify extraction behavior.
-- [ ] **Images vs links** -- Verify `![alt](url)` is NOT extracted as
+- [x] **Images vs links** -- Verify `![alt](url)` is NOT extracted as
       an InlineLink (negative lookbehind `(?<!!)` must work). Verify
       `[text](url)` is NOT extracted as an InlineImage. Test adjacent
       placement: `![img](a.png)[link](b.html)`.
-- [ ] **Images inside code blocks** -- `![alt](url)` inside fenced
+- [x] **Images inside code blocks** -- `![alt](url)` inside fenced
       code block. InlineImage does NO sanitization; verify whether it
       produces a false positive.
-- [ ] **Images inside inline code** -- Same test with backtick spans.
+- [x] **Images inside inline code** -- Same test with backtick spans.
       InlineImage does no sanitization; verify behavior.
-- [ ] **Images inside quote blocks** -- `![alt](url)` inside `> `
+- [x] **Images inside quote blocks** -- `![alt](url)` inside `> `
       lines. InlineImage does no sanitization; verify behavior.
-- [ ] **References inside code blocks** -- `[text][ref]` and
+- [x] **References inside code blocks** -- `[text][ref]` and
       `[ref]: url` inside fenced code blocks. ReferenceDefinition and
       LinkReference only sanitize CodeBlock; verify this works.
-- [ ] **References inside inline code** -- Same test with backtick
+- [x] **References inside inline code** -- Same test with backtick
       spans. These extractors do NOT sanitize CodeInline; verify
       whether false positives occur.
-- [ ] **References inside quote blocks** -- Reference definitions and
+- [x] **References inside quote blocks** -- Reference definitions and
       link references inside `> ` lines. These extractors do NOT
       sanitize QuoteBlock; verify behavior.
-- [ ] **Image references inside code blocks** -- `![alt][ref]` inside
+- [x] **Image references inside code blocks** -- `![alt][ref]` inside
       fenced code blocks. ImageReference only sanitizes CodeBlock;
       verify this works.
-- [ ] **Image references inside inline code** -- Same test with
+- [x] **Image references inside inline code** -- Same test with
       backtick spans. ImageReference does NOT sanitize CodeInline;
       verify behavior.
-- [ ] **Nested code** -- Inline code inside a fenced code block.
+- [x] **Nested code** -- Inline code inside a fenced code block.
       Fenced code block inside inline backticks (edge case). Verify
       neither produces false matches.
-- [ ] **FrontMatter containing element-like syntax** -- YAML
+- [x] **FrontMatter containing element-like syntax** -- YAML
       frontmatter with values that look like links, images, code
       blocks, or headers. Verify FrontMatter.extract() handles these
       and other extractors don't match inside frontmatter.
 
 ### Review existing tests for completeness
 
-- [ ] Review `test_codeblock.py` -- verify CodeBlock extract and
+- [x] Review `test_codeblock.py` -- verify CodeBlock extract and
       sanitize cover edge cases (empty input, nested backticks,
       unclosed fence, language tag variations). Add missing tests.
-- [ ] Review `test_codeinline.py` -- verify CodeInline extract and
+- [x] Review `test_codeinline.py` -- verify CodeInline extract and
       sanitize cover edge cases (empty backticks, adjacent backticks,
       escaped backticks). Add missing tests.
-- [ ] Review `test_frontmatter.py` -- verify extraction covers all
+- [x] Review `test_frontmatter.py` -- verify extraction covers all
       paths. Add missing tests beyond the malformed YAML case above.
-- [ ] Review `test_header.py` -- verify extraction and slugification
+- [x] Review `test_header.py` -- verify extraction and slugification
       cover edge cases (special characters in titles, duplicate slug
       generation, trailing whitespace). Add missing tests.
-- [ ] Review `test_image.py` -- verify InlineImage extract covers
+- [x] Review `test_image.py` -- verify InlineImage extract covers
       edge cases (empty alt text, URLs with spaces, missing closing
       paren). Add missing tests.
-- [ ] Review `test_quoteblock.py` -- verify QuoteBlock extract covers
+- [x] Review `test_quoteblock.py` -- verify QuoteBlock extract covers
       edge cases (varying depth levels `>>`, `>>>`, empty quote lines,
       adjacent quote blocks). Add missing tests.
-- [ ] Review `test_section.py` -- verify section tree building covers
+- [x] Review `test_section.py` -- verify section tree building covers
       all hierarchy scenarios. Add missing tests.
-- [ ] Review `test_table.py` -- verify extraction covers edge cases
+- [x] Review `test_table.py` -- verify extraction covers edge cases
       (single column, empty cells, tables with only a header row). Add
       missing tests.
-- [ ] Review `test_document.py` -- verify Document.load() and
+- [x] Review `test_document.py` -- verify Document.load() and
       line_col() cover all paths. Add missing tests.
-- [ ] Review `test_schema.py` -- verify load_schema() and data model
+- [x] Review `test_schema.py` -- verify load_schema() and data model
       tests are complete (already at 100% but check for logical gaps).
       Add missing tests.
 
 ### Boundary and degenerate inputs
 
-- [ ] For every extract() method: empty string, single-character input,
+- [x] For every extract() method: empty string, single-character input,
       input that is entirely one match, input with no trailing newline
-- [ ] For every sanitize() method: empty string, single-character input,
+- [x] For every sanitize() method: empty string, single-character input,
       input where the entire string matches the pattern
 
 ### Idempotency
 
-- [ ] For every sanitize() method: `sanitize(sanitize(text))` produces
+- [x] For every sanitize() method: `sanitize(sanitize(text))` produces
       the same result as `sanitize(text)` and preserves string length.
       Critical because the sanitization chain applies multiple sanitize
       calls sequentially.
-- [ ] For extract() methods that build state (Section.extract tree
+- [x] For extract() methods that build state (Section.extract tree
       building): calling extract twice on the same input produces
       identical results
 
 ### State mutation
 
-- [ ] Section.extract() does not mutate the input text string
-- [ ] Section._extract() does not corrupt shared state between
+- [x] Section.extract() does not mutate the input text string
+- [x] Section._extract() does not corrupt shared state between
       sibling sections during tree building
-- [ ] Document.load() called twice on the same Document -- verify
+- [x] Document.load() called twice on the same Document -- verify
       second call cleanly replaces state rather than accumulating
 
 ### Unicode and non-ASCII
 
-- [ ] Headers with emoji and accented characters -- verify position
+- [x] Headers with emoji and accented characters -- verify position
       offsets and slugification are correct
-- [ ] Links with unicode in text and URL -- verify extraction and
+- [x] Links with unicode in text and URL -- verify extraction and
       position tracking
-- [ ] Images with unicode alt text -- verify extraction
-- [ ] Table cells with non-ASCII content -- verify extraction
-- [ ] Code blocks containing non-ASCII -- verify sanitize preserves
+- [x] Images with unicode alt text -- verify extraction
+- [x] Table cells with non-ASCII content -- verify extraction
+- [x] Code blocks containing non-ASCII -- verify sanitize preserves
       correct string length (characters, not bytes)
-- [ ] FrontMatter with unicode YAML values -- verify extraction
+- [x] FrontMatter with unicode YAML values -- verify extraction
 
 ### Syntax variant coverage (regex audit)
 
@@ -175,178 +175,185 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 
 #### CodeBlock
 
-- [ ] Tilde-fenced code blocks (`~~~content~~~`) -- not matched.
+- [x] Tilde-fenced code blocks (`~~~content~~~`) -- not matched.
       Regex only handles backtick fences.
-- [ ] Closing fence with trailing spaces (`` ``` ``) -- not matched.
+- [x] Closing fence with trailing spaces (`` ``` ``) -- not matched.
       Backreference `\1` requires exact delimiter match.
-- [ ] Closing fence with MORE backticks than opening -- not matched.
+- [x] Closing fence with MORE backticks than opening -- not matched.
       GFM allows closing fence >= opening length; `\1` demands exact.
-- [ ] Indented code fences (1-3 spaces before `` ``` ``) -- not
+- [x] Indented code fences (1-3 spaces before `` ``` ``) -- not
       matched. Start-of-line anchor requires no leading whitespace.
-- [ ] Empty code block (zero content lines: `` ```\n``` ``) -- not
+- [x] Empty code block (zero content lines: `` ```\n``` ``) -- not
       matched. Pattern requires `\n` before closing fence but no
       content newline exists.
-- [ ] Code fence after `|` character -- false positive match. The
+- [x] Code fence after `|` character -- false positive match. The
       `(?<![^|\n])` anchor treats `|` as valid start-of-line.
 
 #### CodeInline
 
-- [ ] Double-backtick inline code (``` `` code `` ```) -- not matched.
+- [x] Double-backtick inline code (``` `` code `` ```) -- not matched.
       Pattern only handles single-backtick delimiters.
-- [ ] Triple-backtick inline code -- same issue as double.
-- [ ] Inline code containing a single backtick (use multi-backtick
+- [x] Triple-backtick inline code -- same issue as double.
+- [x] Inline code containing a single backtick (use multi-backtick
       wrapper) -- incorrectly parsed, wrong boundaries.
-- [ ] Inline code spanning multiple lines (`` `foo\nbar` ``) -- not
+- [x] Inline code spanning multiple lines (`` `foo\nbar` ``) -- not
       matched. Character class `[^\n`]` excludes newlines.
-- [ ] CRLF: `\r` not excluded from content -- captured in code field
+- [x] CRLF: `\r` not excluded from content -- captured in code field
       when intent is to prevent line-crossing.
 
 #### Header
 
-- [ ] Closing hashes (`# Heading #`, `## Heading ##`) -- trailing
+- [x] Closing hashes (`# Heading #`, `## Heading ##`) -- trailing
       `#` characters captured as part of title text.
-- [ ] Empty heading (`# ` with only whitespace after hash) -- not
+- [x] Empty heading (`# ` with only whitespace after hash) -- not
       matched. `[^\n]+` requires at least one content character after
       `\s+` consumes the space.
-- [ ] Leading spaces (1-3 before `#`: `   # Heading`) -- not matched.
+- [x] Leading spaces (1-3 before `#`: `   # Heading`) -- not matched.
       Start-of-line anchor requires `#` immediately after newline.
-- [ ] Setext headings (`Heading\n=======`) -- not matched. Parser
+- [x] Setext headings (`Heading\n=======`) -- not matched. Parser
       only handles ATX-style. Document as unsupported.
-- [ ] Header after `|` character -- false positive match via
+- [x] Header after `|` character -- false positive match via
       `(?<![^|\n])` anchor.
-- [ ] CRLF: title field contains trailing `\r`.
+- [x] CRLF: title field contains trailing `\r`.
 
 #### InlineLink
 
-- [ ] Title in single quotes (`[t](url 'title')`) -- title not
+- [x] Title in single quotes (`[t](url 'title')`) -- title not
       captured. Regex only matches double-quoted titles.
-- [ ] Title in parentheses (`[t](url (title))`) -- title not captured
+- [x] Title in parentheses (`[t](url (title))`) -- title not captured
       and match may break.
-- [ ] URL in angle brackets (`[t](<url with spaces>)`) -- not matched.
+- [x] URL in angle brackets (`[t](<url with spaces>)`) -- not matched.
       `\S+` cannot handle spaces.
-- [ ] Empty URL (`[text]()`) -- not matched. `\S+` requires at least
+- [x] Empty URL (`[text]()`) -- not matched. `\S+` requires at least
       one character.
-- [ ] Link text containing `]` (`[text \] here](url)`) -- broken.
+- [x] Link text containing `]` (`[text \] here](url)`) -- broken.
       `[^]]*?` stops at first `]`, no escape handling.
-- [ ] Nested brackets in link text (`[text [nested]](url)`) -- broken.
+- [x] Nested brackets in link text (`[text [nested]](url)`) -- broken.
       Same `[^]]` issue.
-- [ ] Title with escaped quote (`"title \" here"`) -- truncated at
+- [x] Title with escaped quote (`"title \" here"`) -- truncated at
       the escaped quote.
 
 #### BracketLink
 
-- [ ] Non-HTTP schemes (`<ftp://example.com>`, `<mailto:user@host>`)
+- [x] Non-HTTP schemes (`<ftp://example.com>`, `<mailto:user@host>`)
       -- not matched. Pattern requires `https?://`.
-- [ ] Email autolinks (`<user@example.com>`) -- not matched. No scheme
+- [x] Email autolinks (`<user@example.com>`) -- not matched. No scheme
       prefix to match.
 
 #### BareLink
 
-- [ ] `www.` prefix without scheme (`www.example.com`) -- not matched.
+- [x] `www.` prefix without scheme (`www.example.com`) -- not matched.
       Pattern requires `http[s]?://` or `./` or `\`.
-- [ ] Trailing punctuation consumption (`https://example.com.`) -- the
+- [x] Trailing punctuation consumption (`https://example.com.`) -- the
       period is captured as part of the URL. GFM strips trailing
       punctuation from extended autolinks.
-- [ ] Relative paths with `../` prefix -- not matched. Only `./` is
+- [x] Relative paths with `../` prefix -- not matched. Only `./` is
       supported.
 
 #### InlineImage
 
-- [ ] Title in single quotes (`![a](url 'title')`) -- same as
+- [x] Title in single quotes (`![a](url 'title')`) -- same as
       InlineLink: title not captured.
-- [ ] URL in angle brackets (`![a](<url with spaces>)`) -- same as
+- [x] URL in angle brackets (`![a](<url with spaces>)`) -- same as
       InlineLink: not matched.
-- [ ] Empty URL (`![alt]()`) -- not matched.
-- [ ] Alt text containing `]` -- broken, same as InlineLink text.
-- [ ] Title with escaped quote -- truncated, same as InlineLink.
+- [x] Empty URL (`![alt]()`) -- not matched.
+- [x] Alt text containing `]` -- broken, same as InlineLink text.
+- [x] Title with escaped quote -- truncated, same as InlineLink.
 
 #### ReferenceDefinition
 
-- [ ] Title in single quotes (`[ref]: url 'title'`) -- not captured.
-- [ ] URL in angle brackets (`[ref]: <url>`) -- not matched.
-- [ ] URL without `#`, `.`, or `/` (`[ref]: example`) -- not matched.
+- [x] Title in single quotes (`[ref]: url 'title'`) -- not captured.
+- [x] URL in angle brackets (`[ref]: <url>`) -- not matched.
+- [x] URL without `#`, `.`, or `/` (`[ref]: example`) -- not matched.
       Pattern `\S*[#\.\/]+\S*` requires these characters.
-- [ ] Indented definition (1-3 spaces: `   [ref]: url`) -- not
+- [x] Indented definition (1-3 spaces: `   [ref]: url`) -- not
       matched. Start-of-line anchor requires no indentation.
-- [ ] CRLF: end-of-line lookahead `(?=\n|$)` fails because `\r`
-      precedes `\n`.
-- [ ] Label containing `]` -- broken, `[^]]*?` stops at first `]`.
+- [x] CRLF: end-of-line lookahead `(?=\n|$)` -- investigated and
+      found NOT to fail. `\s*?` absorbs `\r`, then `\n` satisfies
+      the lookahead. Prediction was wrong.
+- [x] Label containing `]` -- broken, `[^]]*?` stops at first `]`.
 
 #### LinkReference
 
-- [ ] Collapsed reference link (`[text][]`) -- detected as shortcut
+- [x] Collapsed reference link (`[text][]`) -- detected as shortcut
       reference instead; `text` field is None instead of content.
-- [ ] Reference label containing `]` -- broken, `[^\]]+` stops early.
-- [ ] Reference immediately after image (`![img](url)[ref]`) --
-      incorrectly rejected by lookbehind `(?<!\])`.
+- [x] Reference label containing `]` -- broken, `[^\]]+` stops early.
+- [x] Reference immediately after image (`![img](url)[ref]`) --
+      investigated and found NOT rejected. The `[` in `[ref]` is
+      preceded by `)`, not `]`, so the lookbehind correctly allows it.
+      Prediction was wrong. Test documents actual (correct) behavior.
 
 #### ImageReference
 
-- [ ] Dead lookbehind (`(?<!(\]))`) -- always passes because it checks
+- [x] Dead lookbehind (`(?<!(\]))`) -- always passes because it checks
       whether `!` (the preceding literal) is `]`. Test confirms it
       provides no filtering.
-- [ ] Collapsed image reference (`![alt][]`) -- same issue as
+- [x] Collapsed image reference (`![alt][]`) -- same issue as
       LinkReference.
-- [ ] Reference label containing `]` -- broken, same as LinkReference.
+- [x] Reference label containing `]` -- broken, same as LinkReference.
 
 #### Table
 
-- [ ] Over-greedy row matching -- `([^\n]+(\n|$))*` consumes non-table
+- [x] Over-greedy row matching -- `([^\n]+(\n|$))*` consumes non-table
       content after the table. Verify rows capture extends beyond the
       actual table.
-- [ ] Leading spaces on header row -- not matched. Header pattern has
+- [x] Leading spaces on header row -- not matched. Header pattern has
       no leading whitespace allowance.
-- [ ] Escaped pipes in cells (`\|`) -- over-split. `split("|")` does
+- [x] Escaped pipes in cells (`\|`) -- over-split. `split("|")` does
       not handle escapes.
-- [ ] CRLF: `\r` captured in cell values. Header, divider, and row
+- [x] CRLF: `\r` captured in cell values. Header, divider, and row
       content all retain `\r`.
-- [ ] False positive: permissive header pattern matches non-table
-      lines containing pipes followed by a dash line.
+- [x] False positive: investigated and found NO false positive.
+      Permissive header pattern does not match non-table lines
+      containing pipes followed by a dash line. Prediction was wrong.
 
 #### QuoteBlock
 
-- [ ] Lazy continuation (`> first\nsecond` as single quote) -- not
+- [x] Lazy continuation (`> first\nsecond` as single quote) -- not
       matched. Only lines starting with `>` are captured.
-- [ ] Nested quote with spaces between markers (`> > nested`) --
+- [x] Nested quote with spaces between markers (`> > nested`) --
       incorrectly parsed as depth 1 with `> nested` as content.
       Pattern `[>]+` requires consecutive `>` without spaces.
-- [ ] Indented block quote (`   > quote`) -- not matched. Start-of-
+- [x] Indented block quote (`   > quote`) -- not matched. Start-of-
       line anchor requires no leading whitespace.
-- [ ] CRLF: `\r` captured in quote content.
-- [ ] `|` preceding `>` -- false positive via `(?<![^|\n])` anchor.
+- [x] CRLF: `\r` captured in quote content.
+- [x] `|` preceding `>` -- false positive via `(?<![^|\n])` anchor.
 
 #### FrontMatter
 
-- [ ] Closing delimiter `...` (three dots) -- not matched. Pattern
+- [x] Closing delimiter `...` (three dots) -- not matched. Pattern
       requires `---` for both opening and closing.
-- [ ] Empty frontmatter (`---\n---\n`, no content lines) -- not
+- [x] Empty frontmatter (`---\n---\n`, no content lines) -- not
       matched. Pattern requires `\n` before closing fence.
-- [ ] More than 3 dashes (`----` or `-----`) -- not matched. `[-]{3}`
+- [x] More than 3 dashes (`----` or `-----`) -- not matched. `[-]{3}`
       matches exactly 3.
-- [ ] CRLF: complete match failure. Pattern uses literal `\n`.
-- [ ] Leading whitespace on delimiter (`  ---`) -- not matched.
+- [x] CRLF: complete match failure. Pattern uses literal `\n`.
+- [x] Leading whitespace on delimiter (`  ---`) -- not matched.
 
 #### Cross-cutting issues (test across all applicable types)
 
-- [ ] **CRLF line endings** -- affects all patterns using `\n`.
+- [x] **CRLF line endings** -- affects all patterns using `\n`.
       CodeBlock, Header, Table, QuoteBlock, and FrontMatter have data
       quality or match failure issues. Test each type with `\r\n` input
       and document actual behavior.
-- [ ] **Escaped characters** -- no patterns handle backslash escapes
+- [x] **Escaped characters** -- no patterns handle backslash escapes
       (`\[`, `\]`, `` \` ``, `\>`). Test that escaped delimiters are
       incorrectly treated as real delimiters and document the behavior.
-- [ ] **Leading indentation (1-3 spaces)** -- GFM allows this for
+- [x] **Leading indentation (1-3 spaces)** -- GFM allows this for
       block-level elements. CodeBlock, Header, QuoteBlock, and
       ReferenceDefinition all reject indented input. Test and document.
-- [ ] **Pipe character as start-of-line** -- the `(?<![^|\n])` anchor
+- [x] **Pipe character as start-of-line** -- the `(?<![^|\n])` anchor
       treats `|` as valid. Test CodeBlock, Header, QuoteBlock, and
       ReferenceDefinition patterns matching content after `|` inside
       table cells. Document whether this is intentional.
 
 ### Coverage target
 
-- [ ] 100% coverage on all markdown/types/ source files, or documented
-      exclusions for unreachable lines
+- [x] 99% coverage on all markdown/types/ source files. `section.py`
+      line 167 is unreachable: defensive `break` in `_map_subsections`
+      for `header.level == 0`, which never occurs because the method is
+      only called when headers exist and level-0 headers are synthetic
+      placeholders that don't enter the subsection mapping loop.
 
 ## Out of Scope
 
