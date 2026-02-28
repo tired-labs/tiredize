@@ -109,7 +109,7 @@ def check_url_valid(
         if document.path is None:
             return False, None, "document has no path for relative URL"
 
-        path = document.path / Path(url)
+        path = document.path.parent / Path(url)
         if path.exists():
             return True, None, None
         else:
