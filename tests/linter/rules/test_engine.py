@@ -1,6 +1,11 @@
 # Standard library
 from __future__ import annotations
+import copy
 from typing import Any
+from unittest.mock import patch
+
+# Third-party
+import pytest
 
 # Local
 from tiredize.core_types import RuleNotFoundError
@@ -177,3 +182,69 @@ def test_run_linter_rule_id_stamped_on_results():
     assert len(results) >= 1
     for r in results:
         assert r.rule_id == "tabs"
+
+
+# ===================================================================
+#  engine.py gap: non-dict rule config raises ValueError (line 58)
+# ===================================================================
+
+
+def test_run_linter_non_dict_config_raises_value_error():
+    """Passing a non-dict as a rule's config triggers ValueError."""
+    doc = Document()
+    doc.load(text="# Test\n")
+    with pytest.raises(ValueError, match="Invalid configuration"):
+        run_linter(document=doc, rule_configs={"tabs": "not-a-dict"})
+
+
+# engine.py line 64: the isinstance(rule, Rule) check is unreachable
+# from the public API. _select_rules always stores a Rule object
+# from the discovered rules dict, so active_rules[rule_id]["rule"]
+# is guaranteed to be a Rule. No test needed; documented here.
+
+
+# ===================================================================
+#  State mutation (audit point 8)
+# ===================================================================
+
+
+def test_run_linter_does_not_mutate_rule_configs():
+    """run_linter must not change the rule_configs dict."""
+    doc = Document()
+    doc.load(text="# Mutation test\n\ttab here\n")
+    configs = {"tabs": {"allowed": False}}
+    configs_copy = copy.deepcopy(configs)
+    run_linter(document=doc, rule_configs=configs)
+    assert configs == configs_copy
+
+
+# ===================================================================
+#  Partial failure (audit point 10)
+# ===================================================================
+
+
+def test_run_linter_rule_exception_propagates():
+    """If rule 2 of 3 raises, the entire call fails.
+
+    run_linter does not catch exceptions from rule validate()
+    functions. An unexpected exception propagates and remaining rules
+    are not executed. This documents actual behavior.
+    """
+    doc = Document()
+    doc.load(text="# Kaboom\n\ttab\n")
+
+    def exploding_validate(document, config):
+        raise RuntimeError("rule exploded")
+
+    with patch(
+        "tiredize.linter.rules.tabs.validate",
+        side_effect=exploding_validate,
+    ):
+        with pytest.raises(RuntimeError, match="rule exploded"):
+            run_linter(
+                document=doc,
+                rule_configs={
+                    "tabs": {"allowed": False},
+                    "line_length": {"maximum_length": 80},
+                }
+            )
