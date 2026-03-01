@@ -131,3 +131,49 @@ Another overly long line is right here! What gives?!
     assert "exceeds maximum length" in res.message
     assert res.position.offset == 100
     assert res.position.length == 27
+
+
+def test_run_linter_none_configs():
+    """Passing rule_configs=None disables all rules and returns no results."""
+    doc = Document()
+    doc.load(text="# Anything\n\tshould not matter\n")
+    results = run_linter(document=doc, rule_configs=None)
+    assert results == []
+
+
+def test_run_linter_empty_configs():
+    """An empty rule_configs dict means no rules selected, no results."""
+    doc = Document()
+    doc.load(text="# Doesn't matter\n\ttabs everywhere\t\n")
+    results = run_linter(document=doc, rule_configs={})
+    assert results == []
+
+
+def test_run_linter_multiple_rules():
+    """Multiple rules can be active simultaneously and each stamps its id."""
+    markdown = "# Cramped\n\tindented and way too long for the limit\n"
+    doc = Document()
+    doc.load(text=markdown)
+
+    rule_configs: dict[str, Any] = {
+        "tabs": {"allowed": False},
+        "line_length": {"maximum_length": 10},
+    }
+
+    results = run_linter(document=doc, rule_configs=rule_configs)
+    rule_ids = {r.rule_id for r in results}
+    assert "tabs" in rule_ids
+    assert "line_length" in rule_ids
+
+
+def test_run_linter_rule_id_stamped_on_results():
+    """The engine replaces each result's rule_id with the discovered id."""
+    doc = Document()
+    doc.load(text="# Stamp test\n\thas a tab\n")
+    results = run_linter(
+        document=doc,
+        rule_configs={"tabs": {"allowed": False}}
+    )
+    assert len(results) >= 1
+    for r in results:
+        assert r.rule_id == "tabs"

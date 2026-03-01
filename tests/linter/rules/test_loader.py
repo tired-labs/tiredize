@@ -40,3 +40,30 @@ def test_discover_rules_finds_simple_rule():
 def test_discover_rules_ignores_private_modules():
     rules = discover_rules("tests.test_cases.rules.02_private_rule")
     assert len(rules) == 0
+
+
+def test_discover_rules_skips_subpackages():
+    """Subpackages inside a rules package are not descended into."""
+    rules = discover_rules("tests.test_cases.rules.03_with_subpackage")
+    # Only top_rule should be found, not nested_pkg/hidden_rule
+    assert len(rules) == 1
+    assert "top_rule" in rules
+    assert "hidden_rule" not in rules
+
+
+def test_discover_rules_plain_module_returns_empty():
+    """Passing a plain module (not a package) returns no rules."""
+    rules = discover_rules("tiredize.linter.rules.tabs")
+    assert len(rules) == 0
+
+
+def test_discover_rules_default_package():
+    """Calling discover_rules() with no argument discovers built-in rules."""
+    rules = discover_rules()
+    # The project ships at least these four rules
+    for rule_id in ("line_length", "links", "tabs", "trailing_whitespace"):
+        assert rule_id in rules, f"Expected built-in rule '{rule_id}'"
+    # Each discovered rule should be a proper Rule with a callable
+    for rule_id, rule in rules.items():
+        assert isinstance(rule, Rule)
+        assert callable(rule.func)
