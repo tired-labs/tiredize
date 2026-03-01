@@ -135,4 +135,12 @@ unrelated files, or extend scope beyond what is specified here.
   functions. An unexpected exception propagates and remaining rules
   are not executed.
 
+## Follow-up Issues
+
+- `fix-config-int-bool-guard.md` -- `get_config_int` accepts bool
+  inputs due to Python's `bool` subclassing `int`. Skipped spec test
+  awaits fix.
+- `fix-slug-non-ascii.md` -- `slugify_header` strips non-ASCII
+  characters. GFM preserves them. Skipped spec test awaits fix.
+
 ## Open Questions

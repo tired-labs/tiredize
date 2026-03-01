@@ -47,7 +47,7 @@ def test_get_config_int_missing_key():
 
 @pytest.mark.skip(
     reason="get_config_int accepts bool because isinstance(True, int) "
-    "is True in Python. Needs a bool guard before the int check."
+    "is True in Python. See issue fix-config-int-bool-guard.md"
 )
 def test_get_config_int_bool_returns_none():
     """bool is a subclass of int and should be rejected.
@@ -272,8 +272,8 @@ def test_anchor_document_with_no_sections():
 
 @pytest.mark.skip(
     reason="slugify_header strips non-ASCII via [^a-z0-9 \\-] regex. "
-    "GFM preserves non-ASCII in slugs. Needs a unicode-aware "
-    "slugifier."
+    "GFM preserves non-ASCII in slugs. "
+    "See issue fix-slug-non-ascii.md"
 )
 def test_anchor_with_non_ascii_slug():
     """Anchor with non-ASCII characters should match per GFM rules.
