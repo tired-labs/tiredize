@@ -1,4 +1,4 @@
-Status: active
+Status: completed
 Sub-issues:
   - test-coverage-markdown-types.md
   - test-coverage-markdown-utils.md
