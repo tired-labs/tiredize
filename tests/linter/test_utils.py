@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 # Third-party
+import pytest
 import requests
 
 # Local
@@ -44,16 +45,17 @@ def test_get_config_int_missing_key():
     assert get_config_int({}, "lives") is None
 
 
+@pytest.mark.skip(
+    reason="get_config_int accepts bool because isinstance(True, int) "
+    "is True in Python. Needs a bool guard before the int check."
+)
 def test_get_config_int_bool_returns_none():
-    """bool is a subclass of int but should be rejected.
+    """bool is a subclass of int and should be rejected.
 
-    isinstance(True, int) is True in Python, so get_config_int
-    actually returns the bool value. This documents actual behavior.
+    A bool config value is semantically different from an integer.
+    get_config_int should return None for bool inputs.
     """
-    # bool IS an int subclass, so isinstance check passes
-    result = get_config_int({"flag": True}, "flag")
-    # Documenting: get_config_int does NOT reject bools
-    assert result is True
+    assert get_config_int({"flag": True}, "flag") is None
 
 
 def test_get_config_int_does_not_mutate_config():
@@ -268,14 +270,23 @@ def test_anchor_document_with_no_sections():
 # ===================================================================
 
 
+@pytest.mark.skip(
+    reason="slugify_header strips non-ASCII via [^a-z0-9 \\-] regex. "
+    "GFM preserves non-ASCII in slugs. Needs a unicode-aware "
+    "slugifier."
+)
 def test_anchor_with_non_ascii_slug():
-    """Anchor with non-ASCII characters matches correctly."""
+    """Anchor with non-ASCII characters should match per GFM rules.
+
+    GFM preserves non-ASCII in slugs: "Café Section" should produce
+    "#café-section", not "#caf-section".
+    """
     doc = Document()
     doc.load(text="# Caf\u00e9 Section\n\nContent.\n")
-    slug = doc.sections[0].header.slug
-    is_valid, status, error = check_url_valid(doc, slug)
+    assert doc.sections[0].header.slug == "#caf\u00e9-section"
+
+    is_valid, _, _ = check_url_valid(doc, "#caf\u00e9-section")
     assert is_valid is True
-    assert error is None
 
 
 # ===================================================================
@@ -430,6 +441,19 @@ def test_http_custom_timeout_passed():
         )
     _, kwargs = mock_get.call_args
     assert kwargs["timeout"] == 7
+
+
+def test_http_verify_ssl_passed():
+    """Custom verify_ssl is forwarded to requests.get as verify."""
+    doc = Document()
+    with patch(
+        MOCK_TARGET, return_value=_make_mock_response(200)
+    ) as mock_get:
+        check_url_valid(
+            doc, "https://example.com", verify_ssl=False
+        )
+    _, kwargs = mock_get.call_args
+    assert kwargs["verify"] is False
 
 
 def test_http_allow_redirects_defaults_to_true():

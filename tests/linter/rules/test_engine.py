@@ -228,7 +228,8 @@ def test_run_linter_rule_exception_propagates():
 
     run_linter does not catch exceptions from rule validate()
     functions. An unexpected exception propagates and remaining rules
-    are not executed. This documents actual behavior.
+    are not executed. This documents actual behavior: results from
+    rule 1 are lost and rule 3 never runs.
     """
     doc = Document()
     doc.load(text="# Kaboom\n\ttab\n")
@@ -244,7 +245,8 @@ def test_run_linter_rule_exception_propagates():
             run_linter(
                 document=doc,
                 rule_configs={
-                    "tabs": {"allowed": False},
                     "line_length": {"maximum_length": 80},
+                    "tabs": {"allowed": False},
+                    "trailing_whitespace": {"allowed": False},
                 }
             )

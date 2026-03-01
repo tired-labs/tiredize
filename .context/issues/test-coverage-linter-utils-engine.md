@@ -114,11 +114,15 @@ unrelated files, or extend scope beyond what is specified here.
 - HTTP tests use `unittest.mock.patch` on `requests.get` rather than
   a dedicated mocking library. This avoids adding a test dependency
   and is sufficient for testing our branching logic.
-- `get_config_int` does NOT reject bools despite the acceptance
-  criterion suggesting it should return None. Because `bool` is a
-  subclass of `int` in Python, `isinstance(True, int)` is `True`.
-  The function returns the bool value as-is. This is documented
-  behavior, not a bug.
+- `get_config_int` does NOT reject bools. Because `bool` is a
+  subclass of `int` in Python, `isinstance(True, int)` is `True`
+  and the function returns the bool value. The spec-correct test
+  asserts `None` and is skipped pending a fix (add a `bool` guard
+  before the `int` isinstance check).
+- `slugify_header` strips all non-ASCII characters via the regex
+  `[^a-z0-9 \-]`. GFM preserves non-ASCII in slugs. The
+  spec-correct anchor test asserts GFM behavior and is skipped
+  pending a unicode-aware slugifier.
 - engine.py line 64 (`isinstance(rule, Rule)` guard) is unreachable
   from the public API. `_select_rules` always stores a genuine Rule
   object from the discovered rules dict. Documented in the test file
