@@ -248,7 +248,6 @@ def test_sanitize_text_idempotent():
     second = sanitize_text(pattern, first)
     assert second == first
     assert len(second) == len(text)
-    assert len(second) == len(text)
 
 
 # ===================================================================
@@ -260,13 +259,13 @@ def test_sanitize_text_unicode_preserves_char_length():
     """Length preserved in characters (str length), not bytes.
     \u00e9 is 1 Python char but 2 UTF-8 bytes."""
     text = "the caf\u00e9 is nice"
-    result = sanitize_text(r"caf\u00e9", text)
+    result = sanitize_text("caf\u00e9", text)
     assert len(result) == len(text)
 
 
 def test_sanitize_text_emoji_preserves_length():
     """Emoji are 1 Python char each. Length must be preserved."""
     text = "hello \U0001F60A world"
-    result = sanitize_text(r"\U0001F60A", text)
+    result = sanitize_text("\U0001F60A", text)
     assert len(result) == len(text)
     assert "\U0001F60A" not in result
