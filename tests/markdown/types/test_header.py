@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.header import Header
@@ -238,3 +241,232 @@ def test_six_headers_repeated():
             string=exp_string,
             title=actual_text
         )
+
+
+# ===================================================================
+#  Sanitize method (line 70)
+# ===================================================================
+
+
+def test_header_sanitize_preserves_length():
+    text = "# Big Title\n\nParagraph below."
+    sanitized = Header.sanitize(text)
+    assert len(sanitized) == len(text)
+    assert "Big Title" not in sanitized
+
+
+def test_header_sanitize_no_headers():
+    text = "Just a paragraph, no headers."
+    sanitized = Header.sanitize(text)
+    assert sanitized == text
+
+
+def test_header_sanitize_idempotent():
+    text = "# Title\n\n## Subtitle\n"
+    first = Header.sanitize(text)
+    second = Header.sanitize(first)
+    assert first == second
+    assert len(second) == len(text)
+
+
+# ===================================================================
+#  slugify_header -- empty title (line 96)
+# ===================================================================
+
+
+def test_slugify_empty_title():
+    """Empty string title falls back to 'section'."""
+    slug = Header.slugify_header("")
+    assert slug == "#section"
+
+
+def test_slugify_special_characters():
+    """Punctuation removed except hyphens."""
+    slug = Header.slugify_header("Hello, World! (2024)")
+    assert slug == "#hello-world-2024"
+
+
+def test_slugify_multiple_hyphens_collapsed():
+    slug = Header.slugify_header("a - - - b")
+    assert slug == "#a-b"
+
+
+def test_slugify_duplicate_tracking():
+    slug = Header.slugify_header("Title", existing=["Title"])
+    assert slug == "#title-1"
+
+
+def test_slugify_multiple_duplicates():
+    slug = Header.slugify_header("Title", existing=["Title", "Title"])
+    assert slug == "#title-2"
+
+
+# ===================================================================
+#  Edge cases
+# ===================================================================
+
+
+def test_header_seven_hashes_not_matched():
+    """GFM only supports 1-6 hashes. Regex \\#{1,6} correctly rejects this."""
+    text = "####### Too Many Hashes"
+    matches = Header.extract(text)
+    assert len(matches) == 0
+
+
+def test_header_no_space_after_hash_not_matched():
+    """GFM requires space after hashes. Correctly rejected."""
+    text = "#NoSpace"
+    matches = Header.extract(text)
+    assert len(matches) == 0
+
+
+@pytest.mark.skip(reason="gfm-parity: closing hashes not stripped from title")
+def test_header_closing_hashes_stripped():
+    """GFM strips trailing # characters from heading titles."""
+    text = "# Title ##"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].title == "Title"
+
+
+# ===================================================================
+#  Boundary and degenerate inputs
+# ===================================================================
+
+
+def test_header_extract_empty_string():
+    assert Header.extract("") == []
+
+
+def test_header_extract_single_char():
+    assert Header.extract("#") == []
+
+
+# ===================================================================
+#  State mutation
+# ===================================================================
+
+
+def test_header_extract_does_not_mutate_input():
+    text = "# Hello World\n\nParagraph."
+    original = text
+    Header.extract(text)
+    assert text == original
+
+
+# ===================================================================
+#  Unicode
+# ===================================================================
+
+
+def test_header_unicode_title():
+    text = "# Café Résumé"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].title == "Café Résumé"
+
+
+def test_header_emoji_title():
+    text = "# Welcome to the Party 🎉"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert "🎉" in matches[0].title
+
+
+def test_header_unicode_slug():
+    """Non-ASCII stripped by [^a-z0-9 \\-] in slugify."""
+    slug = Header.slugify_header("Café Résumé")
+    assert slug == "#caf-rsum"
+
+
+# ===================================================================
+#  Additional syntax variant tests
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: empty heading not matched"
+)
+def test_header_empty_heading():
+    """GFM allows empty headings: # followed by only whitespace."""
+    text = "# "
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].level == 1
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: leading spaces on headings not supported"
+)
+def test_header_leading_spaces():
+    """GFM allows 1-3 spaces before # in headings."""
+    text = "   # Indented Heading"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].title == "Indented Heading"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: setext headings not supported"
+)
+def test_header_setext_equals():
+    """GFM supports setext headings with = underline (level 1)."""
+    text = "Heading\n======="
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].level == 1
+    assert matches[0].title == "Heading"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: setext headings not supported"
+)
+def test_header_setext_dashes():
+    """GFM supports setext headings with - underline (level 2)."""
+    text = "Heading\n-------"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    assert matches[0].level == 2
+
+
+def test_header_after_pipe_char():
+    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
+    Header after | produces a false positive match."""
+    text = "|# Heading"
+    matches = Header.extract(text)
+    # Per GFM, |# is not a heading -- it's a table cell.
+    # The anchor accepts | as a valid predecessor, causing a
+    # false positive.
+    assert len(matches) == 1  # documents actual behavior
+
+
+# ===================================================================
+#  Cross-cutting: CRLF line endings
+# ===================================================================
+
+
+def test_header_crlf_in_title():
+    """Header title captures content up to \\n via [^\\n]+.
+    With CRLF line endings, \\r is captured as part of the title."""
+    text = "# Title\r\nParagraph"
+    matches = Header.extract(text)
+    assert len(matches) == 1
+    # \\r is captured as part of title because [^\\n]+ stops at
+    # \\n but not at \\r
+    assert matches[0].title == "Title\r"  # documents actual behavior
+
+
+# ===================================================================
+#  Cross-cutting: escaped characters
+# ===================================================================
+
+
+def test_header_escaped_hash():
+    """Backslash-escaped # should not start a heading per GFM.
+    The regex does not handle backslash escapes."""
+    text = "\\# Not a heading"
+    matches = Header.extract(text)
+    # The regex sees # after \\ at start of line. The lookbehind
+    # checks the char before #, which is \\. Since \\ is not
+    # | or \\n, the lookbehind (?<![^|\\n]) fails and no match.
+    assert len(matches) == 0  # accidentally correct

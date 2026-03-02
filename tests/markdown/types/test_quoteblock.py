@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.quoteblock import QuoteBlock
@@ -142,3 +145,177 @@ def test_five_quoteblocks_repeated():
             position=positions[i],
             quote=text_01
         )
+
+
+# ===================================================================
+#  Edge cases
+# ===================================================================
+
+
+def test_quoteblock_depth_two():
+    text = ">> Deeply quoted text"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert matches[0].depth == 2
+    assert matches[0].quote == "Deeply quoted text"
+
+
+def test_quoteblock_base_offset():
+    text = "> Some quote"
+    matches = QuoteBlock.extract(text, base_offset=50)
+    assert len(matches) == 1
+    assert matches[0].position.offset == 50
+
+
+# ===================================================================
+#  Sanitize method
+# ===================================================================
+
+
+def test_quoteblock_sanitize_preserves_length():
+    text = "Before\n> Quote text\nAfter"
+    sanitized = QuoteBlock.sanitize(text)
+    assert len(sanitized) == len(text)
+    assert "Quote text" not in sanitized
+
+
+def test_quoteblock_sanitize_no_quotes():
+    text = "Just plain text."
+    sanitized = QuoteBlock.sanitize(text)
+    assert sanitized == text
+
+
+def test_quoteblock_sanitize_idempotent():
+    text = "Before\n> Quote text\nAfter"
+    first = QuoteBlock.sanitize(text)
+    second = QuoteBlock.sanitize(first)
+    assert first == second
+    assert len(second) == len(text)
+
+
+# ===================================================================
+#  Syntax variant tests (GFM spec compliance)
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: lazy continuation in block quotes not supported"
+)
+def test_quoteblock_lazy_continuation():
+    """GFM lazy continuation: line without > continues the quote."""
+    text = "> First line\nSecond line (lazy continuation)"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert "Second line" in matches[0].quote
+
+
+@pytest.mark.skip(reason="gfm-parity: spaced nested quotes parsed as depth 1")
+def test_quoteblock_spaced_nested():
+    """GFM nested quotes '> > text' should be parsed as depth 2."""
+    text = "> > nested quote"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert matches[0].depth == 2
+    assert matches[0].quote == "nested quote"
+
+
+# ===================================================================
+#  Boundary and degenerate inputs
+# ===================================================================
+
+
+def test_quoteblock_extract_empty_string():
+    assert QuoteBlock.extract("") == []
+
+
+def test_quoteblock_extract_single_char():
+    """A lone > is a valid empty blockquote per GFM."""
+    results = QuoteBlock.extract(">")
+    assert len(results) == 1
+    assert results[0].depth == 1
+    assert results[0].quote == ""
+
+
+# ===================================================================
+#  State mutation
+# ===================================================================
+
+
+def test_quoteblock_extract_does_not_mutate_input():
+    text = "> Quote text\n> More quote"
+    original = text
+    QuoteBlock.extract(text)
+    assert text == original
+
+
+# ===================================================================
+#  Unicode
+# ===================================================================
+
+
+def test_quoteblock_unicode_content():
+    text = "> Café résumé 日本語"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert "Café" in matches[0].quote
+    assert "日本語" in matches[0].quote
+
+
+# ===================================================================
+#  Additional syntax variant tests
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: indented block quotes not supported"
+)
+def test_quoteblock_indented():
+    """GFM allows 1-3 spaces before > in block quotes."""
+    text = "   > Indented quote"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert matches[0].quote == "Indented quote"
+
+
+def test_quoteblock_after_pipe_char():
+    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
+    > after | produces a false positive match."""
+    text = "|> Not a real quote"
+    matches = QuoteBlock.extract(text)
+    # Per GFM, |> is not a blockquote.
+    # The anchor accepts | as a valid predecessor.
+    assert len(matches) == 1  # documents actual behavior
+
+
+def test_quoteblock_depth_three():
+    """Triple-depth block quote."""
+    text = ">>> Deep quote"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    assert matches[0].depth == 3
+    assert matches[0].quote == "Deep quote"
+
+
+def test_quoteblock_empty_lines_between():
+    """Adjacent quote blocks separated by blank line should be
+    separate matches, not merged."""
+    text = "> First\n\n> Second"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 2
+    assert matches[0].quote == "First"
+    assert matches[1].quote == "Second"
+
+
+# ===================================================================
+#  Cross-cutting: CRLF line endings
+# ===================================================================
+
+
+def test_quoteblock_crlf_in_content():
+    """QuoteBlock regex [^\\n]* stops at \\n, so \\r would be
+    captured as part of the quote content."""
+    text = "> Quote\r\nMore text"
+    matches = QuoteBlock.extract(text)
+    assert len(matches) == 1
+    # \\r is captured because [^\\n]* does not exclude \\r
+    assert matches[0].quote == "Quote\r"  # documents actual behavior

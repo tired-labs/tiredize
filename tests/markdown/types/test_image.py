@@ -1,6 +1,9 @@
 # Standard library
 from __future__ import annotations
 
+# Third-party
+import pytest
+
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.image import InlineImage
@@ -191,3 +194,216 @@ def test_five_images_unique():
     assert len(matches) == 5
     for i, match in enumerate(matches):
         assert match == expected[i]
+
+
+# ===================================================================
+#  Sanitize method
+# ===================================================================
+
+
+def test_image_sanitize_preserves_length():
+    text = 'See ![alt](https://img.com/pic.png "title") here.'
+    sanitized = InlineImage.sanitize(text)
+    assert len(sanitized) == len(text)
+    assert "img.com" not in sanitized
+
+
+def test_image_sanitize_no_images():
+    text = "No images here."
+    sanitized = InlineImage.sanitize(text)
+    assert sanitized == text
+
+
+def test_image_sanitize_idempotent():
+    text = "![alt](https://img.com/pic.png)"
+    first = InlineImage.sanitize(text)
+    second = InlineImage.sanitize(first)
+    assert first == second
+    assert len(second) == len(text)
+
+
+# ===================================================================
+#  Cross-type: image not extracted as InlineLink
+# ===================================================================
+
+
+def test_image_not_extracted_as_inline_link():
+    """InlineLink has negative lookbehind (?<!!) to avoid images."""
+    from tiredize.markdown.types.link import InlineLink
+    text = "![alt](https://img.com/pic.png)"
+    results = InlineLink.extract(text)
+    assert len(results) == 0
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: greedy URL regex consumes past closing paren"
+)
+def test_image_adjacent_to_link():
+    """![img](a.png)[link](b.html) -- image URL should be 'a.png',
+    not greedily extended through the adjacent link syntax."""
+    text = "![img](a.png)[link](b.html)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "a.png"
+
+
+# ===================================================================
+#  Cross-type: image inside code block (no sanitization)
+# ===================================================================
+
+
+@pytest.mark.skip(reason="InlineImage does not sanitize CodeBlock")
+def test_image_not_inside_code_block():
+    """Images inside fenced code blocks should not be extracted."""
+    text = "```\n![alt](https://img.com/pic.png)\n```"
+    results = InlineImage.extract(text)
+    assert len(results) == 0
+
+
+@pytest.mark.skip(reason="InlineImage does not sanitize CodeInline")
+def test_image_not_inside_inline_code():
+    """Images inside inline code should not be extracted."""
+    text = "Use `![alt](https://img.com/pic.png)` as example."
+    results = InlineImage.extract(text)
+    assert len(results) == 0
+
+
+# ===================================================================
+#  Edge cases
+# ===================================================================
+
+
+def test_image_no_title():
+    text = "![alt](https://img.com/pic.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].title is None
+
+
+def test_image_base_offset():
+    text = "![alt](https://img.com/pic.png)"
+    results = InlineImage.extract(text, base_offset=42)
+    assert len(results) == 1
+    assert results[0].position.offset == 42
+
+
+# ===================================================================
+#  Boundary and degenerate inputs
+# ===================================================================
+
+
+def test_image_extract_empty_string():
+    assert InlineImage.extract("") == []
+
+
+def test_image_extract_single_char():
+    assert InlineImage.extract("!") == []
+
+
+# ===================================================================
+#  Syntax variant tests (GFM spec compliance)
+# ===================================================================
+
+
+@pytest.mark.skip(reason="gfm-parity: empty URL in images not supported")
+def test_image_empty_url():
+    """GFM allows empty URLs ![alt]()."""
+    text = "![alt]()"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+
+
+# ===================================================================
+#  State mutation
+# ===================================================================
+
+
+def test_image_extract_does_not_mutate_input():
+    text = "![alt](https://img.com/pic.png)"
+    original = text
+    InlineImage.extract(text)
+    assert text == original
+
+
+# ===================================================================
+#  Unicode
+# ===================================================================
+
+
+def test_image_unicode_alt_text():
+    text = "![日本語の画像](https://img.com/pic.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].text == "日本語の画像"
+
+
+def test_image_unicode_url():
+    text = "![alt](https://img.com/café.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert "café" in results[0].url
+
+
+# ===================================================================
+#  Cross-type: images inside quote blocks
+# ===================================================================
+
+
+def test_image_inside_quote_block():
+    """InlineImage does not sanitize QuoteBlock.
+    Per GFM, images inside blockquotes are real images.
+    InlineImage does NO sanitization at all, so this should match
+    -- but the ! may be preceded by > whitespace which doesn't
+    interfere with the regex."""
+    text = "> ![alt](https://img.com/pic.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://img.com/pic.png"
+
+
+# ===================================================================
+#  InlineImage -- additional syntax variants
+# ===================================================================
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: single-quote titles not supported"
+)
+def test_image_single_quote_title():
+    """GFM allows single-quote titles in images."""
+    text = "![alt](https://img.com/pic.png 'A Title')"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].title == "A Title"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: angle-bracket URLs not supported"
+)
+def test_image_angle_bracket_url():
+    """GFM allows <url with spaces> in images."""
+    text = "![alt](<https://img.com/path with spaces.png>)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: ] in alt text breaks match"
+)
+def test_image_alt_text_with_bracket():
+    """GFM handles escaped ] in alt text."""
+    text = r"![alt \] text](https://img.com/pic.png)"
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].url == "https://img.com/pic.png"
+
+
+@pytest.mark.skip(
+    reason="gfm-parity: escaped quote in title truncates match"
+)
+def test_image_escaped_quote_in_title():
+    r"""GFM handles \" inside double-quoted titles."""
+    text = r'![alt](https://img.com/pic.png "title \" here")'
+    results = InlineImage.extract(text)
+    assert len(results) == 1
+    assert results[0].title == r'title " here'
