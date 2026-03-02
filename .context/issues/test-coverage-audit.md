@@ -35,16 +35,16 @@ file in the linter and markdown packages has been reviewed.
 
 ## Acceptance Criteria
 
-- [ ] All four sub-issues completed
-- [ ] Every existing test file in `tests/linter/` and
+- [x] All four sub-issues completed
+- [x] Every existing test file in `tests/linter/` and
       `tests/markdown/` has been reviewed for completeness and updated
       where gaps were found (not just new test files -- existing tests
       must be audited too)
-- [ ] 100% coverage across `tiredize/linter/` and
+- [x] 100% coverage across `tiredize/linter/` and
       `tiredize/markdown/`, or documented exclusions for unreachable
       lines
-- [ ] Fix any bugs discovered during the audit
-- [ ] Final coverage report comparing before and after
+- [x] Fix any bugs discovered during the audit
+- [x] Final coverage report comparing before and after
 
 ## Out of Scope
 
@@ -90,5 +90,75 @@ addressed as part of the audit:
   document actual parser behavior. False positives caused by missing
   sanitization are asserted with comments noting the known gap, not
   fixed (sanitization fixes belong in `parser-sanitization-audit.md`).
+
+## Final Coverage Report
+
+Baseline: commit `07ed8f4` (pre-audit main, after fix-relative-url-resolution).
+Final: commit `a643e6c` (audit merged to main).
+
+### Linter package
+
+| File | Before | After | Notes |
+|------|--------|-------|-------|
+| linter/engine.py | 92% (3 miss) | 97% (1 miss) | Line 64 unreachable (`isinstance` guard behind `_select_rules`) |
+| linter/rules/\_\_init\_\_.py | 96% (2 miss) | 100% | |
+| linter/rules/line_length.py | 96% (1 miss) | 100% | |
+| linter/rules/links.py | 22% (32 miss) | 100% | |
+| linter/rules/tabs.py | 25% (21 miss) | 100% | |
+| linter/rules/trailing_whitespace.py | 26% (20 miss) | 100% | |
+| linter/utils.py | 42% (32 miss) | 100% | |
+
+### Markdown package
+
+| File | Before | After | Notes |
+|------|--------|-------|-------|
+| markdown/types/code.py | 100% | 100% | |
+| markdown/types/document.py | 88% (8 miss) | 100% | |
+| markdown/types/frontmatter.py | 90% (3 miss) | 100% | |
+| markdown/types/header.py | 96% (2 miss) | 100% | |
+| markdown/types/image.py | 100% | 100% | |
+| markdown/types/link.py | 99% (1 miss) | 100% | |
+| markdown/types/list.py | 93% (1 miss) | 100% | |
+| markdown/types/quoteblock.py | 100% | 100% | |
+| markdown/types/reference.py | 97% (2 miss) | 100% | |
+| markdown/types/schema.py | 100% | 100% | |
+| markdown/types/section.py | 94% (5 miss) | 99% (1 miss) | Line 167 unreachable (`header.level == 0` in `_map_subsections`) |
+| markdown/types/table.py | 98% (1 miss) | 100% | |
+| markdown/utils.py | 81% (5 miss) | 81% (5 miss) | Lines 15-19: `get_position_from_match` dead code (`dead-code-cleanup.md`) |
+
+### Totals
+
+| | Before | After |
+|---|--------|-------|
+| Statements | 921 | 921 |
+| Missed | 139 | 7 |
+| Coverage | 85% | 99% |
+| Tests | 99 passed | 462 passed, 66 skipped |
+
+### Documented exclusions
+
+- `engine.py` line 64: `isinstance(rule, Rule)` guard is unreachable.
+  `_select_rules` guarantees Rule objects from the discovered rules dict.
+- `section.py` line 167: `header.level == 0` break in `_map_subsections`
+  is unreachable. Level-0 headers are synthetic placeholders that never
+  enter the subsection mapping loop.
+- `utils.py` lines 15-19: `get_position_from_match()` is dead code.
+  Tracked by `dead-code-cleanup.md`.
+
+## Follow-Up Issues Opened
+
+Bugs and gaps discovered during the audit, tracked as separate issues:
+
+| Issue | Category | Skipped Tests |
+|-------|----------|---------------|
+| `gfm-parity.md` | GFM syntax variants and CRLF support | ~52 |
+| `sanitize-text-newline-bug.md` | `splitlines()` drops trailing newline | 5 |
+| `parser-sanitization-gaps.md` | Missing sanitize chains (Image, Reference) | 4 |
+| `quoteblock-over-sanitization.md` | QuoteBlock sanitize strips link content | 3 |
+| `parser-greedy-regex.md` | Greedy regex consumes past boundaries | 1 |
+| `fix-config-int-bool-guard.md` | `get_config_int` accepts bool inputs | 1 |
+| `fix-slug-non-ascii.md` | `slugify_header` strips non-ASCII characters | 1 |
+| `dead-code-cleanup.md` | `get_position_from_match` unused function | 0 |
+| `relative-url-prefix-handling.md` | URLs without `./` or `../` prefix | 0 |
 
 ## Open Questions
