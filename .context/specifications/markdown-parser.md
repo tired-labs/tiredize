@@ -369,12 +369,9 @@ against GitHub-Flavored Markdown (GFM) rendering rules.
 
 ### Per-Extractor Sanitization Chains
 
-Each extractor should sanitize internally before matching, independent
-of calling context, ensuring correct results whether called from
+Each extractor sanitizes internally before matching, independent of
+calling context, ensuring correct results whether called from
 `Section._extract()`, standalone scripts, or a future API.
-`Table.extract()` is the sole exception — it currently relies on
-`Section._extract()` to pass CodeBlock-sanitized input. This is
-tracked in `table-internal-sanitization.md`.
 
 | Extractor             | Sanitizes (in order)                      |
 |-----------------------|-------------------------------------------|
@@ -393,8 +390,7 @@ tracked in `table-internal-sanitization.md`.
 | `ImageReference`      | CodeBlock, CodeInline                     |
 | `QuoteBlock`          | CodeBlock                                 |
 | `List`                | (none)                                    |
-| `Table`               | (none, but `Section._extract` passes      |
-|                       | CodeBlock-sanitized text)                 |
+| `Table`               | CodeBlock                                 |
 
 **Design principle:** The chain order follows GFM rendering
 precedence. Code constructs have highest precedence (content inside
@@ -416,8 +412,7 @@ are the most ambiguous pattern and must exclude all other link types.
 ### Section._extract() Orchestration
 
 `Section._extract()` passes raw `string` to all extractors,
-relying on each to sanitize internally. The exception is
-`Table.extract()`, which receives `CodeBlock.sanitize(string)`.
+relying on each to sanitize internally.
 
 The `string_safe` field stored on each `Section` is
 `CodeInline.sanitize(CodeBlock.sanitize(string))`. It is not passed
@@ -434,7 +429,8 @@ rules that need code-free text).
   the repeating group, eliminating backtracking. See issue
   `parser-robustness.md` for full details.
 
-- **Table extraction receives sanitized input:** `Table.extract()` in
-  `Section._extract()` receives `CodeBlock.sanitize(string)` rather
-  than raw text, preventing both false table matches inside code
-  fences and triggering the backtracking vulnerability above.
+- **Table extraction sanitizes internally:** `Table.extract()` calls
+  `CodeBlock.sanitize()` on its input before matching, consistent with
+  all other extractors. This prevents false table matches inside code
+  fences. Previously, sanitization was handled externally by
+  `Section._extract()` — see issue `table-internal-sanitization.md`.
