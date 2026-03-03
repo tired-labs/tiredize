@@ -31,7 +31,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --cov=./ --cov-report=xml
+          pytest --cov=tiredize --cov-report=xml
 
       - name: Coveralls
         uses: coverallsapp/github-action@v2
