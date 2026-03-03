@@ -256,7 +256,7 @@ def test_bare_link_sanitize_preserves_length():
 
 # ===================================================================
 #  BareLink -- sanitization chain
-#  BareLink sanitizes: CodeBlock, CodeInline, QuoteBlock, InlineImage,
+#  BareLink sanitizes: CodeBlock, CodeInline, InlineImage,
 #  BracketLink, InlineLink, ReferenceDefinition before matching.
 # ===================================================================
 
@@ -332,15 +332,15 @@ def test_bare_link_not_inside_inline_code():
 
 # ===================================================================
 #  Cross-type: links inside quote blocks
-#  InlineLink/BracketLink sanitize QuoteBlock. BareLink also sanitizes it.
-#  The `>` is sanitized, so the link text after sanitization may still
-#  match. Document actual behavior.
+#  Link extractors do not sanitize QuoteBlock. The > prefix does not
+#  interfere with link regex patterns, so links inside blockquotes
+#  are correctly extracted.
 # ===================================================================
 
 
 def test_inline_link_inside_quote_block():
     """Per GFM, links inside blockquotes are real links and should be
-    extracted. QuoteBlock sanitize is too aggressive."""
+    extracted."""
     text = "> [link](https://example.com)"
     results = InlineLink.extract(text)
     assert len(results) == 1
