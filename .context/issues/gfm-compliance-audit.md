@@ -16,15 +16,15 @@ produces sub-issues for unimplemented GFM features.
 
 ## Acceptance Criteria
 
-- [ ] 16 per-type spec files created following the standard template
-- [ ] `markdown-parser.md` restructured as a hub document with shared
+- [x] 16 per-type spec files created following the standard template
+- [x] `markdown-parser.md` restructured as a hub document with shared
       concepts only (no per-type regex or sanitization content)
-- [ ] Every per-type spec includes a GFM compliance assessment
-- [ ] 8 draft sub-issues created for unimplemented GFM features
-- [ ] `gfm-parity.md` updated with `Sub-issues:` list
-- [ ] All per-type specs cross-referenced against source code for
+- [x] Every per-type spec includes a GFM compliance assessment
+- [x] 8 draft sub-issues created for unimplemented GFM features
+- [x] `gfm-parity.md` updated with `Sub-issues:` list
+- [x] All per-type specs cross-referenced against source code for
       accuracy
-- [ ] Linter and tests still pass (no code changes in this issue)
+- [x] Linter and tests still pass (no code changes in this issue)
 
 ## Out of Scope
 
