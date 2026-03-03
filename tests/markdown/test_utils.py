@@ -222,6 +222,22 @@ def test_sanitize_text_preserves_length_with_trailing_newline():
     assert len(result) == len(text)
 
 
+def test_sanitize_text_match_ending_with_multiple_newlines():
+    """Match ending with multiple \\n preserves all trailing newlines."""
+    text = "abc\n\n\nxyz"
+    result = sanitize_text(r"abc\n\n\n", text)
+    assert len(result) == len(text)
+    assert result.endswith("xyz")
+
+
+def test_sanitize_text_match_entirely_newlines():
+    """Match consisting entirely of \\n characters preserves length."""
+    text = "\n\n\nxyz"
+    result = sanitize_text(r"\n\n\n", text)
+    assert len(result) == len(text)
+    assert result.endswith("xyz")
+
+
 # ===================================================================
 #  sanitize_text -- idempotency
 # ===================================================================
