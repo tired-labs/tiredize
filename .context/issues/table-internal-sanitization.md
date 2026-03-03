@@ -28,9 +28,10 @@ sanitize internally like every other extractor.
 - [ ] All existing tests pass (no regressions)
 - [ ] Parser specification updated: sanitization chain table changed
       from "(none, but Section._extract passes CodeBlock-sanitized
-      text)" to "CodeBlock", and Section._extract orchestration
-      section updated to reflect that all extractors receive raw
-      `string`
+      text)" to "CodeBlock"
+- [ ] Parser specification "Section._extract() Orchestration"
+      section updated to reflect that all extractors now receive
+      raw `string` (remove the Table exception note)
 
 ## Out of Scope
 

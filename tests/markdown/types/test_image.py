@@ -348,11 +348,8 @@ def test_image_unicode_url():
 
 
 def test_image_inside_quote_block():
-    """InlineImage does not sanitize QuoteBlock.
-    Per GFM, images inside blockquotes are real images.
-    InlineImage does NO sanitization at all, so this should match
-    -- but the ! may be preceded by > whitespace which doesn't
-    interfere with the regex."""
+    """InlineImage does not sanitize QuoteBlock. Per GFM, images
+    inside blockquotes are real images that should be extracted."""
     text = "> ![alt](https://img.com/pic.png)"
     results = InlineImage.extract(text)
     assert len(results) == 1

@@ -350,8 +350,9 @@ def test_image_reference_not_inside_code_block():
 
 # ===================================================================
 #  Cross-type: references inside inline code
-#  ReferenceDefinition/LinkReference/ImageReference do NOT sanitize
-#  CodeInline. Verify whether false positives occur.
+#  LinkReference and ImageReference sanitize CodeInline.
+#  ReferenceDefinition does not, but its start-of-line anchor
+#  prevents matching inside inline code naturally.
 # ===================================================================
 
 
