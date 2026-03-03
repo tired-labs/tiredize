@@ -1,4 +1,4 @@
-Status: ready
+Status: completed
 Parent: test-coverage-audit.md
 
 # QuoteBlock Over-Sanitization
@@ -77,16 +77,16 @@ blockquotes to be found correctly.
 
 ## Acceptance Criteria
 
-- [ ] `QuoteBlock.sanitize()` call removed from InlineLink.extract()
-- [ ] `QuoteBlock.sanitize()` call removed from BracketLink.extract()
-- [ ] `QuoteBlock.sanitize()` call removed from BareLink.extract()
-- [ ] QuoteBlock import removed from `link.py` if no longer used
-- [ ] All 3 skipped spec tests unskipped and passing
-- [ ] No regressions in existing tests
-- [ ] Parser specification updated: sanitization chain table updated
+- [x] `QuoteBlock.sanitize()` call removed from InlineLink.extract()
+- [x] `QuoteBlock.sanitize()` call removed from BracketLink.extract()
+- [x] `QuoteBlock.sanitize()` call removed from BareLink.extract()
+- [x] QuoteBlock import removed from `link.py` if no longer used
+- [x] All 3 skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
+- [x] Parser specification updated: sanitization chain table updated
       to remove QuoteBlock from InlineLink, BracketLink, and BareLink
       chains
-- [ ] Parser specification known gaps section updated to remove the
+- [x] Parser specification known gaps section updated to remove the
       QuoteBlock over-sanitization note
 
 ## Out of Scope

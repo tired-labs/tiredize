@@ -380,10 +380,10 @@ calling context, ensuring correct results whether called from
 | `FrontMatter`         | (none -- extracted before Section parse)  |
 | `Header`              | CodeBlock                                 |
 | `InlineImage`         | CodeBlock, CodeInline                     |
-| `InlineLink`          | CodeBlock, CodeInline, QuoteBlock         |
-| `BracketLink`         | CodeBlock, CodeInline, QuoteBlock         |
-| `BareLink`            | CodeBlock, CodeInline, QuoteBlock,        |
-|                       | InlineImage, BracketLink, InlineLink,     |
+| `InlineLink`          | CodeBlock, CodeInline                     |
+| `BracketLink`         | CodeBlock, CodeInline                     |
+| `BareLink`            | CodeBlock, CodeInline, InlineImage,       |
+|                       | BracketLink, InlineLink,                  |
 |                       | ReferenceDefinition                       |
 | `ReferenceDefinition` | CodeBlock                                 |
 | `LinkReference`       | CodeBlock, CodeInline                     |
@@ -394,20 +394,16 @@ calling context, ensuring correct results whether called from
 
 **Design principle:** The chain order follows GFM rendering
 precedence. Code constructs have highest precedence (content inside
-code is never interpreted as other elements). Link extractors
-sanitize QuoteBlock because the `>` prefix can interfere with link
-pattern matching. BareLink has the deepest chain because bare URLs
-are the most ambiguous pattern and must exclude all other link types.
+code is never interpreted as other elements). BareLink has the
+deepest chain because bare URLs are the most ambiguous pattern and
+must exclude all other link types.
 
-**Known gaps:**
-- QuoteBlock sanitization blanks entire line content instead of
-  stripping `> ` prefixes, causing link extractors to miss valid
-  links inside blockquotes. Tracked in
-  `quoteblock-over-sanitization.md`.
-- InlineImage does not sanitize QuoteBlock. This is intentional --
-  GitHub renders images inside blockquotes, so they are valid
-  content. When the QuoteBlock over-sanitization bug is fixed,
-  this decision should be revisited.
+**QuoteBlock and link extractors:** Link extractors do not sanitize
+QuoteBlock. Per GFM, blockquote content is real markdown — links
+inside blockquotes are valid and should be extracted. The `>` prefix
+does not interfere with any link regex pattern (none use
+start-of-line anchors or characters that conflict with `>`). See
+issue `quoteblock-over-sanitization.md`.
 
 ### Section._extract() Orchestration
 
