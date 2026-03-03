@@ -282,10 +282,7 @@ def test_table_sanitize_no_tables():
 
 
 def test_table_sanitize_idempotent():
-    """Sanitize called twice produces the same result as a single call.
-    Note: sanitize_text has a known length-preservation gap when the
-    matched text ends with a trailing newline (splitlines() drops it).
-    The idempotency assertion still holds."""
+    """Sanitize called twice produces the same result as a single call."""
     text = "| Col |\n|-----|\n| val |\n"
     first = Table.sanitize(text)
     second = Table.sanitize(first)
