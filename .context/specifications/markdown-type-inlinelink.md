@@ -76,6 +76,12 @@ uses reference-style syntax).
   is not exposed as a dataclass field. The InlineLink dataclass
   has `title` (from the optional quoted title) and `url`, but
   the link display text captured by `(?P<text>...)` is only
-  accessible via the `string` field.
+  accessible via the `string` field. This differs from
+  InlineImage, which does expose `text` as a field.
+- The `title` field is declared as `str` in the dataclass but
+  receives `None` at runtime when the optional title group does
+  not match. The type annotation should be `str | None` to
+  match InlineImage's declaration. This is a pre-existing type
+  annotation inconsistency.
 - URLs containing literal `)` are not supported. Tracked in
   `gfm-parity.md`.

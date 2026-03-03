@@ -69,3 +69,8 @@ Partial compliance with GFM spec section 4.7. Known gaps:
 
 - Defined in the same source file as LinkReference and
   ImageReference (`reference.py`).
+- The `title` field is declared as `str` in the dataclass but
+  receives `None` at runtime when the optional title group does
+  not match. The type annotation should be `str | None`. This is
+  the same pre-existing type annotation inconsistency as in
+  InlineLink.
