@@ -69,9 +69,11 @@ def sanitize_text(pattern: str, text: str) -> str
 ```
 
 `search_all_re` wraps `re.finditer` with `re.VERBOSE`. `sanitize_text`
-replaces pattern matches with whitespace to preserve offsets.
-`get_position_from_match` returns `(line_number, column_offset,
-match_length)` for a regex match.
+replaces pattern matches with whitespace to preserve offsets. It splits
+on `\n` (not `splitlines()`) to ensure trailing newlines in matched
+regions are preserved in the output. The output length must always
+equal the input length. `get_position_from_match` returns
+`(line_number, column_offset, match_length)` for a regex match.
 
 ## File Layout
 

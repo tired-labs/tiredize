@@ -5,7 +5,6 @@ all markdown element extractors. These tests exercise the functions
 directly rather than through the element type wrappers.
 """
 
-import pytest
 
 from tiredize.markdown.utils import sanitize_text, search_all_re
 
@@ -204,16 +203,10 @@ def test_sanitize_text_single_character_input():
 
 
 # ===================================================================
-#  sanitize_text -- trailing newline bug
-#  (Known bug: splitlines() drops trailing \n. These tests document
-#  the bug and are skipped. See sanitize-text-newline-bug.md.)
+#  sanitize_text -- trailing newline handling
 # ===================================================================
 
 
-@pytest.mark.skip(
-    reason="sanitize-text-newline-bug: "
-    "splitlines() drops trailing newline"
-)
 def test_sanitize_text_match_ending_with_newline():
     """Match ending with \\n preserves the trailing newline."""
     text = "---\nfoo\n---\nafter"
@@ -222,15 +215,27 @@ def test_sanitize_text_match_ending_with_newline():
     assert result.endswith("after")
 
 
-@pytest.mark.skip(
-    reason="sanitize-text-newline-bug: "
-    "splitlines() drops trailing newline"
-)
 def test_sanitize_text_preserves_length_with_trailing_newline():
     """Length preservation contract holds for matches ending in \\n."""
     text = "hello\nworld\n"
     result = sanitize_text(r"hello\nworld\n", text)
     assert len(result) == len(text)
+
+
+def test_sanitize_text_match_ending_with_multiple_newlines():
+    """Match ending with multiple \\n preserves all trailing newlines."""
+    text = "abc\n\n\nxyz"
+    result = sanitize_text(r"abc\n\n\n", text)
+    assert len(result) == len(text)
+    assert result.endswith("xyz")
+
+
+def test_sanitize_text_match_entirely_newlines():
+    """Match consisting entirely of \\n characters preserves length."""
+    text = "\n\n\nxyz"
+    result = sanitize_text(r"\n\n\n", text)
+    assert len(result) == len(text)
+    assert result.endswith("xyz")
 
 
 # ===================================================================

@@ -29,7 +29,7 @@ def sanitize_text(pattern: str, text: str) -> str:
     for match in matches:
         result += text[last_end:match.start()]
         last_end = match.end()
-        old_lines = match.group().splitlines()
+        old_lines = match.group().split("\n")
         new_lines: list[str] = []
         for old_line in old_lines:
             new_lines.append(" " * len(old_line))
