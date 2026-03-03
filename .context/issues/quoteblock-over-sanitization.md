@@ -1,17 +1,24 @@
-Status: draft
+Status: completed
 Parent: test-coverage-audit.md
 
 # QuoteBlock Over-Sanitization
 
 ## Summary
 
-QuoteBlock.sanitize() removes the entire content of blockquote lines,
-including valid markdown elements (links, images, references) that
-appear inside them. Per GFM, blockquotes are containers -- their
-content is real markdown that should be parsed and extracted. The
-current sanitization approach treats blockquotes as opaque regions
-and blanks them entirely, causing downstream extractors that sanitize
-QuoteBlock to miss valid elements.
+InlineLink, BracketLink, and BareLink extractors sanitize QuoteBlock
+before matching. QuoteBlock.sanitize() blanks the entire line
+including content, which causes these extractors to miss valid links
+inside blockquotes. Per GFM, blockquote content is real markdown —
+links inside `> ` prefixed lines are rendered and should be extracted.
+
+The `>` prefix does not actually interfere with any of the three link
+regexes (verified empirically — none use start-of-line anchors or
+characters that conflict with `>`). The QuoteBlock sanitization step
+is unnecessary and should be removed from these extractors.
+
+`QuoteBlock.sanitize()` itself is correct and unchanged — it blanks
+entire blockquote lines, which is the right behavior for its own
+contract.
 
 Identified during the test coverage audit
 (`test-coverage-markdown-types.md`). 3 skipped spec tests document
@@ -41,9 +48,7 @@ the bug.
 ### Correctly working cases (not affected)
 
 - **InlineImage inside quote block**: InlineImage does NOT sanitize
-  QuoteBlock, so `> ![alt](url)` IS correctly extracted. (However,
-  InlineImage has its own sanitization gap -- it doesn't sanitize
-  anything, tracked in `parser-sanitization-gaps.md`.)
+  QuoteBlock, so `> ![alt](url)` IS correctly extracted.
 
 - **LinkReference and ImageReference inside quote blocks**: These do
   NOT sanitize QuoteBlock, so `> [text][ref]` and `> ![alt][ref]`
@@ -57,48 +62,48 @@ the bug.
 
 ### Root cause
 
-`QuoteBlock.sanitize()` uses `sanitize_text()` which replaces the
-entire matched region with whitespace. The QuoteBlock regex
-`(?:(?<=\n)|(?:^))(?P<depth>[>]+)\s*(?P<quote>[^\n]*)` matches the full
-blockquote line including its content. When this is replaced with
-whitespace, all content is lost.
+The `>` prefix does not interfere with InlineLink, BracketLink, or
+BareLink regex patterns. None of these regexes use start-of-line
+anchors or characters that conflict with `>`. QuoteBlock sanitization
+was added as a precaution but is unnecessary for these extractors.
+Removing it from their sanitization chains allows links inside
+blockquotes to be found correctly.
 
-### Extractors that sanitize QuoteBlock
+### Extractors that sanitized QuoteBlock (removed by this fix)
 
-- InlineLink (line 133: `QuoteBlock.sanitize(text_sanitized)`)
-- BracketLink (line 80)
-- BareLink (line 30)
-
-These three link types lose all content that appears inside
-blockquotes.
+- InlineLink
+- BracketLink
+- BareLink
 
 ## Acceptance Criteria
 
-- [ ] Links inside blockquotes are correctly extracted by
-      InlineLink, BracketLink, and BareLink
-- [ ] All 3 skipped spec tests unskipped and passing
-- [ ] QuoteBlock sanitization does not break extraction of other
-      element types inside blockquotes
-- [ ] No regressions in existing tests
+- [x] `QuoteBlock.sanitize()` call removed from InlineLink.extract()
+- [x] `QuoteBlock.sanitize()` call removed from BracketLink.extract()
+- [x] `QuoteBlock.sanitize()` call removed from BareLink.extract()
+- [x] QuoteBlock import removed from `link.py` if no longer used
+- [x] All 3 skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
+- [x] Parser specification updated: sanitization chain table updated
+      to remove QuoteBlock from InlineLink, BracketLink, and BareLink
+      chains
+- [x] Parser specification known gaps section updated to remove the
+      QuoteBlock over-sanitization note
 
 ## Out of Scope
 
+- Changes to `QuoteBlock.sanitize()` itself (it works as intended)
+- QuoteBlock as a container type with child elements (tracked in
+  `container-element-model.md`)
 - InlineImage sanitization chain (tracked in
   `parser-sanitization-gaps.md`)
 - GFM syntax variant support (tracked in `gfm-parity.md`)
-- sanitize_text utility bug (tracked in
-  `sanitize-text-newline-bug.md`)
 
 ## Design Decisions
 
-## Open Questions
+- **Remove QuoteBlock from link sanitization chains rather than
+  modifying QuoteBlock.sanitize().** The `>` prefix does not
+  interfere with link regexes, so sanitization is unnecessary.
+  QuoteBlock.sanitize() correctly blanks entire lines and its
+  contract should not change.
 
-- Should QuoteBlock.sanitize() only remove the `> ` prefix instead
-  of the entire line content? This would preserve the content for
-  downstream extractors while still preventing the `>` from
-  interfering with other patterns.
-- Should the link extractors stop sanitizing QuoteBlock entirely
-  and instead strip the `> ` prefix before matching?
-- How should multiline blockquotes interact with sanitization? If
-  a link spans multiple `> ` lines, the `> ` prefix on each line
-  would need to be stripped.
+## Open Questions

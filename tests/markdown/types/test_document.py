@@ -142,6 +142,7 @@ def test_document_load_from_path():
     expected_link_inline = [[] for _ in range(18)]
     expected_link_inline[0] = [Position(offset=500, length=44)]
     expected_link_inline[2] = [Position(offset=922, length=28)]
+    expected_link_inline[6] = [Position(offset=1557, length=59)]
 
     expected_link_reference: list[list[Position]]
     expected_link_reference = [[] for _ in range(18)]
