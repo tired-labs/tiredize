@@ -10,15 +10,6 @@ def search_all_re(pattern: str, string: str) -> list[re.Match[str]]:
     return result
 
 
-def get_position_from_match(
-        match: re.Match[str], text: str) -> tuple[int, int, int]:
-    string = match.group()
-    line_num = text[:match.start()].count("\n") + 1
-    string_first_line = string.split("\n")[0]
-    offset = text.split("\n")[line_num - 1].index(string_first_line)
-    return line_num, offset, len(string)
-
-
 def sanitize_text(pattern: str, text: str) -> str:
     """
     Replace any matches of pattern with whitespace to preserve positioning
