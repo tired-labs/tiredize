@@ -1,4 +1,4 @@
-Status: active
+Status: completed
 Parent: test-coverage-audit.md
 
 # sanitize_text() Trailing Newline Bug
