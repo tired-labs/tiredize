@@ -1,4 +1,4 @@
-Status: draft
+Status: active
 
 # Remove Dead Code: get_position_from_match
 
@@ -10,13 +10,14 @@ coverage audit. Should be removed to reduce maintenance surface.
 
 ## Acceptance Criteria
 
-- [ ] Confirm `get_position_from_match` has zero callers (grep across
+- [x] Confirm `get_position_from_match` has zero callers (grep across
       all source and test files)
-- [ ] Remove the function from `tiredize/markdown/utils.py`
-- [ ] Update `tiredize/markdown/utils.py` imports if any become unused
-- [ ] Update markdown-parser.md specification to remove the function
+- [x] Remove the function from `tiredize/markdown/utils.py`
+- [x] Update `tiredize/markdown/utils.py` imports if any become unused
+      (no imports became unused — `re` is still used by `search_all_re`)
+- [x] Update markdown-parser.md specification to remove the function
       from the Utility Functions section
-- [ ] All tests pass after removal
+- [x] All tests pass after removal
 
 ## Out of Scope
 
