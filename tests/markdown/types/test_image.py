@@ -235,9 +235,6 @@ def test_image_not_extracted_as_inline_link():
     assert len(results) == 0
 
 
-@pytest.mark.skip(
-    reason="gfm-parity: greedy URL regex consumes past closing paren"
-)
 def test_image_adjacent_to_link():
     """![img](a.png)[link](b.html) -- image URL should be 'a.png',
     not greedily extended through the adjacent link syntax."""

@@ -1,4 +1,4 @@
-Status: draft
+Status: completed
 Parent: test-coverage-audit.md
 
 # Parser Greedy Regex Bugs
@@ -80,15 +80,15 @@ documented-behavior tests capture the findings.
 
 ## Acceptance Criteria
 
-- [ ] InlineImage URL regex does not consume past closing `)`
-- [ ] Table rows pattern stops at first non-table line (e.g.,
+- [x] InlineImage URL regex does not consume past closing `)`
+- [x] Table rows pattern stops at first non-table line (e.g.,
       line not containing `|` or empty line)
-- [ ] Pipe-as-start-of-line behavior evaluated: intentional design
+- [x] Pipe-as-start-of-line behavior evaluated: intentional design
       decision or bug to fix
-- [ ] BareLink regex does not partial-match `../` paths
-- [ ] ImageReference lookbehind fixed or removed
-- [ ] All affected skipped spec tests unskipped and passing
-- [ ] No regressions in existing tests
+- [x] BareLink regex does not partial-match `../` paths
+- [x] ImageReference lookbehind fixed or removed
+- [x] All affected skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
 
 ## Out of Scope
 
@@ -100,12 +100,19 @@ documented-behavior tests capture the findings.
 
 ## Design Decisions
 
-## Open Questions
+- **The `|` in `(?<![^|\n])` is a bug, not a design choice.**
+  `Section._extract()` passes raw text to all extractors — it does
+  not parse table cells individually. The pipe anchor creates false
+  positives where `|# Heading` is treated as a heading. The anchor
+  should match only at actual start of line or start of string.
 
-- Is the `|` in `(?<![^|\n])` an intentional design choice for
-  table cell processing? If so, should it be documented rather
-  than fixed?
-- Should InlineImage and InlineLink URL patterns use `[^\s)]+`
-  instead of `\S+` to stop at `)` boundaries?
-- Should Table row matching require `|` in each line, or use a
-  blank-line terminator?
+- **URL patterns use `[^\s)]+` instead of `\S+`.** This prevents
+  greedy consumption past the closing `)`. URLs containing literal
+  `)` (e.g., Wikipedia balanced-paren URLs) are a GFM parity
+  concern tracked in `gfm-parity.md`.
+
+- **Table row matching requires `|` in each data row.** Per GFM
+  spec, a line without `|` terminates the table. This prevents
+  the rows pattern from consuming non-table content.
+
+## Open Questions

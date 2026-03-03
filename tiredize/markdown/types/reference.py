@@ -19,7 +19,7 @@ class ReferenceDefinition:
     url: str
 
     RE_REFERENCE_DEFINITION = r"""
-        (?<![^|\n])\[              # Start of line, but don't capture it
+        (?:(?<=\n)|(?:^))\[        # Start of line (zero-width)
         (?P<text>[^]]*?)           # Capture the link text
         \]:\s+                     # Closing bracket, colon, leading spaces
         (?P<url>\S*[#\.\/]+\S*)    # Capture the URL
@@ -75,7 +75,7 @@ class LinkReference:
         (?<!(!|\]))\[
         (\s*(?P<text>[^]]*?)\s*\]\[)?
         \s*
-        (?P<reference>[^\]]+)           # Capture the URL
+        (?P<reference>[^\]]+)           # Capture the reference label
         \s*
         \](?!:)
         (?!\()                          # Negative lookahead to avoid inline
@@ -125,11 +125,10 @@ class ImageReference:
     text: str | None
 
     RE_IMAGE_REFERENCE = r"""
-        !
-        (?<!(\]))\[
+        !\[
         (\s*(?P<text>[^]]*?)\s*\]\[)?
         \s*
-        (?P<reference>[^\]]+)             # Capture the URL
+        (?P<reference>[^\]]+)             # Capture the reference label
         \s*
         \](?!:)
         (?!\()                          # Negative lookahead to avoid inline

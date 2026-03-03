@@ -278,13 +278,11 @@ def test_quoteblock_indented():
 
 
 def test_quoteblock_after_pipe_char():
-    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
-    > after | produces a false positive match."""
+    """Blockquote after | should not match. Per GFM, | indicates
+    a table cell, not a valid start-of-line for blockquotes."""
     text = "|> Not a real quote"
     matches = QuoteBlock.extract(text)
-    # Per GFM, |> is not a blockquote.
-    # The anchor accepts | as a valid predecessor.
-    assert len(matches) == 1  # documents actual behavior
+    assert len(matches) == 0
 
 
 def test_quoteblock_depth_three():

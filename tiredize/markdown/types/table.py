@@ -33,7 +33,7 @@ class Table:
             ([|][ \t]*:?-+:?[ \t]*)+
             [|]?\n
         )
-        (?P<rows>([^\n]+(\n|$))*)
+        (?P<rows>([^\n]*\|[^\n]*(\n|$))*)
     """
 
     @staticmethod
@@ -72,7 +72,7 @@ class Table:
             for row in row_matches:
                 row = row.strip()
                 row = row[:-1] if row[-1] == "|" else row
-                row = row[1:] if row[0] == "|" else row
+                row = row[1:] if row and row[0] == "|" else row
                 row = row.split("|")
                 row = [cell.strip() for cell in row]
                 rows.append(row)

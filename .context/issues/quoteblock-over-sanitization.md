@@ -50,7 +50,8 @@ the bug.
   ARE correctly extracted.
 
 - **ReferenceDefinition inside quote blocks**: The start-of-line
-  anchor `(?<![^|\n])` prevents matching because `>` precedes `[`.
+  anchor `(?:(?<=\n)|(?:^))` prevents matching because `>` precedes
+  `[`.
   This is correct -- GFM reference definitions inside blockquotes
   are scoped to the blockquote, not the document.
 
@@ -58,7 +59,7 @@ the bug.
 
 `QuoteBlock.sanitize()` uses `sanitize_text()` which replaces the
 entire matched region with whitespace. The QuoteBlock regex
-`(?<![^|\n])(?P<depth>[>]+)\s*(?P<quote>[^\n]*)` matches the full
+`(?:(?<=\n)|(?:^))(?P<depth>[>]+)\s*(?P<quote>[^\n]*)` matches the full
 blockquote line including its content. When this is replaced with
 whitespace, all content is lost.
 

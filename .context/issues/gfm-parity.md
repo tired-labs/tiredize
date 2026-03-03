@@ -156,13 +156,16 @@ Several types match with CRLF input but capture `\r` as content:
       tests pass
 - [ ] New tests added for each newly supported variant
 - [ ] Parser specification updated to reflect supported syntax
+- [ ] InlineLink and InlineImage URL patterns support balanced
+      parentheses (e.g., `https://en.wikipedia.org/wiki/Foo_(bar)`)
+      per GFM extended autolink spec
 
 ## Out of Scope
 
 - CRLF line ending handling (cross-cutting concern, may warrant its
   own issue)
-- Pipe-as-start-of-line anchor behavior (design decision to evaluate
-  separately)
+- Pipe-as-start-of-line anchor behavior (fixed in
+  `parser-greedy-regex.md`)
 - Missing sanitization chains (tracked in
   `parser-sanitization-gaps.md`)
 - sanitize_text trailing newline bug (tracked in

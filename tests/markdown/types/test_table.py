@@ -351,8 +351,7 @@ def test_table_unicode_cells():
 
 
 def test_table_over_greedy_row_matching():
-    """The rows pattern ([^\\n]+(\\n|$))* consumes all non-empty
-    lines after the divider, including non-table content."""
+    """Table rows pattern stops at lines without pipe characters."""
     text = (
         "| A |\n"
         "|---|\n"
@@ -361,9 +360,8 @@ def test_table_over_greedy_row_matching():
     )
     results = Table.extract(text)
     assert len(results) == 1
-    # The regex greedily captures "This is not a table row."
-    # as a row because it matches [^\n]+
-    assert len(results[0].rows) == 2  # documents actual behavior
+    assert len(results[0].rows) == 1
+    assert results[0].rows[0] == ["1"]
 
 
 @pytest.mark.skip(
@@ -384,6 +382,15 @@ def test_table_header_only_no_data_rows():
     results = Table.extract(text)
     assert len(results) == 1
     assert results[0].header == ["A", "B"]
+
+
+def test_table_pipe_only_data_row():
+    """A data row containing only | should not crash extraction.
+    Per GFM, this is a valid row with empty cells."""
+    text = "| A |\n|---|\n|\n"
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].rows == [[""]]
 
 
 # ===================================================================

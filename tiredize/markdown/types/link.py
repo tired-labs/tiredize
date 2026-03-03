@@ -20,7 +20,7 @@ class BareLink:
     url: str
 
     RE_URL = r"""
-        (?P<url>(http[s]?:\/\/|(\.\/|\\))\S+)  # Capture the URL
+        (?P<url>(http[s]?:\/\/|(\.\.\/)|(\.\/|\\))\S+)  # Capture the URL
     """
 
     @staticmethod
@@ -121,7 +121,7 @@ class InlineLink:
         \s*                           # Optional whitespace
         \]\(                          # Closing bracket, opening parenthesis
         \s*                           # Optional whitespace
-        (?P<url>\S+)                  # Capture the URL
+        (?P<url>[^\s)]+)               # Capture the URL
         (\s*?\"(?P<title>[^"]*?)\")?  # Capture optional title
         \s*\)                         # Closing parenthesis
     """

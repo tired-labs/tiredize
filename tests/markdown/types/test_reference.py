@@ -479,13 +479,10 @@ def test_link_reference_inside_quote_block():
     may or may not match depending on how the lookbehind works."""
     text = "> [text][ref]"
     results = LinkReference.extract(text)
-    # The > and space are removed by CodeBlock sanitize but not
-    # QuoteBlock sanitize. Since LinkReference doesn't sanitize
-    # QuoteBlock, the text is unchanged. The lookbehind (?<!(!|\]))
-    # checks the char before [. The char before [ is space, which
-    # passes. So this should match as a false positive.
-    # Per GFM, link references in blockquotes ARE valid, so matching
-    # is actually correct behavior.
+    # LinkReference doesn't sanitize QuoteBlock, so the text is
+    # unchanged. The lookbehind (?<!(!|\])) checks the char before
+    # [, which is space — passes correctly.
+    # Per GFM, link references in blockquotes ARE valid.
     assert len(results) >= 1
 
 
@@ -544,20 +541,16 @@ def test_link_reference_label_with_bracket():
 
 
 def test_reference_definition_after_pipe_char():
-    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
-    Reference definition after | produces a false positive match."""
+    """Reference definition after | should not match. Per GFM,
+    | indicates a table cell, not a valid start-of-line."""
     text = "|[ref]: https://example.com"
     results = ReferenceDefinition.extract(text)
-    # Per GFM, |[ref]: is not a reference definition.
-    # The anchor accepts | as a valid predecessor.
-    assert len(results) == 1  # documents actual behavior
+    assert len(results) == 0
 
 
-def test_image_reference_dead_lookbehind():
-    """The lookbehind (?<!(\\])) checks whether ! is ].
-    Since ! is never ], the lookbehind always passes and provides
-    no filtering. This test confirms the lookbehind is a no-op
-    by verifying it doesn't filter even with ]] preceding !."""
+def test_image_reference_after_closing_brackets():
+    """Image reference preceded by ]] should still be extracted.
+    The ![ prefix is sufficient to identify image references."""
     text = "]]![alt][ref]"
     results = ImageReference.extract(text)
     assert len(results) == 1

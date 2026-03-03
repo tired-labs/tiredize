@@ -430,14 +430,11 @@ def test_header_setext_dashes():
 
 
 def test_header_after_pipe_char():
-    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
-    Header after | produces a false positive match."""
+    """Header after | should not match. Per GFM, | indicates
+    a table cell, not a valid start-of-line for headings."""
     text = "|# Heading"
     matches = Header.extract(text)
-    # Per GFM, |# is not a heading -- it's a table cell.
-    # The anchor accepts | as a valid predecessor, causing a
-    # false positive.
-    assert len(matches) == 1  # documents actual behavior
+    assert len(matches) == 0
 
 
 # ===================================================================
@@ -466,7 +463,7 @@ def test_header_escaped_hash():
     The regex does not handle backslash escapes."""
     text = "\\# Not a heading"
     matches = Header.extract(text)
-    # The regex sees # after \\ at start of line. The lookbehind
-    # checks the char before #, which is \\. Since \\ is not
-    # | or \\n, the lookbehind (?<![^|\\n]) fails and no match.
+    # The start-of-line anchor matches at position 0, but the first
+    # character is \, not #, so #{1,6} doesn't match. The # at
+    # position 1 is not at start-of-line, so the anchor fails.
     assert len(matches) == 0  # accidentally correct

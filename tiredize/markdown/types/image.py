@@ -25,7 +25,7 @@ class InlineImage:
         \s*                           # Optional whitespace
         \]\(                          # Closing bracket, opening parenthesis
         \s*                           # Optional whitespace
-        (?P<url>\S+)                  # Capture the URL
+        (?P<url>[^\s)]+)               # Capture the URL
         (\s*?\"(?P<title>[^"]*?)\")?  # Capture optional title
         \s*\)                         # Closing parenthesis
     """
