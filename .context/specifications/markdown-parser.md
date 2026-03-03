@@ -119,9 +119,12 @@ against GitHub-Flavored Markdown (GFM) rendering rules.
 
 ### Per-Extractor Sanitization Chains
 
-Each extractor sanitizes internally before matching, independent of
-calling context. This ensures correct results whether called from
+Each extractor should sanitize internally before matching, independent
+of calling context, ensuring correct results whether called from
 `Section._extract()`, standalone scripts, or a future API.
+`Table.extract()` is the sole exception — it currently relies on
+`Section._extract()` to pass CodeBlock-sanitized input. This is
+tracked in `table-internal-sanitization.md`.
 
 | Extractor             | Sanitizes (in order)                      |
 |-----------------------|-------------------------------------------|
