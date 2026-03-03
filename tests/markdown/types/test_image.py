@@ -248,11 +248,10 @@ def test_image_adjacent_to_link():
 
 
 # ===================================================================
-#  Cross-type: image inside code block (no sanitization)
+#  Cross-type: image inside code constructs
 # ===================================================================
 
 
-@pytest.mark.skip(reason="InlineImage does not sanitize CodeBlock")
 def test_image_not_inside_code_block():
     """Images inside fenced code blocks should not be extracted."""
     text = "```\n![alt](https://img.com/pic.png)\n```"
@@ -260,7 +259,6 @@ def test_image_not_inside_code_block():
     assert len(results) == 0
 
 
-@pytest.mark.skip(reason="InlineImage does not sanitize CodeInline")
 def test_image_not_inside_inline_code():
     """Images inside inline code should not be extracted."""
     text = "Use `![alt](https://img.com/pic.png)` as example."
@@ -350,11 +348,8 @@ def test_image_unicode_url():
 
 
 def test_image_inside_quote_block():
-    """InlineImage does not sanitize QuoteBlock.
-    Per GFM, images inside blockquotes are real images.
-    InlineImage does NO sanitization at all, so this should match
-    -- but the ! may be preceded by > whitespace which doesn't
-    interfere with the regex."""
+    """InlineImage does not sanitize QuoteBlock. Per GFM, images
+    inside blockquotes are real images that should be extracted."""
     text = "> ![alt](https://img.com/pic.png)"
     results = InlineImage.extract(text)
     assert len(results) == 1

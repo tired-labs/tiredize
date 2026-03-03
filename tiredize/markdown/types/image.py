@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 # Local
 from tiredize.core_types import Position
+from tiredize.markdown.types.code import CodeBlock
+from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 
@@ -33,9 +35,11 @@ class InlineImage:
         """
         Extract markdown images from text.
         """
+        text_sanitized = CodeBlock.sanitize(text)
+        text_sanitized = CodeInline.sanitize(text_sanitized)
         matches = search_all_re(
             InlineImage.RE_INLINE_IMAGE,
-            text
+            text_sanitized
         )
 
         result: list[InlineImage] = []

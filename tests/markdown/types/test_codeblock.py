@@ -331,16 +331,12 @@ def test_codeblock_after_pipe_char():
 
 def test_inline_code_inside_code_block():
     """Inline code backticks inside a fenced code block should not
-    produce CodeInline matches when CodeInline sanitizes CodeBlock
-    first (which it doesn't -- CodeInline has no sanitization)."""
+    produce CodeInline matches. CodeInline sanitizes CodeBlock
+    before matching."""
     from tiredize.markdown.types.code import CodeInline
     text = "```\n`inline` code\n```"
     results = CodeInline.extract(text)
-    # CodeInline does NOT sanitize CodeBlock, so it finds `inline`
-    # inside the fence. This is a false positive.
-    # We document actual behavior: it matches.
-    assert len(results) == 1
-    assert results[0].code == "inline"
+    assert len(results) == 0
 
 
 def test_code_block_fence_inside_inline_code():

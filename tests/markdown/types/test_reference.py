@@ -350,8 +350,9 @@ def test_image_reference_not_inside_code_block():
 
 # ===================================================================
 #  Cross-type: references inside inline code
-#  ReferenceDefinition/LinkReference/ImageReference do NOT sanitize
-#  CodeInline. Verify whether false positives occur.
+#  LinkReference and ImageReference sanitize CodeInline.
+#  ReferenceDefinition does not, but its start-of-line anchor
+#  prevents matching inside inline code naturally.
 # ===================================================================
 
 
@@ -363,7 +364,6 @@ def test_reference_definition_inside_inline_code_not_matched():
     assert len(results) == 0
 
 
-@pytest.mark.skip(reason="LinkReference does not sanitize CodeInline")
 def test_link_reference_not_inside_inline_code():
     """Link references inside inline code should not be extracted."""
     text = "`[text][ref]`"
@@ -371,7 +371,6 @@ def test_link_reference_not_inside_inline_code():
     assert len(results) == 0
 
 
-@pytest.mark.skip(reason="ImageReference does not sanitize CodeInline")
 def test_image_reference_not_inside_inline_code():
     """Image references inside inline code should not be extracted."""
     text = "`![alt][ref]`"

@@ -1,4 +1,4 @@
-Status: draft
+Status: completed
 Parent: test-coverage-audit.md
 
 # Parser Sanitization Gaps
@@ -74,14 +74,14 @@ Current sanitization chains per extractor:
 
 ## Acceptance Criteria
 
-- [ ] InlineImage.extract() sanitizes CodeBlock and CodeInline
+- [x] InlineImage.extract() sanitizes CodeBlock and CodeInline
       before matching
-- [ ] CodeInline.extract() sanitizes CodeBlock before matching
-- [ ] LinkReference.extract() sanitizes CodeInline before matching
-- [ ] ImageReference.extract() sanitizes CodeInline before matching
-- [ ] All 4 skipped spec tests unskipped and passing
-- [ ] CodeInline-inside-CodeBlock test updated to assert no match
-- [ ] No regressions in existing tests
+- [x] CodeInline.extract() sanitizes CodeBlock before matching
+- [x] LinkReference.extract() sanitizes CodeInline before matching
+- [x] ImageReference.extract() sanitizes CodeInline before matching
+- [x] All 4 skipped spec tests unskipped and passing
+- [x] CodeInline-inside-CodeBlock test updated to assert no match
+- [x] No regressions in existing tests
 
 ## Out of Scope
 
@@ -89,16 +89,32 @@ Current sanitization chains per extractor:
 - GFM syntax variant support (tracked in `gfm-parity.md`)
 - Regex pattern changes (tracked in `parser-greedy-regex.md`)
 - sanitize_text utility bug (tracked in
-  `sanitize-text-newline-bug.md`)
+  `sanitize-text-newline-bug.md`, now completed)
 
 ## Design Decisions
 
-## Open Questions
+- **InlineImage does not sanitize QuoteBlock.** GitHub renders
+  images inside blockquotes (`> ![alt](url)` displays the image),
+  so images inside blockquotes are valid content that should be
+  extracted. Adding QuoteBlock sanitization would replicate the
+  over-sanitization bug tracked in `quoteblock-over-sanitization.md`.
+  When that bug is fixed (stripping `> ` prefix instead of blanking
+  content), QuoteBlock sanitization can be added to InlineImage if
+  needed.
 
-- Should InlineImage also sanitize QuoteBlock (matching InlineLink's
-  chain)?
-- Should the sanitization chain for each extractor be documented in
-  the parser specification?
-- Does adding sanitization to CodeInline.extract() affect
-  Section._extract() which already passes CodeBlock-sanitized text
-  to CodeInline?
+- **Sanitization chains are documented in the parser specification.**
+  The chain determines extraction correctness and is a contract.
+  Documenting it in the spec provides concrete reference material
+  for unit tests and bug fixes, and helps future users of the tool
+  understand the extraction logic.
+
+- **Each extractor sanitizes internally, independent of calling
+  context.** Extractors are designed as self-contained modules that
+  produce correct results regardless of whether they are called from
+  Section._extract(), standalone scripts, or a future API. Adding
+  CodeBlock sanitization inside CodeInline.extract() is correct even
+  though Section._extract() already creates a CodeBlock-sanitized
+  copy — the internal sanitization makes the extractor safe in any
+  context.
+
+## Open Questions

@@ -117,27 +117,57 @@ GitHub's markdown rendering behavior. It is not yet exhaustive -- edge
 cases remain and the ordering should be validated with unit tests
 against GitHub-Flavored Markdown (GFM) rendering rules.
 
-### Current Sanitization State in `Section._extract()`
+### Per-Extractor Sanitization Chains
 
-| Extractor                  | Input Received         | Sanitized? |
-|----------------------------|------------------------|------------|
-| `CodeBlock.extract()`      | `string`               | N/A (highest precedence) |
-| `CodeInline.extract()`     | `string`               | No         |
-| `InlineImage.extract()`    | `string`               | No         |
-| `ImageReference.extract()` | `string`               | No         |
-| `BareLink.extract()`       | `string`               | No (does internal sanitization) |
-| `BracketLink.extract()`    | `string`               | No (does internal sanitization) |
-| `InlineLink.extract()`     | `string`               | No (does internal sanitization) |
-| `LinkReference.extract()`  | `string`               | No (does internal sanitization) |
-| `List.extract()`           | `string`               | No         |
-| `QuoteBlock.extract()`     | `string`               | No         |
-| `ReferenceDefinition.extract()` | `string`          | No         |
-| `Table.extract()`          | `CodeBlock.sanitize(string)` | **Yes** |
+Each extractor should sanitize internally before matching, independent
+of calling context, ensuring correct results whether called from
+`Section._extract()`, standalone scripts, or a future API.
+`Table.extract()` is the sole exception — it currently relies on
+`Section._extract()` to pass CodeBlock-sanitized input. This is
+tracked in `table-internal-sanitization.md`.
 
-Link extractors do their own internal sanitization. Other extractors
-that could produce false positives inside code blocks (`InlineImage`,
-`ImageReference`, `List`, `QuoteBlock`) currently receive raw input.
-This is a known gap -- see issue `parser-sanitization-audit.md`.
+| Extractor             | Sanitizes (in order)                      |
+|-----------------------|-------------------------------------------|
+| `CodeBlock`           | (none -- highest precedence)              |
+| `CodeInline`          | CodeBlock                                 |
+| `FrontMatter`         | (none -- extracted before Section parse)  |
+| `Header`              | CodeBlock                                 |
+| `InlineImage`         | CodeBlock, CodeInline                     |
+| `InlineLink`          | CodeBlock, CodeInline, QuoteBlock         |
+| `BracketLink`         | CodeBlock, CodeInline, QuoteBlock         |
+| `BareLink`            | CodeBlock, CodeInline, QuoteBlock,        |
+|                       | InlineImage, BracketLink, InlineLink,     |
+|                       | ReferenceDefinition                       |
+| `ReferenceDefinition` | CodeBlock                                 |
+| `LinkReference`       | CodeBlock, CodeInline                     |
+| `ImageReference`      | CodeBlock, CodeInline                     |
+| `QuoteBlock`          | CodeBlock                                 |
+| `List`                | (none)                                    |
+| `Table`               | (none, but `Section._extract` passes      |
+|                       | CodeBlock-sanitized text)                 |
+
+**Design principle:** The chain order follows GFM rendering
+precedence. Code constructs have highest precedence (content inside
+code is never interpreted as other elements). Link extractors
+sanitize QuoteBlock because the `>` prefix can interfere with link
+pattern matching. BareLink has the deepest chain because bare URLs
+are the most ambiguous pattern and must exclude all other link types.
+
+**Known gaps:**
+- QuoteBlock sanitization blanks entire line content instead of
+  stripping `> ` prefixes, causing link extractors to miss valid
+  links inside blockquotes. Tracked in
+  `quoteblock-over-sanitization.md`.
+- InlineImage does not sanitize QuoteBlock. This is intentional --
+  GitHub renders images inside blockquotes, so they are valid
+  content. When the QuoteBlock over-sanitization bug is fixed,
+  this decision should be revisited.
+
+### Section._extract() Orchestration
+
+`Section._extract()` passes raw `string` to all extractors,
+relying on each to sanitize internally. The exception is
+`Table.extract()`, which receives `CodeBlock.sanitize(string)`.
 
 The `string_safe` field stored on each `Section` is
 `CodeInline.sanitize(CodeBlock.sanitize(string))`. It is not passed

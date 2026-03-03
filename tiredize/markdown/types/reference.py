@@ -5,6 +5,7 @@ from dataclasses import dataclass
 # Local
 from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
+from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 
@@ -86,6 +87,7 @@ class LinkReference:
         base_offset: int = 0
     ) -> list[LinkReference]:
         text_sanitized = CodeBlock.sanitize(text)
+        text_sanitized = CodeInline.sanitize(text_sanitized)
         matches = search_all_re(
             LinkReference.RE_LINK_REFERENCE,
             text_sanitized
@@ -139,6 +141,7 @@ class ImageReference:
         base_offset: int = 0
     ) -> list[ImageReference]:
         text_sanitized = CodeBlock.sanitize(text)
+        text_sanitized = CodeInline.sanitize(text_sanitized)
         matches = search_all_re(
             ImageReference.RE_IMAGE_REFERENCE,
             text_sanitized
