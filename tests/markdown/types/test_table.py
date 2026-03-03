@@ -384,6 +384,15 @@ def test_table_header_only_no_data_rows():
     assert results[0].header == ["A", "B"]
 
 
+def test_table_pipe_only_data_row():
+    """A data row containing only | should not crash extraction.
+    Per GFM, this is a valid row with empty cells."""
+    text = "| A |\n|---|\n|\n"
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].rows == [[""]]
+
+
 # ===================================================================
 #  Cross-cutting: CRLF line endings
 # ===================================================================
