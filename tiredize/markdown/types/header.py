@@ -19,7 +19,7 @@ class Header:
     title: str
 
     RE_HEADER = r"""
-        (?<![^|\n])           # Start of line, but don't capture it
+        (?:(?<=\n)|(?:^))     # Start of line (zero-width)
         (?P<hashes>\#{1,6})   # One to six hash characters
         \s+                   # Whitespace
         (?P<title>[^\n]+)     # Capture anything after that as the title

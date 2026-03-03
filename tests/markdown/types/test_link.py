@@ -420,16 +420,13 @@ def test_bare_link_trailing_punctuation_stripped():
     assert results[0].url == "https://example.com"
 
 
-@pytest.mark.skip(
-    reason="gfm-parity: ../ relative paths produce false partial match"
-)
 def test_bare_link_parent_dir_not_partial_match():
-    """Relative paths with ../ should not produce a false partial match
-    of ./sibling/ from position 1 of ../."""
+    """Relative paths with ../ should match the full path, not a
+    false partial match of ./sibling/ from position 1."""
     text = "See ../sibling/readme.md for details."
     results = BareLink.extract(text)
-    # Either match the full ../sibling/readme.md or don't match at all
-    assert len(results) == 0 or results[0].url == "../sibling/readme.md"
+    assert len(results) == 1
+    assert results[0].url == "../sibling/readme.md"
 
 
 # ===================================================================

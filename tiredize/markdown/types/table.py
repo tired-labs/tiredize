@@ -33,7 +33,7 @@ class Table:
             ([|][ \t]*:?-+:?[ \t]*)+
             [|]?\n
         )
-        (?P<rows>([^\n]+(\n|$))*)
+        (?P<rows>([^\n]*\|[^\n]*(\n|$))*)
     """
 
     @staticmethod

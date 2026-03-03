@@ -430,14 +430,11 @@ def test_header_setext_dashes():
 
 
 def test_header_after_pipe_char():
-    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
-    Header after | produces a false positive match."""
+    """Header after | should not match. Per GFM, | indicates
+    a table cell, not a valid start-of-line for headings."""
     text = "|# Heading"
     matches = Header.extract(text)
-    # Per GFM, |# is not a heading -- it's a table cell.
-    # The anchor accepts | as a valid predecessor, causing a
-    # false positive.
-    assert len(matches) == 1  # documents actual behavior
+    assert len(matches) == 0
 
 
 # ===================================================================

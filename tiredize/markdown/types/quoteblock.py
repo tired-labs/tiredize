@@ -17,7 +17,7 @@ class QuoteBlock:
     string: str
 
     RE_QUOTEBLOCK = r"""
-        (?<![^|\n])        # Start of line, but don't capture it
+        (?:(?<=\n)|(?:^))  # Start of line (zero-width)
         (?P<depth>[>]+)    # Capture the blockquote depth
         \s*                # Optional whitespace
         (?P<quote>[^\n]*)  # Capture anything after that as the quote

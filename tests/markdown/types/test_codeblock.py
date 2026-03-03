@@ -313,15 +313,11 @@ def test_codeblock_empty():
 
 
 def test_codeblock_after_pipe_char():
-    """The (?<![^|\\n]) anchor treats | as valid start-of-line.
-    Code fence after | produces a false positive match."""
+    """Code fence after | should not match. Per GFM, | indicates
+    a table cell, not a valid start-of-line for code fences."""
     text = "|```\ncode\n```"
     results = CodeBlock.extract(text)
-    # Per GFM, | before ``` should not start a code block.
-    # The anchor (?<![^|\\n]) means "preceding char must be |
-    # or \\n (or start of string)", so | is accepted.
-    # This is a false positive.
-    assert len(results) == 1  # documents actual behavior
+    assert len(results) == 0
 
 
 # ===================================================================

@@ -17,7 +17,7 @@ class CodeBlock:
     string: str
 
     RE_CODEBLOCK = r"""
-        (?<![^|\n])
+        (?:(?<=\n)|(?:^))
         (?P<delimiter>``[`]+)
         (?P<language>.*)
         \n
