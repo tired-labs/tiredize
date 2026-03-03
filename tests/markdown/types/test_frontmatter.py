@@ -144,9 +144,6 @@ def test_malformed_yaml_returns_none():
 # ===================================================================
 
 
-@pytest.mark.skip(
-    reason="sanitize_text drops trailing newline via splitlines()"
-)
 def test_frontmatter_sanitize_preserves_length():
     """Sanitize must preserve string length per sanitization contract."""
     text = "---\ntitle: Hello\n---\n# Content"
@@ -161,9 +158,6 @@ def test_frontmatter_sanitize_no_frontmatter():
     assert sanitized == text
 
 
-@pytest.mark.skip(
-    reason="sanitize_text drops trailing newline via splitlines()"
-)
 def test_frontmatter_sanitize_idempotent():
     """Sanitize applied twice must produce the same result
     and preserve length."""
@@ -280,16 +274,11 @@ def test_frontmatter_indented_delimiter():
 # ===================================================================
 
 
-@pytest.mark.skip(
-    reason="sanitize_text drops trailing newline via splitlines()"
-)
 def test_header_not_extracted_from_frontmatter():
     """Headers inside YAML frontmatter should not be extracted.
     FrontMatter.sanitize replaces the frontmatter with whitespace,
-    but the trailing newline is lost due to the splitlines() bug.
-    This causes '# Real Header' to be appended to the sanitized
-    '---' line without a preceding newline, so the start-of-line
-    anchor fails and the header is not found."""
+    so downstream extractors do not match content inside the
+    sanitized region."""
     from tiredize.markdown.types.header import Header
     text = "---\n# Not a header\ntitle: Hello\n---\n# Real Header"
     sanitized = FrontMatter.sanitize(text)
