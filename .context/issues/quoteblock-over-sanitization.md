@@ -69,11 +69,11 @@ was added as a precaution but is unnecessary for these extractors.
 Removing it from their sanitization chains allows links inside
 blockquotes to be found correctly.
 
-### Extractors that sanitize QuoteBlock
+### Extractors that sanitized QuoteBlock (removed by this fix)
 
-- InlineLink (`link.py` line 133)
-- BracketLink (`link.py` line 80)
-- BareLink (`link.py` line 30)
+- InlineLink
+- BracketLink
+- BareLink
 
 ## Acceptance Criteria
 
