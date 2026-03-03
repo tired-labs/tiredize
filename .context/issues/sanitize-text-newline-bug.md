@@ -1,4 +1,4 @@
-Status: draft
+Status: active
 Parent: test-coverage-audit.md
 
 # sanitize_text() Trailing Newline Bug
@@ -83,11 +83,11 @@ Patterns whose matches never end with `\n`:
 
 ## Acceptance Criteria
 
-- [ ] `sanitize_text()` preserves string length for all inputs,
+- [x] `sanitize_text()` preserves string length for all inputs,
       including matches that end with `\n`
-- [ ] All 3 skipped spec tests unskipped and passing
-- [ ] No regressions in existing tests
-- [ ] The fix handles edge cases: match ending with multiple `\n`,
+- [x] All 3 skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
+- [x] The fix handles edge cases: match ending with multiple `\n`,
       match that is entirely `\n` characters
 
 ## Out of Scope
@@ -98,10 +98,19 @@ Patterns whose matches never end with `\n`:
 
 ## Design Decisions
 
-## Open Questions
+- **Use `split('\n')` instead of `splitlines()`.**
+  `split('\n')` treats `\n` as a separator and preserves trailing
+  empty elements (`"foo\n".split('\n')` → `['foo', '']`), so
+  `"\n".join()` produces the correct number of newlines.
+  `splitlines()` treats `\n` as a terminator and drops the trailing
+  element, causing the length mismatch.
 
-- Should the fix use `split('\n')` instead of `splitlines()`?
-  `"foo\n".split('\n')` gives `['foo', '']` which preserves the
-  trailing empty element.
-- Does `splitlines()` handle `\r\n` differently from `split('\n')`?
-  If CRLF support is added later, the fix should account for both.
+- **Do not handle CRLF in this fix.** `split('\n')` does not split
+  on `\r\n` as a unit — `\r` is preserved as content. This is
+  acceptable because CRLF support is a cross-cutting concern that
+  affects every regex pattern and line-splitting call in the parser.
+  It is tracked as a separate effort in `gfm-parity.md`. When CRLF
+  support lands, all line-splitting logic (including this function)
+  will be revisited project-wide.
+
+## Open Questions

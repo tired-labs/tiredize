@@ -173,6 +173,13 @@ Several types match with CRLF input but capture `\r` as content:
 
 ## Design Decisions
 
+- **CRLF handling is deferred to this issue.** Other bug fixes that
+  touch line-splitting logic (e.g., `sanitize-text-newline-bug.md`
+  switching from `splitlines()` to `split('\n')`) consciously do not
+  account for CRLF. When CRLF support is implemented here, all
+  line-splitting call sites must be revisited project-wide, including
+  `sanitize_text()` in `tiredize/markdown/utils.py`.
+
 ## Open Questions
 
 - Should these be tackled as a single issue or split by category
