@@ -78,9 +78,10 @@ class CodeInline:
         """
         Extract inline code from markdown text.
         """
+        text_sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             CodeInline.RE_CODE_INLINE,
-            text
+            text_sanitized
         )
 
         result: list[CodeInline] = []
