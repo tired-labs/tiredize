@@ -105,6 +105,28 @@ Regex patterns are class-level constants prefixed with `RE_` (e.g.,
 `RE_HEADER`, `RE_CODEBLOCK`) and use `re.VERBOSE` syntax. This allows
 inline comments and whitespace for readability.
 
+### Start-of-Line Anchor
+
+Block-level elements (CodeBlock, Header, QuoteBlock,
+ReferenceDefinition) use `(?:(?<=\n)|(?:^))` as a zero-width
+start-of-line anchor. This matches at the start of the string or
+immediately after a newline, but not after `|` or other characters.
+Negative lookbehind (`(?<!...)`) cannot be used in `re.VERBOSE` mode.
+
+### URL Pattern in Inline Links and Images
+
+`InlineLink` and `InlineImage` use `[^\s)]+` to capture URLs. The
+`)` exclusion prevents the pattern from consuming past the closing
+parenthesis into adjacent syntax. URLs containing literal `)` (e.g.,
+balanced parentheses in Wikipedia URLs) are not supported — tracked
+in `gfm-parity.md`.
+
+### BareLink Relative Path Matching
+
+`BareLink.RE_URL` matches `../` as an explicit alternative before
+`./`, preventing `./` from false-matching inside `../` paths.
+Backslash paths (`\`) are also supported for Windows-style paths.
+
 ## Sanitize Chain
 
 Extractors call `sanitize()` on higher-precedence types before running
