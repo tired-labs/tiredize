@@ -111,7 +111,9 @@ Block-level elements (CodeBlock, Header, QuoteBlock,
 ReferenceDefinition) use `(?:(?<=\n)|(?:^))` as a zero-width
 start-of-line anchor. This matches at the start of the string or
 immediately after a newline, but not after `|` or other characters.
-Negative lookbehind (`(?<!...)`) cannot be used in `re.VERBOSE` mode.
+The previous anchor `(?<![^|\n])` used a negated character class
+that included `|`, causing it to accept `|` as a valid predecessor
+and producing false positive matches inside table cells.
 
 ### URL Pattern in Inline Links and Images
 

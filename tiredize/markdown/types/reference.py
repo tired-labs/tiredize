@@ -75,7 +75,7 @@ class LinkReference:
         (?<!(!|\]))\[
         (\s*(?P<text>[^]]*?)\s*\]\[)?
         \s*
-        (?P<reference>[^\]]+)           # Capture the URL
+        (?P<reference>[^\]]+)           # Capture the reference label
         \s*
         \](?!:)
         (?!\()                          # Negative lookahead to avoid inline
@@ -128,7 +128,7 @@ class ImageReference:
         !\[
         (\s*(?P<text>[^]]*?)\s*\]\[)?
         \s*
-        (?P<reference>[^\]]+)             # Capture the URL
+        (?P<reference>[^\]]+)             # Capture the reference label
         \s*
         \](?!:)
         (?!\()                          # Negative lookahead to avoid inline
