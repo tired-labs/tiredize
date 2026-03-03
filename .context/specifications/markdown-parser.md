@@ -115,7 +115,6 @@ assessment, and naming mappings.
 ### Block-Level Elements
 
 - [`markdown-type-codeblock.md`](markdown-type-codeblock.md) — CodeBlock (fenced code blocks)
-- [`markdown-type-codeinline.md`](markdown-type-codeinline.md) — CodeInline (code spans)
 - [`markdown-type-header.md`](markdown-type-header.md) — Header (ATX headings)
 - [`markdown-type-quoteblock.md`](markdown-type-quoteblock.md) — QuoteBlock (block quotes)
 - [`markdown-type-table.md`](markdown-type-table.md) — Table (GFM tables)
@@ -123,6 +122,7 @@ assessment, and naming mappings.
 
 ### Inline Elements
 
+- [`markdown-type-codeinline.md`](markdown-type-codeinline.md) — CodeInline (code spans)
 - [`markdown-type-inlineimage.md`](markdown-type-inlineimage.md) — InlineImage (images)
 - [`markdown-type-inlinelink.md`](markdown-type-inlinelink.md) — InlineLink (links)
 - [`markdown-type-bracketlink.md`](markdown-type-bracketlink.md) — BracketLink (autolinks)

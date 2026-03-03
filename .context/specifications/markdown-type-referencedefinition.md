@@ -18,7 +18,7 @@ for link references and image references elsewhere in the document.
 | `position` | `Position` | Character offset and length relative to document root |
 | `string` | `str` | The full matched text |
 | `text` | `str` | The reference label between `[` and `]` |
-| `title` | `str` | Optional title in double quotes (None if absent) |
+| `title` | `str` | Optional title in double quotes (see Notes for type caveat) |
 | `url` | `str` | The URL after the colon and whitespace |
 
 ## Regex Pattern

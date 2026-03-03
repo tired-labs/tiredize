@@ -16,7 +16,7 @@ lookbehind prevents matching image syntax (`![text](url)`).
 |-------|------|-------------|
 | `position` | `Position` | Character offset and length relative to document root |
 | `string` | `str` | The full matched text |
-| `title` | `str` | Optional title in double quotes (None if absent) |
+| `title` | `str` | Optional title in double quotes (see Notes for type caveat) |
 | `url` | `str` | The URL between `(` and `)` |
 
 ## Regex Pattern
