@@ -1,5 +1,14 @@
 Status: draft
 Parent: test-coverage-audit.md
+Sub-issues:
+  - gfm-thematic-break.md
+  - gfm-setext-heading.md
+  - gfm-indented-code-block.md
+  - gfm-emphasis.md
+  - gfm-strikethrough.md
+  - gfm-task-list.md
+  - gfm-hard-line-break.md
+  - gfm-html-block.md
 
 # GFM Parity: Unsupported Syntax Variants
 
