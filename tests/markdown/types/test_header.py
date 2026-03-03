@@ -463,7 +463,7 @@ def test_header_escaped_hash():
     The regex does not handle backslash escapes."""
     text = "\\# Not a heading"
     matches = Header.extract(text)
-    # The regex sees # after \\ at start of line. The lookbehind
-    # checks the char before #, which is \\. Since \\ is not
-    # | or \\n, the lookbehind (?<![^|\\n]) fails and no match.
+    # The start-of-line anchor matches at position 0, but the first
+    # character is \, not #, so #{1,6} doesn't match. The # at
+    # position 1 is not at start-of-line, so the anchor fails.
     assert len(matches) == 0  # accidentally correct

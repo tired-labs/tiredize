@@ -479,13 +479,10 @@ def test_link_reference_inside_quote_block():
     may or may not match depending on how the lookbehind works."""
     text = "> [text][ref]"
     results = LinkReference.extract(text)
-    # The > and space are removed by CodeBlock sanitize but not
-    # QuoteBlock sanitize. Since LinkReference doesn't sanitize
-    # QuoteBlock, the text is unchanged. The lookbehind (?<!(!|\]))
-    # checks the char before [. The char before [ is space, which
-    # passes. So this should match as a false positive.
-    # Per GFM, link references in blockquotes ARE valid, so matching
-    # is actually correct behavior.
+    # LinkReference doesn't sanitize QuoteBlock, so the text is
+    # unchanged. The lookbehind (?<!(!|\])) checks the char before
+    # [, which is space — passes correctly.
+    # Per GFM, link references in blockquotes ARE valid.
     assert len(results) >= 1
 
 
