@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 # Local
 from tiredize.core_types import Position
+from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
 
@@ -41,9 +42,10 @@ class Table:
         """
         Extract table from markdown text.
         """
+        sanitized = CodeBlock.sanitize(text)
         matches = search_all_re(
             Table.RE_TABLE,
-            text
+            sanitized
         )
 
         result: list[Table] = []

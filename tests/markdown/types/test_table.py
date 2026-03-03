@@ -394,6 +394,69 @@ def test_table_pipe_only_data_row():
 
 
 # ===================================================================
+#  Internal CodeBlock sanitization
+# ===================================================================
+
+
+def test_extract_ignores_table_inside_code_fence():
+    """Table.extract() should sanitize code blocks internally,
+    preventing false matches on table syntax inside fences."""
+    text = (
+        "Some text before.\n\n"
+        "```\n"
+        "| Weapon | Damage |\n"
+        "|--------|--------|\n"
+        "| Sword  | 10     |\n"
+        "```\n\n"
+        "Some text after.\n"
+    )
+    results = Table.extract(text)
+    assert len(results) == 0
+
+
+def test_extract_finds_table_outside_code_fence():
+    """A real table outside a code fence should still be found,
+    even when a code fence with table-like content is present."""
+    text = (
+        "```\n"
+        "| Fake | Table |\n"
+        "|------|-------|\n"
+        "| no   | match |\n"
+        "```\n\n"
+        "| Real | Table |\n"
+        "|------|-------|\n"
+        "| yes  | match |\n"
+    )
+    results = Table.extract(text)
+    assert len(results) == 1
+    assert results[0].header == ["Real", "Table"]
+    assert results[0].rows == [["yes", "match"]]
+
+
+def test_extract_preserves_position_after_sanitization():
+    """Positions must reflect the original text, not the sanitized text.
+    CodeBlock sanitization replaces content with spaces but preserves
+    offsets, so table positions should be correct."""
+    code_fence = (
+        "```\n"
+        "| Ghost | Table |\n"
+        "|-------|-------|\n"
+        "| boo   | 👻    |\n"
+        "```\n"
+    )
+    real_table = (
+        "| Hero | Quest |\n"
+        "|------|-------|\n"
+        "| Link | Zelda |\n"
+    )
+    text = code_fence + "\n" + real_table
+    results = Table.extract(text)
+    assert len(results) == 1
+    expected_offset = len(code_fence) + 1  # +1 for the blank line
+    assert results[0].position.offset == expected_offset
+
+
+# ===================================================================
 #  Cross-cutting: CRLF line endings
 # ===================================================================
 

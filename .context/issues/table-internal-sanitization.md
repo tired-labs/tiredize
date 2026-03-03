@@ -1,4 +1,4 @@
-Status: ready
+Status: completed
 
 # Add internal CodeBlock sanitization to Table.extract()
 
@@ -20,16 +20,16 @@ sanitize internally like every other extractor.
 
 ## Acceptance Criteria
 
-- [ ] `Table.extract()` calls `CodeBlock.sanitize()` on the input
+- [x] `Table.extract()` calls `CodeBlock.sanitize()` on the input
       text before matching
-- [ ] `Section._extract()` can pass raw `string` to `Table.extract()`
+- [x] `Section._extract()` can pass raw `string` to `Table.extract()`
       instead of `CodeBlock.sanitize(string)` (since Table now
       handles it internally)
-- [ ] All existing tests pass (no regressions)
-- [ ] Parser specification updated: sanitization chain table changed
+- [x] All existing tests pass (no regressions)
+- [x] Parser specification updated: sanitization chain table changed
       from "(none, but Section._extract passes CodeBlock-sanitized
       text)" to "CodeBlock"
-- [ ] Parser specification "Section._extract() Orchestration"
+- [x] Parser specification "Section._extract() Orchestration"
       section updated to reflect that all extractors now receive
       raw `string` (remove the Table exception note)
 

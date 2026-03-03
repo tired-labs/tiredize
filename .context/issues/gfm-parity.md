@@ -159,6 +159,12 @@ Several types match with CRLF input but capture `\r` as content:
 - [ ] InlineLink and InlineImage URL patterns support balanced
       parentheses (e.g., `https://en.wikipedia.org/wiki/Foo_(bar)`)
       per GFM extended autolink spec
+- [ ] Cross-component sanitization test audit: for each extractor
+      with a sanitization chain, verify that tests exist confirming
+      the extractor ignores matches inside each sanitized type's
+      content (e.g., Table ignores table syntax inside code fences,
+      InlineLink ignores URLs inside code blocks). Fill any gaps
+      found.
 
 ## Out of Scope
 

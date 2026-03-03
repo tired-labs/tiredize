@@ -151,7 +151,7 @@ class Section:
             string_safe=CodeInline.sanitize(code_block_safe),
             subsections=[],
             tables=Table.extract(
-                text=code_block_safe,
+                text=string,
                 base_offset=base_offset
             )
         )
