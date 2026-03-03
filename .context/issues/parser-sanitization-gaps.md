@@ -1,4 +1,4 @@
-Status: active
+Status: completed
 Parent: test-coverage-audit.md
 
 # Parser Sanitization Gaps
