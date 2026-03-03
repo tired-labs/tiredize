@@ -7,6 +7,11 @@ dataclass elements. It owns the document model, element extraction,
 text sanitization (to prevent false matches across element types), and
 position tracking. Located in `tiredize/markdown/`.
 
+Each element type has its own specification file with regex patterns,
+dataclass fields, sanitization chains, and GFM compliance assessment.
+This hub document covers shared concepts, cross-cutting architecture,
+and the file layout.
+
 ## Contracts and Interfaces
 
 ### Entry Point
@@ -75,6 +80,66 @@ regions are preserved in the output. The output length must always
 equal the input length. `get_position_from_match` returns
 `(line_number, column_offset, match_length)` for a regex match.
 
+### Shared Regex Patterns
+
+#### Start-of-Line Anchor
+
+Block-level elements (CodeBlock, Header, QuoteBlock,
+ReferenceDefinition) use `(?:(?<=\n)|(?:^))` as a zero-width
+start-of-line anchor. This matches at the start of the string or
+immediately after a newline, but not after `|` or other characters.
+The previous anchor `(?<![^|\n])` used a negated character class
+that included `|`, causing it to accept `|` as a valid predecessor
+and producing false positive matches inside table cells.
+
+#### URL Pattern in Inline Links and Images
+
+`InlineLink` and `InlineImage` use `[^\s)]+` to capture URLs. The
+`)` exclusion prevents the pattern from consuming past the closing
+parenthesis into adjacent syntax. URLs containing literal `)` (e.g.,
+balanced parentheses in Wikipedia URLs) are not supported — tracked
+in `gfm-parity.md`.
+
+#### BareLink Relative Path Matching
+
+`BareLink.RE_URL` matches `../` as an explicit alternative before
+`./`, preventing `./` from false-matching inside `../` paths.
+Backslash paths (`\`) are also supported for Windows-style paths.
+
+## Element Type Specifications
+
+Per-type specification files follow a consistent template with
+dataclass fields, regex pattern, sanitization chain, GFM compliance
+assessment, and naming mappings.
+
+### Block-Level Elements
+
+- [`markdown-type-codeblock.md`](markdown-type-codeblock.md) — CodeBlock (fenced code blocks)
+- [`markdown-type-codeinline.md`](markdown-type-codeinline.md) — CodeInline (code spans)
+- [`markdown-type-header.md`](markdown-type-header.md) — Header (ATX headings)
+- [`markdown-type-quoteblock.md`](markdown-type-quoteblock.md) — QuoteBlock (block quotes)
+- [`markdown-type-table.md`](markdown-type-table.md) — Table (GFM tables)
+- [`markdown-type-list.md`](markdown-type-list.md) — List (stub — not implemented)
+
+### Inline Elements
+
+- [`markdown-type-inlineimage.md`](markdown-type-inlineimage.md) — InlineImage (images)
+- [`markdown-type-inlinelink.md`](markdown-type-inlinelink.md) — InlineLink (links)
+- [`markdown-type-bracketlink.md`](markdown-type-bracketlink.md) — BracketLink (autolinks)
+- [`markdown-type-barelink.md`](markdown-type-barelink.md) — BareLink (extended autolinks)
+
+### Reference Elements
+
+- [`markdown-type-referencedefinition.md`](markdown-type-referencedefinition.md) — ReferenceDefinition (link reference definitions)
+- [`markdown-type-linkreference.md`](markdown-type-linkreference.md) — LinkReference (reference links)
+- [`markdown-type-imagereference.md`](markdown-type-imagereference.md) — ImageReference (reference images)
+
+### Structural Elements
+
+- [`markdown-type-frontmatter.md`](markdown-type-frontmatter.md) — FrontMatter (YAML frontmatter)
+- [`markdown-type-document.md`](markdown-type-document.md) — Document (top-level container)
+- [`markdown-type-section.md`](markdown-type-section.md) — Section (tree builder and extraction orchestrator)
+
 ## File Layout
 
 ```
@@ -99,263 +164,7 @@ tiredize/markdown/
     └── table.py         Table
 ```
 
-## Regex Constants
-
-Regex patterns are class-level constants prefixed with `RE_` (e.g.,
-`RE_HEADER`, `RE_CODEBLOCK`) and use `re.VERBOSE` syntax. This allows
-inline comments and whitespace for readability.
-
-### Start-of-Line Anchor
-
-Block-level elements (CodeBlock, Header, QuoteBlock,
-ReferenceDefinition) use `(?:(?<=\n)|(?:^))` as a zero-width
-start-of-line anchor. This matches at the start of the string or
-immediately after a newline, but not after `|` or other characters.
-The previous anchor `(?<![^|\n])` used a negated character class
-that included `|`, causing it to accept `|` as a valid predecessor
-and producing false positive matches inside table cells.
-
-### URL Pattern in Inline Links and Images
-
-`InlineLink` and `InlineImage` use `[^\s)]+` to capture URLs. The
-`)` exclusion prevents the pattern from consuming past the closing
-parenthesis into adjacent syntax. URLs containing literal `)` (e.g.,
-balanced parentheses in Wikipedia URLs) are not supported — tracked
-in `gfm-parity.md`.
-
-### BareLink Relative Path Matching
-
-`BareLink.RE_URL` matches `../` as an explicit alternative before
-`./`, preventing `./` from false-matching inside `../` paths.
-Backslash paths (`\`) are also supported for Windows-style paths.
-
-### Pattern Reference
-
-Each pattern is shown in `re.VERBOSE` form with named capture groups
-and component descriptions.
-
-#### `CodeBlock.RE_CODEBLOCK` (code.py)
-
-```
-(?:(?<=\n)|(?:^))       # Start-of-line anchor (zero-width)
-(?P<delimiter>``[`]+)   # Opening fence: 3+ backticks
-(?P<language>.*)        # Optional language identifier
-\n                      # Newline after opening fence
-(?P<code>[\s\S]*?)      # Code content (lazy, spans newlines)
-\n                      # Newline before closing fence
-\1                      # Closing fence: must match opening backtick count
-```
-
-The closing fence uses backreference `\1` to ensure the delimiter
-length matches. `[\s\S]*?` is used instead of `.*?` because `.`
-does not match newlines. The lazy quantifier prevents consuming
-past the first matching closing fence.
-
-#### `CodeInline.RE_CODE_INLINE` (code.py)
-
-```
-`                       # Opening backtick
-(?P<code>[^\n`]+)       # Content: any chars except backtick or newline
-`                       # Closing backtick
-```
-
-Does not support multi-backtick inline code (e.g., ` `` code `` `).
-The `[^\n`]` exclusion prevents matching across lines. Tracked in
-`gfm-parity.md`.
-
-#### `FrontMatter.RE_FRONT_MATTER_YAML` (frontmatter.py)
-
-```
-^                       # Must be at absolute start of string
-[-]{3}                  # Opening fence: ---
-\n                      # Newline
-(?P<yaml>[\s\S]*?)      # YAML content (lazy, spans newlines)
-\n                      # Newline
-[-]{3}                  # Closing fence: ---
-\n                      # Trailing newline
-```
-
-Anchored to `^` (start of string), not start-of-line. FrontMatter
-is always the first thing in a document. The closing `---\n`
-requires a trailing newline, so `---` at end-of-file without a
-newline will not match.
-
-#### `Header.RE_HEADER` (header.py)
-
-```
-(?:(?<=\n)|(?:^))       # Start-of-line anchor (zero-width)
-(?P<hashes>\#{1,6})     # 1-6 hash characters (heading level)
-\s+                     # Mandatory whitespace after hashes
-(?P<title>[^\n]+)       # Title: rest of line
-```
-
-Requires at least one space after `#`. A line like `#no-space`
-will not match. The title captures everything to end-of-line
-including trailing whitespace and closing `#` characters.
-
-#### `InlineImage.RE_INLINE_IMAGE` (image.py)
-
-```
-!\[                     # Opening: exclamation mark + bracket
-\s*                     # Optional whitespace
-(?P<text>[^]]*?)        # Alt text (lazy, excludes ])
-\s*                     # Optional whitespace
-\]\(                    # Closing bracket + opening parenthesis
-\s*                     # Optional whitespace
-(?P<url>[^\s)]+)        # URL: non-whitespace, excludes )
-(\s*?\"(?P<title>[^"]*?)\")?  # Optional title in double quotes
-\s*\)                   # Closing parenthesis
-```
-
-The `[^\s)]+` URL pattern prevents greedy consumption past the
-closing `)`. See "URL Pattern in Inline Links and Images" above.
-
-#### `InlineLink.RE_LINK_INLINE` (link.py)
-
-```
-(?<!!)                  # Negative lookbehind: not preceded by !
-\[\s*                   # Opening bracket + optional whitespace
-(?P<text>[^]]*?)        # Link text (lazy, excludes ])
-\s*                     # Optional whitespace
-\]\(                    # Closing bracket + opening parenthesis
-\s*                     # Optional whitespace
-(?P<url>[^\s)]+)        # URL: non-whitespace, excludes )
-(\s*?\"(?P<title>[^"]*?)\")?  # Optional title in double quotes
-\s*\)                   # Closing parenthesis
-```
-
-The `(?<!!)` lookbehind prevents matching `![text](url)` as a
-link (images start with `!`). Otherwise identical to InlineImage.
-
-#### `BracketLink.RE_LINK_BRACKET` (link.py)
-
-```
-<                       # Opening angle bracket
-(?P<url>https?:\/\/\S+) # URL: must start with http:// or https://
->                       # Closing angle bracket
-```
-
-Only matches absolute HTTP/HTTPS URLs. Relative paths and other
-protocols (ftp, mailto) are not supported.
-
-#### `BareLink.RE_URL` (link.py)
-
-```
-(?P<url>
-    (http[s]?:\/\/      # Absolute URL: http:// or https://
-    |(\.\.\/)           # Parent-relative path: ../
-    |(\.\/|\\)          # Current-relative path: ./ or \ (Windows)
-    )\S+                # Rest of URL: any non-whitespace
-)
-```
-
-The `../` alternative appears before `./` to prevent `./` from
-false-matching at position 1 inside `../` paths. See "BareLink
-Relative Path Matching" above. `\S+` is used here (not `[^\s)]+`)
-because bare links have no closing delimiter to consume past.
-
-#### `ReferenceDefinition.RE_REFERENCE_DEFINITION` (reference.py)
-
-```
-(?:(?<=\n)|(?:^))\[     # Start-of-line anchor + opening bracket
-(?P<text>[^]]*?)        # Label text (lazy, excludes ])
-\]:\s+                  # Closing bracket + colon + whitespace
-(?P<url>\S*[#\.\/]+\S*) # URL: must contain #, ., or /
-\s*?                    # Optional whitespace
-("(?P<title>[^"]*)")?   # Optional title in double quotes
-(?=\n|$)                # Lookahead: must end at newline or EOF
-```
-
-The URL pattern `\S*[#\.\/]+\S*` requires at least one `#`, `.`,
-or `/` character. This prevents plain words from matching as URLs
-but also means URLs without these characters are rejected (tracked
-in `gfm-parity.md`). The end-of-line lookahead ensures definitions
-don't consume content on the same line.
-
-#### `LinkReference.RE_LINK_REFERENCE` (reference.py)
-
-```
-(?<!(!|\]))\[           # Not preceded by ! or ] + opening bracket
-(\s*(?P<text>[^]]*?)    # Optional: link text (lazy, excludes ])
-\s*\]\[)?               # Optional: closing bracket + opening bracket
-\s*                     # Optional whitespace
-(?P<reference>[^\]]+)   # Reference label (excludes ])
-\s*                     # Optional whitespace
-\](?!:)                 # Closing bracket, not followed by :
-(?!\()                  # Not followed by ( (excludes inline links)
-```
-
-Matches both full references `[text][ref]` and shortcut
-references `[ref]`. The `(?<!(!|\]))` lookbehind prevents matching
-image references (`![alt][ref]`) and consecutive bracket
-sequences. The `(?!:)` lookahead prevents matching reference
-definitions `[ref]:`. The `(?!\()` lookahead prevents matching
-inline links `[text](url)`.
-
-#### `ImageReference.RE_IMAGE_REFERENCE` (reference.py)
-
-```
-!\[                     # Opening: exclamation mark + bracket
-(\s*(?P<text>[^]]*?)    # Optional: alt text (lazy, excludes ])
-\s*\]\[)?               # Optional: closing bracket + opening bracket
-\s*                     # Optional whitespace
-(?P<reference>[^\]]+)   # Reference label (excludes ])
-\s*                     # Optional whitespace
-\](?!:)                 # Closing bracket, not followed by :
-(?!\()                  # Not followed by ( (excludes inline images)
-```
-
-Same structure as LinkReference but anchored by `![` instead of
-lookbehind filtering. Matches both full `![alt][ref]` and shortcut
-`![ref]` forms.
-
-#### `QuoteBlock.RE_QUOTEBLOCK` (quoteblock.py)
-
-```
-(?:(?<=\n)|(?:^))       # Start-of-line anchor (zero-width)
-(?P<depth>[>]+)         # Blockquote depth: one or more >
-\s*                     # Optional whitespace after >
-(?P<quote>[^\n]*)       # Quote content: rest of line
-```
-
-Matches individual blockquote lines. The `extract()` method
-merges consecutive lines of the same depth into a single
-QuoteBlock element. Multi-level nesting is indicated by the
-`depth` field (e.g., `>>` has depth 2).
-
-#### `Table.RE_TABLE` (table.py)
-
-```
-(?P<header>             # Header row:
-    [|]?                #   Optional leading pipe
-    ([^\n|]*[|])*       #   Zero or more cells followed by pipe
-    [^\n|]+             #   Final cell (no trailing pipe required)
-    [|]?                #   Optional trailing pipe
-    \n                  #   Newline
-)
-(?P<divider>            # Divider row (two alternatives):
-    [|][ \t]*:?-+:?[ \t]*       # Alt 1: starts with pipe
-    ([|][ \t]*:?-+:?[ \t]*)*    #   more pipe-separated cells
-    [|]?\n                       #   optional trailing pipe + newline
-    |                            # -- OR --
-    [ \t]*:?-+:?[ \t]*          # Alt 2: starts without pipe
-    ([|][ \t]*:?-+:?[ \t]*)+    #   one or more pipe-separated cells
-    [|]?\n                       #   optional trailing pipe + newline
-)
-(?P<rows>               # Data rows:
-    ([^\n]*\|[^\n]*     #   Each row must contain at least one pipe
-    (\n|$))*            #   Terminated by newline or end-of-string
-)
-```
-
-The divider uses two alternatives to ensure at least one pipe
-appears in the repeating group, preventing catastrophic
-backtracking. See "Table divider regex rewrite" in Design
-Decisions. Data rows require `|` on each line — a line without
-`|` terminates the table, preventing the rows pattern from
-consuming non-table content.
-
-## Sanitize Chain
+## Sanitization Architecture
 
 Extractors call `sanitize()` on higher-precedence types before running
 their own regex to avoid false matches. For example, link extraction
@@ -363,7 +172,7 @@ sanitizes out code blocks and inline code first because a URL inside a
 fenced code block is not a rendered link.
 
 The precedence order was determined empirically by testing against
-GitHub's markdown rendering behavior. It is not yet exhaustive -- edge
+GitHub's markdown rendering behavior. It is not yet exhaustive — edge
 cases remain and the ordering should be validated with unit tests
 against GitHub-Flavored Markdown (GFM) rendering rules.
 
@@ -375,9 +184,9 @@ calling context, ensuring correct results whether called from
 
 | Extractor             | Sanitizes (in order)                      |
 |-----------------------|-------------------------------------------|
-| `CodeBlock`           | (none -- highest precedence)              |
+| `CodeBlock`           | (none — highest precedence)               |
 | `CodeInline`          | CodeBlock                                 |
-| `FrontMatter`         | (none -- extracted before Section parse)  |
+| `FrontMatter`         | (none — extracted before Section parse)   |
 | `Header`              | CodeBlock                                 |
 | `InlineImage`         | CodeBlock, CodeInline                     |
 | `InlineLink`          | CodeBlock, CodeInline                     |
@@ -414,6 +223,28 @@ The `string_safe` field stored on each `Section` is
 `CodeInline.sanitize(CodeBlock.sanitize(string))`. It is not passed
 to any extractor; it is stored for downstream consumers (e.g., linter
 rules that need code-free text).
+
+## Unimplemented GFM Features
+
+The following GFM features have no implementation in the parser.
+Each is tracked as a sub-issue of `gfm-parity.md`:
+
+- **Thematic breaks** (GFM 4.1) — Horizontal rules (`---`, `***`,
+  `___`). See `gfm-thematic-break.md`.
+- **Setext headings** (GFM 4.3) — Underline-style headings. See
+  `gfm-setext-heading.md`.
+- **Indented code blocks** (GFM 4.4) — 4-space indented code. See
+  `gfm-indented-code-block.md`.
+- **Emphasis and strong emphasis** (GFM 6.2) — `*em*`, `**strong**`,
+  `_em_`, `__strong__`. See `gfm-emphasis.md`.
+- **Strikethrough** (GFM extension) — `~~text~~`. See
+  `gfm-strikethrough.md`.
+- **Task list items** (GFM extension) — `- [ ] task`. See
+  `gfm-task-list.md`.
+- **Hard line breaks** (GFM 6.7) — Trailing spaces or `\` at EOL.
+  See `gfm-hard-line-break.md`.
+- **HTML blocks** (GFM 4.6) — Raw HTML blocks. See
+  `gfm-html-block.md`.
 
 ## Design Decisions
 
