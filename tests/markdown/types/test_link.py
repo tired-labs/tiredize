@@ -338,9 +338,6 @@ def test_bare_link_not_inside_inline_code():
 # ===================================================================
 
 
-@pytest.mark.skip(
-    reason="QuoteBlock sanitize removes content that contains valid links"
-)
 def test_inline_link_inside_quote_block():
     """Per GFM, links inside blockquotes are real links and should be
     extracted. QuoteBlock sanitize is too aggressive."""
@@ -580,9 +577,6 @@ def test_bare_link_inside_table_cell():
 # ===================================================================
 
 
-@pytest.mark.skip(
-    reason="QuoteBlock sanitize removes content containing links"
-)
 def test_bracket_link_inside_quote_block():
     """Per GFM, links inside blockquotes are real links."""
     text = "> <https://example.com>"
@@ -591,9 +585,6 @@ def test_bracket_link_inside_quote_block():
     assert results[0].url == "https://example.com"
 
 
-@pytest.mark.skip(
-    reason="QuoteBlock sanitize removes content containing links"
-)
 def test_bare_link_inside_quote_block():
     """Per GFM, links inside blockquotes are real links."""
     text = "> https://example.com"

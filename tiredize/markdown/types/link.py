@@ -7,7 +7,6 @@ from tiredize.core_types import Position
 from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.types.image import InlineImage
-from tiredize.markdown.types.quoteblock import QuoteBlock
 from tiredize.markdown.types.reference import ReferenceDefinition
 from tiredize.markdown.utils import sanitize_text
 from tiredize.markdown.utils import search_all_re
@@ -27,7 +26,6 @@ class BareLink:
     def extract(text: str, base_offset: int = 0) -> list[BareLink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
-        text_sanitized = QuoteBlock.sanitize(text_sanitized)
         text_sanitized = InlineImage.sanitize(text_sanitized)
         text_sanitized = BracketLink.sanitize(text_sanitized)
         text_sanitized = InlineLink.sanitize(text_sanitized)
@@ -77,7 +75,6 @@ class BracketLink:
     def extract(text: str, base_offset: int = 0) -> list[BracketLink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
-        text_sanitized = QuoteBlock.sanitize(text_sanitized)
         matches = search_all_re(
             BracketLink.RE_LINK_BRACKET,
             text_sanitized
@@ -130,7 +127,6 @@ class InlineLink:
     def extract(text: str, base_offset: int = 0) -> list[InlineLink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
-        text_sanitized = QuoteBlock.sanitize(text_sanitized)
         matches = search_all_re(
             InlineLink.RE_LINK_INLINE,
             text_sanitized
