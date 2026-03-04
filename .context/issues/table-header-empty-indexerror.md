@@ -1,4 +1,4 @@
-Status: active
+Status: completed
 
 # Table.extract() IndexError on whitespace-only header match
 
