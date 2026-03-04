@@ -20,7 +20,7 @@ class Table:
     RE_TABLE = r"""
         (?P<header>
             [|]?
-            ([^\n|]*[|])*
+            ([^\n|]*[|])+
             [^\n|]+
             [|]?
             \n
