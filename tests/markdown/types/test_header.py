@@ -374,9 +374,9 @@ def test_header_emoji_title():
 
 
 def test_header_unicode_slug():
-    """Non-ASCII stripped by [^a-z0-9 \\-] in slugify."""
+    """GFM preserves non-ASCII letters in slugs."""
     slug = Header.slugify_header("Café Résumé")
-    assert slug == "#caf-rsum"
+    assert slug == "#café-résumé"
 
 
 # ===================================================================

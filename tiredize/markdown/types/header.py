@@ -96,7 +96,7 @@ class Header:
             title = "section"
 
         slug = title.lower()
-        slug = re.sub(r"[^a-z0-9 \-]", "", slug)
+        slug = re.sub(r"[^\w \-]", "", slug)
         slug = slug.replace(" ", "-")
         slug = re.sub(r"-+", "-", slug)
         slug = slug.strip("-")

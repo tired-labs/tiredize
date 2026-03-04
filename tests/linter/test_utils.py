@@ -270,11 +270,6 @@ def test_anchor_document_with_no_sections():
 # ===================================================================
 
 
-@pytest.mark.skip(
-    reason="slugify_header strips non-ASCII via [^a-z0-9 \\-] regex. "
-    "GFM preserves non-ASCII in slugs. "
-    "See issue fix-slug-non-ascii.md"
-)
 def test_anchor_with_non_ascii_slug():
     """Anchor with non-ASCII characters should match per GFM rules.
 
