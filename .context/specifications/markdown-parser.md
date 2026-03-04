@@ -63,8 +63,6 @@ document root, not to the parent's text slice.
 ```python
 # tiredize/markdown/utils.py
 def search_all_re(pattern: str, string: str) -> list[re.Match[str]]
-def get_position_from_match(
-    match: re.Match[str], text: str) -> tuple[int, int, int]
 def sanitize_text(pattern: str, text: str) -> str
 ```
 
@@ -72,16 +70,14 @@ def sanitize_text(pattern: str, text: str) -> str
 replaces pattern matches with whitespace to preserve offsets. It splits
 on `\n` (not `splitlines()`) to ensure trailing newlines in matched
 regions are preserved in the output. The output length must always
-equal the input length. `get_position_from_match` returns
-`(line_number, column_offset, match_length)` for a regex match.
+equal the input length.
 
 ## File Layout
 
 ```
 tiredize/markdown/
 ├── __init__.py
-├── utils.py            search_all_re, get_position_from_match,
-│                       sanitize_text
+├── utils.py            search_all_re, sanitize_text
 └── types/
     ├── __init__.py
     ├── code.py          CodeBlock, CodeInline
