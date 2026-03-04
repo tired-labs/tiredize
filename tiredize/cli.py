@@ -14,6 +14,9 @@ from tiredize.core_types import RuleResult
 from tiredize.linter.engine import run_linter
 from tiredize.markdown.types.document import Document
 from tiredize.markdown.types.schema import load_schema
+from tiredize.validators.frontmatter_schema import load_frontmatter_schema
+from tiredize.validators.frontmatter_schema import validate \
+    as validate_frontmatter
 from tiredize.validators.markdown_schema import AmbiguityError
 from tiredize.validators.markdown_schema import validate
 
@@ -83,11 +86,10 @@ def _run_markdown_schema(doc: Document, schema_path: Path) -> list[RuleResult]:
 def _run_frontmatter_schema(
         doc: Document,
         schema_path: Path) -> list[RuleResult]:
-    # Validate the file exists now so users don't get silent success
-    # with a nonexistent path. The actual schema logic is not yet
-    # implemented.
-    schema_path.read_text(encoding="utf-8")
-    return []
+    schema = load_frontmatter_schema(
+        schema_path.read_text(encoding="utf-8")
+    )
+    return validate_frontmatter(doc, schema)
 
 
 def main(argv: list[str] | None = None) -> int:

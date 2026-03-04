@@ -5,10 +5,10 @@
 # .context/specifications/issue-file-format.md.
 #
 # Usage:
-#   tiredize --markdown-schema .context/schemas/issue.yaml .context/issues/*.md
+#   tiredize --markdown-schema .context/schemas/issue-markdown.yaml .context/issues/*.md
 #
 # Note: This schema validates section structure only. Frontmatter
-# validation (status, type, priority, created) requires linter rules.
+# validation is handled by issue-frontmatter.yaml.
 
 enforce_order: true
 allow_extra_sections: false

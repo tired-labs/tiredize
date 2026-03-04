@@ -300,13 +300,17 @@ def test_scalar_rules_yaml_prints_error(capsys, tmp_path):
     assert "error:" in captured.err
 
 
-def test_frontmatter_schema_placeholder_succeeds(capsys, tmp_path):
+def test_frontmatter_schema_valid_document(capsys, tmp_path):
     doc = tmp_path / "patient_zero.md"
-    doc.write_text("# Waiting Room\n\nSomeday this will matter.\n")
-    schema = tmp_path / "placeholder_schema.yaml"
+    doc.write_text(
+        "---\ntitle: Waiting Room\n---\n"
+        "# Heading\n\nSomeday this will matter.\n"
+    )
+    schema = tmp_path / "frontmatter_schema.yaml"
     schema.write_text(
         "fields:\n"
-        "  - name: title\n"
+        "  title:\n"
+        "    type: string\n"
     )
     result = main([
         "--frontmatter-schema", str(schema),
@@ -315,6 +319,41 @@ def test_frontmatter_schema_placeholder_succeeds(capsys, tmp_path):
     assert result == 0
     captured = capsys.readouterr()
     assert captured.out == ""
+
+
+def test_frontmatter_schema_missing_field(capsys, tmp_path):
+    doc = tmp_path / "incomplete.md"
+    doc.write_text("# No Frontmatter\n")
+    schema = tmp_path / "frontmatter_schema.yaml"
+    schema.write_text(
+        "fields:\n"
+        "  title:\n"
+        "    type: string\n"
+    )
+    result = main([
+        "--frontmatter-schema", str(schema),
+        str(doc),
+    ])
+    assert result == 1
+    captured = capsys.readouterr()
+    assert "schema.frontmatter.missing_field" in captured.out
+
+
+def test_frontmatter_schema_invalid_schema(capsys, tmp_path):
+    doc = tmp_path / "victim.md"
+    doc.write_text("# Title\n")
+    schema = tmp_path / "bad_schema.yaml"
+    schema.write_text(
+        "fields:\n"
+        "  - name: title\n"
+    )
+    result = main([
+        "--frontmatter-schema", str(schema),
+        str(doc),
+    ])
+    assert result == 1
+    captured = capsys.readouterr()
+    assert "error:" in captured.err
 
 
 def test_nonexistent_frontmatter_schema_path(capsys, tmp_path):

@@ -4,7 +4,8 @@ on:
   pull_request:
     paths:
       - '.context/issues/**/*.md'
-      - '.context/schemas/issue.yaml'
+      - '.context/schemas/issue-markdown.yaml'
+      - '.context/schemas/issue-frontmatter.yaml'
 
 jobs:
   validate:
@@ -17,7 +18,11 @@ jobs:
           python-version: '3.12'
 
       - name: Install tiredize
-        run: pip install git+https://github.com/tired-labs/tiredize.git
+        run: pip install .
 
       - name: Validate issue files
-        run: tiredize --markdown-schema .context/schemas/issue.yaml .context/issues/*.md
+        run: >
+          tiredize
+          --markdown-schema .context/schemas/issue-markdown.yaml
+          --frontmatter-schema .context/schemas/issue-frontmatter.yaml
+          .context/issues/*.md

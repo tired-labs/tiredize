@@ -1,0 +1,57 @@
+# Schema: Issue File Frontmatter
+#
+# Validates the YAML frontmatter of issue files in .context/issues/.
+# Enforces the issue file format specification from
+# .context/specifications/issue-file-format.md.
+#
+# Usage:
+#   tiredize --frontmatter-schema .context/schemas/issue-frontmatter.yaml .context/issues/*.md
+
+allow_extra_fields: false
+
+fields:
+  status:
+    type: string
+    allowed:
+      - draft
+      - ready
+      - active
+      - blocked
+      - done
+      - cancelled
+
+  type:
+    type: string
+    allowed:
+      - bug
+      - feature
+      - refactor
+      - documentation
+      - spike
+
+  priority:
+    type: string
+    allowed:
+      - critical
+      - high
+      - medium
+      - low
+
+  created:
+    type: date
+
+  parent:
+    type: string
+    required: false
+
+  sub_issues:
+    type: list
+    required: false
+
+  specs:
+    type: list
+    required: false
+
+  labels:
+    type: list
+    required: false

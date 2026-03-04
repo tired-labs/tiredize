@@ -34,7 +34,7 @@ and agents to inspect issue state without parsing the document body.
 | `status` | string | Current issue status. One of: `draft`, `ready`, `active`, `blocked`, `done`, `cancelled`. |
 | `type` | string | Nature of the work. One of: `bug`, `feature`, `refactor`, `documentation`, `spike`. |
 | `priority` | string | Scheduling priority. One of: `critical`, `high`, `medium`, `low`. |
-| `created` | string | Date the issue was created. ISO 8601 format: `YYYY-MM-DD`. |
+| `created` | date | Date the issue was created. ISO 8601 format: `YYYY-MM-DD`. YAML parses this as a `datetime.date` value. |
 
 ### Optional Fields
 
