@@ -1,5 +1,5 @@
 ---
-status: active
+status: done
 type: feature
 priority: high
 created: 2026-02-28
@@ -333,8 +333,8 @@ simple (no recursive nesting) and does not need to be a markdown type.
 
 ### Progress
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
+- [x] Implementation complete
+- [x] SE peer review passed
 - [ ] QA Engineer review passed
 - [ ] Technical Architect review passed
 - [ ] Director review passed
@@ -342,17 +342,78 @@ simple (no recursive nesting) and does not need to be a markdown type.
 
 ### Problem
 
+Markdown documents with YAML frontmatter (TRRs, issue files) had no
+way to validate their frontmatter against a schema. The
+`--frontmatter-schema` CLI flag existed as a stub that silently
+accepted any input. Community-submitted TRRs could have missing
+required fields, wrong types, or invalid values with no CI enforcement.
+
 ### Solution
+
+Implemented `tiredize/validators/frontmatter_schema.py` containing
+three components:
+
+1. **Duplicate-key YAML loader** — `SafeLoader` subclass that detects
+   duplicate YAML keys (which PyYAML silently drops).
+2. **Schema loader** — `load_frontmatter_schema()` parses and
+   self-validates the schema YAML, rejecting invalid schemas with
+   descriptive errors.
+3. **Frontmatter validator** — `validate()` checks a parsed Document
+   against a loaded schema, returning `list[RuleResult]` with 8 error
+   types covering missing fields, extra fields, wrong types, disallowed
+   values, duplicate list items, map values, duplicate keys, and
+   non-string list items.
+
+Also created `issue-frontmatter.yaml` schema for the project's own
+issue files and wired it into both the pre-commit hook and GitHub
+Actions workflow.
 
 ### Test Summary
 
+| Test suite | Tests | Result |
+|------------|-------|--------|
+| `test_frontmatter_schema.py` — safe_load_yaml | 8 | Pass |
+| `test_frontmatter_schema.py` — schema loader happy path | 11 | Pass |
+| `test_frontmatter_schema.py` — schema loader errors | 16 | Pass |
+| `test_frontmatter_schema.py` — validate happy path | 15 | Pass |
+| `test_frontmatter_schema.py` — validate missing field | 3 | Pass |
+| `test_frontmatter_schema.py` — validate extra field | 3 | Pass |
+| `test_frontmatter_schema.py` — validate wrong type | 9 | Pass |
+| `test_frontmatter_schema.py` — validate value not allowed | 4 | Pass |
+| `test_frontmatter_schema.py` — validate duplicate list item | 3 | Pass |
+| `test_frontmatter_schema.py` — validate map not supported | 2 | Pass |
+| `test_frontmatter_schema.py` — validate list item not string | 4 | Pass |
+| `test_frontmatter_schema.py` — validate duplicate key | 1 | Pass |
+| `test_frontmatter_schema.py` — validate position reporting | 2 | Pass |
+| `test_frontmatter_schema.py` — validate combined errors | 3 | Pass |
+| `test_frontmatter_schema.py` — validate edge cases | 12 | Pass |
+| `test_cli.py` — frontmatter schema CLI tests | 3 new | Pass |
+
+Total: 96 new tests in `test_frontmatter_schema.py`, 3 new CLI tests
+(1 replaced stub test). All 648 project tests pass.
+
 ### Coverage
+
+| File | Statements | Missed | Coverage |
+|------|-----------|--------|---------|
+| `frontmatter_schema.py` | 155 | 0 | 100% |
+| `cli.py` | 84 | 2 | 98% |
+
+Uncovered CLI lines: `__main__` guard (line 59) and `SystemExit`
+wrapper (line 192). Standard entry-point boilerplate.
 
 ### SE Peer Review
 
 #### Incorporated
 
+No actionable findings.
+
 #### Not Incorporated
+
+- Nested duplicate key detection noted as future awareness item (not
+  relevant while maps are unsupported).
+- Spec wording "mapping key" vs "top-level mapping key" noted as minor
+  precision issue — deferred as non-behavioral.
 
 ### QA Engineer Review
 
@@ -368,6 +429,13 @@ simple (no recursive nesting) and does not need to be a markdown type.
 
 ### Follow-Up Work
 
+None identified.
+
 ### Breaking Changes
+
+The `--frontmatter-schema` CLI flag previously accepted any YAML file
+silently and returned success (stub behavior). It now validates the
+schema and document, so previously-passing invocations with invalid
+schemas will fail with exit code 1.
 
 ### Process Feedback
