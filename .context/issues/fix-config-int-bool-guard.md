@@ -1,4 +1,4 @@
-Status: draft
+Status: completed
 
 # Fix get_config_int to reject bool inputs
 
@@ -18,12 +18,12 @@ and is currently skipped:
 
 ## Acceptance Criteria
 
-- [ ] `get_config_int` returns `None` when the value is a `bool`
+- [x] `get_config_int` returns `None` when the value is a `bool`
       (add `isinstance(raw_value, bool)` guard before the `int` check)
-- [ ] The skipped test `test_get_config_int_bool_returns_none` is
+- [x] The skipped test `test_get_config_int_bool_returns_none` is
       unskipped and passes
-- [ ] All existing tests pass (no regressions)
-- [ ] Linter specification verified -- already says "wrong type returns
+- [x] All existing tests pass (no regressions)
+- [x] Linter specification verified -- already says "wrong type returns
       None" which covers this fix
 
 ## Out of Scope
@@ -33,5 +33,8 @@ this issue are strictly forbidden. Do not refactor adjacent code, update
 unrelated files, or extend scope beyond what is specified here.
 
 ## Design Decisions
+
+- Guard order matters: `isinstance(raw_value, bool)` must come before
+  `isinstance(raw_value, int)` because `bool` is a subclass of `int`.
 
 ## Open Questions

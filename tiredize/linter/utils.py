@@ -18,7 +18,7 @@ def get_config_int(
     Retrieve an integer configuration value.
     """
     raw_value = config.get(key)
-    if not isinstance(raw_value, int):
+    if isinstance(raw_value, bool) or not isinstance(raw_value, int):
         return None
     return raw_value
 

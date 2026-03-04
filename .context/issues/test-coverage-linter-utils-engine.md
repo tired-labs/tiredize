@@ -114,15 +114,10 @@ unrelated files, or extend scope beyond what is specified here.
 - HTTP tests use `unittest.mock.patch` on `requests.get` rather than
   a dedicated mocking library. This avoids adding a test dependency
   and is sufficient for testing our branching logic.
-- `get_config_int` does NOT reject bools. Because `bool` is a
-  subclass of `int` in Python, `isinstance(True, int)` is `True`
-  and the function returns the bool value. The spec-correct test
-  asserts `None` and is skipped pending a fix (add a `bool` guard
-  before the `int` isinstance check).
-- `slugify_header` strips all non-ASCII characters via the regex
-  `[^a-z0-9 \-]`. GFM preserves non-ASCII in slugs. The
-  spec-correct anchor test asserts GFM behavior and is skipped
-  pending a unicode-aware slugifier.
+- ~~`get_config_int` bool rejection~~ -- resolved by
+  `fix-config-int-bool-guard.md`. Bool guard added, test re-enabled.
+- ~~`slugify_header` non-ASCII stripping~~ -- resolved by
+  `fix-slug-non-ascii.md`. Regex updated to `\w`, test re-enabled.
 - engine.py line 64 (`isinstance(rule, Rule)` guard) is unreachable
   from the public API. `_select_rules` always stores a genuine Rule
   object from the discovered rules dict. Documented in the test file
@@ -138,8 +133,8 @@ unrelated files, or extend scope beyond what is specified here.
 ## Follow-up Issues
 
 - `fix-config-int-bool-guard.md` -- `get_config_int` accepts bool
-  inputs due to Python's `bool` subclassing `int`. Skipped spec test
-  awaits fix.
+  inputs due to Python's `bool` subclassing `int`. Fixed; skipped
+  test re-enabled.
 - `fix-slug-non-ascii.md` -- `slugify_header` strips non-ASCII
   characters. GFM preserves them. Fixed; skipped test re-enabled.
 

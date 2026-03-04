@@ -12,7 +12,6 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 # Third-party
-import pytest
 import requests
 
 # Local
@@ -45,10 +44,6 @@ def test_get_config_int_missing_key():
     assert get_config_int({}, "lives") is None
 
 
-@pytest.mark.skip(
-    reason="get_config_int accepts bool because isinstance(True, int) "
-    "is True in Python. See issue fix-config-int-bool-guard.md"
-)
 def test_get_config_int_bool_returns_none():
     """bool is a subclass of int and should be rejected.
 
@@ -56,6 +51,7 @@ def test_get_config_int_bool_returns_none():
     get_config_int should return None for bool inputs.
     """
     assert get_config_int({"flag": True}, "flag") is None
+    assert get_config_int({"flag": False}, "flag") is None
 
 
 def test_get_config_int_does_not_mutate_config():
