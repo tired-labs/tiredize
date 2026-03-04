@@ -141,6 +141,6 @@ unrelated files, or extend scope beyond what is specified here.
   inputs due to Python's `bool` subclassing `int`. Skipped spec test
   awaits fix.
 - `fix-slug-non-ascii.md` -- `slugify_header` strips non-ASCII
-  characters. GFM preserves them. Skipped spec test awaits fix.
+  characters. GFM preserves them. Fixed; skipped test re-enabled.
 
 ## Open Questions

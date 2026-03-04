@@ -75,28 +75,34 @@ class Header:
         existing: list[str] | None = None
     ) -> str:
         """
-        Generate GitHub-Flavored Markdown (GFM) anchor slugs for all headings.
+        Generate a GFM-compatible anchor slug from heading text.
 
         Steps followed:
         1. Lowercase the text.
-        2. Remove punctuation characters except hyphens and spaces.
+        2. Remove characters that are not Unicode word characters
+           (``\\w``), spaces, or hyphens.  ``\\w`` covers Unicode
+           letters, digits, and underscores but excludes combining
+           marks (Unicode category M), so NFD-decomposed diacritics
+           (e.g., U+0301) are stripped.
         3. Convert spaces to hyphens.
         4. Collapse multiple hyphens.
         5. Strip leading/trailing hyphens.
-        6. If the slug already exists, append "-1", "-2", etc.
+        6. Prepend ``#``.
+        7. If the title matches a previously seen heading, append
+           "-1", "-2", etc.
 
         Parameters:
         title: The raw heading text, e.g. "Section One: Good Stuff".
         existing: Optional list tracking previously-seen titles.
 
         Returns:
-        A list of unique slugs corresponding to the input headings.
+        A unique slug string prefixed with '#'.
         """
         if title == "":
             title = "section"
 
         slug = title.lower()
-        slug = re.sub(r"[^a-z0-9 \-]", "", slug)
+        slug = re.sub(r"[^\w \-]", "", slug)
         slug = slug.replace(" ", "-")
         slug = re.sub(r"-+", "-", slug)
         slug = slug.strip("-")
