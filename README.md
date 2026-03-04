@@ -36,8 +36,12 @@ reference-style, bracket, and bare), images, tables, block quotes,
 and frontmatter into typed dataclass elements with accurate position
 tracking. List extraction is planned but not yet implemented.
 
-**Frontmatter schema validation** -- Planned. The CLI flag exists but
-the handler is a stub.
+**Frontmatter schema validation** -- Validate YAML frontmatter fields
+against a user-defined schema. Declare which fields must exist, their
+expected types (`string`, `int`, `float`, `bool`, `date`, `list`), and
+optionally constrain their values to a set of allowed entries. Detects
+duplicate YAML keys, rejects map values, and enforces string-only list
+items with no duplicates.
 
 ## Installation
 
@@ -73,10 +77,16 @@ tiredize --markdown-schema schema.yaml document.md
 tiredize --rules rules.yaml document.md
 ```
 
-### Combine both
+### Validate frontmatter against a schema
 
 ```bash
-tiredize --markdown-schema schema.yaml --rules rules.yaml document.md
+tiredize --frontmatter-schema frontmatter.yaml document.md
+```
+
+### Combine all three
+
+```bash
+tiredize --markdown-schema schema.yaml --frontmatter-schema frontmatter.yaml --rules rules.yaml document.md
 ```
 
 ### Multiple files
@@ -124,9 +134,44 @@ sections:
     level: 1
 ```
 
-See the [schema validator specification][spec-validator] for the full
-format reference, including all properties, constraints, and validation
-algorithm details.
+See the [markdown schema validator specification][spec-validator] for the
+full format reference, including all properties, constraints, and
+validation algorithm details.
+
+### Frontmatter Schema
+
+A YAML file defining expected frontmatter fields, their types, and
+optionally their allowed values.
+
+```yaml
+fields:
+  status:
+    type: string
+    allowed:
+      - draft
+      - ready
+      - active
+      - done
+
+  priority:
+    type: string
+    allowed:
+      - critical
+      - high
+      - medium
+      - low
+
+  created:
+    type: date
+
+  tags:
+    type: list
+    required: false
+```
+
+See the [frontmatter schema validator specification][spec-frontmatter] for
+the full format reference, including all properties, type mapping,
+constraints, and error types.
 
 ### Linter Rules
 
@@ -192,4 +237,5 @@ and available configuration helpers.
 [TIRED Labs]: https://www.tired-labs.org/
 [TRR]: https://github.com/tired-labs/techniques
 [spec-validator]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/markdown-schema-validator.md
+[spec-frontmatter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/frontmatter-schema-validator.md
 [spec-linter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/linter.md

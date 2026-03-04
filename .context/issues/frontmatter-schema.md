@@ -4,7 +4,7 @@ type: feature
 priority: high
 created: 2026-02-28
 specs:
-  - frontmatter-schema.md
+  - frontmatter-schema-validator.md
 ---
 
 # Frontmatter Schema Validation
@@ -22,8 +22,8 @@ similar static site generators.
 
 - [x] Implement a duplicate-key-detecting YAML loader (subclass
       `SafeLoader`) that raises `ValueError` on duplicate keys. Used
-      only for loading the document's frontmatter during schema
-      validation, not for general YAML loading.
+      for loading the document's frontmatter during schema validation
+      and for loading the schema itself, not for general YAML loading.
 - [x] Implement the schema loader (`load_frontmatter_schema`) that
       parses and self-validates the schema YAML. The loader rejects
       invalid schemas with descriptive `ValueError` messages.
@@ -36,7 +36,7 @@ similar static site generators.
       `FileNotFoundError`, `yaml.YAMLError`).
 - [x] Add unit tests with full coverage for the schema loader,
       validator, and duplicate-key loader.
-- [x] Create a `frontmatter-schema.md` specification in
+- [x] Create a `frontmatter-schema-validator.md` specification in
       `.context/specifications/`.
 
 ## Out of Scope
@@ -203,11 +203,12 @@ fields:
 appears more than once. This is unacceptable for frontmatter validation
 because the user loses data without warning.
 
-Implement a `SafeLoader` subclass that overrides `construct_mapping`
-to detect duplicate keys and raise `ValueError` with a message naming
-the duplicated key. This loader is used only in the frontmatter schema
-validation path — the existing `FrontMatter.extract()` parser and
-general `_load_yaml()` helper are not modified.
+Implement a `SafeLoader` subclass that registers a custom constructor
+for `DEFAULT_MAPPING_TAG` using `construct_pairs` to detect duplicate
+keys and raise `ValueError` with a message naming the duplicated key.
+This loader is used in the frontmatter schema validation path and in
+the schema loader itself — the existing `FrontMatter.extract()` parser
+and general `_load_yaml()` helper are not modified.
 
 ### Validation Behavior
 
@@ -260,7 +261,7 @@ frontmatter is absent, position is `Position(offset=0, length=0)`.
 |------|---------|
 | `tiredize/validators/frontmatter_schema.py` | Schema loader and validator |
 | `tests/validators/test_frontmatter_schema.py` | Unit tests |
-| `.context/specifications/frontmatter-schema.md` | Specification |
+| `.context/specifications/frontmatter-schema-validator.md` | Specification |
 
 The schema loader and validator live in the same module, following the
 pattern established by the markdown schema (where `load_schema` lives

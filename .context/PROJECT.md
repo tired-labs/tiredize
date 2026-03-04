@@ -53,10 +53,10 @@ subsystems:
 not in linter rules. Content checks belong in linter rules, not in
 the schema validator.
 
-**Frontmatter schema** (`--frontmatter-schema`) is a planned fourth
-concern: validating required frontmatter fields, accepted types, and
-accepted values. The handler in `cli.py` is a stub. See issue
-`frontmatter-schema.md`.
+4. **Frontmatter Schema Validator** (`tiredize/validators/`) -- Validates
+   YAML frontmatter against a user-defined schema. Owns frontmatter
+   field validation: required fields, type checking, allowed values,
+   duplicate key detection. Spec: `specifications/frontmatter-schema-validator.md`.
 
 **Configuration file strategy** is an open question: whether to
 consolidate all configs into a single file or keep them separate.

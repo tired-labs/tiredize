@@ -360,6 +360,46 @@ class TestLoadSchemaErrors:
                 "      - true\n"
             )
 
+    def test_field_name_bool_rejected(self):
+        """YAML parses bare 'true' as a boolean key, not a string.
+        Schema loader must reject non-string field names."""
+        with pytest.raises(ValueError, match="[Ff]ield name.*string"):
+            load_frontmatter_schema(
+                "fields:\n"
+                "  true:\n"
+                "    type: bool\n"
+            )
+
+    def test_field_name_null_rejected(self):
+        """YAML parses bare 'null' as None. Schema loader must reject."""
+        with pytest.raises(ValueError, match="[Ff]ield name.*string"):
+            load_frontmatter_schema(
+                "fields:\n"
+                "  null:\n"
+                "    type: string\n"
+            )
+
+    def test_field_name_int_rejected(self):
+        """YAML parses bare '42' as an integer key."""
+        with pytest.raises(ValueError, match="[Ff]ield name.*string"):
+            load_frontmatter_schema(
+                "fields:\n"
+                "  42:\n"
+                "    type: int\n"
+            )
+
+    def test_allowed_datetime_in_date_field(self):
+        """datetime is subclass of date; allowed values must reject
+        datetime, same as bool is rejected for int."""
+        with pytest.raises(ValueError, match="allowed.*type"):
+            load_frontmatter_schema(
+                "fields:\n"
+                "  created:\n"
+                "    type: date\n"
+                "    allowed:\n"
+                "      - 2026-03-04T12:00:00\n"
+            )
+
     def test_duplicate_key_in_schema(self):
         """Duplicate keys in the schema YAML are rejected."""
         with pytest.raises(ValueError, match="duplicate"):
@@ -698,6 +738,18 @@ class TestValidateWrongType:
         results = validate(doc, schema)
         assert len(results) == 1
         assert results[0].rule_id == "schema.frontmatter.wrong_type"
+
+    def test_date_field_gets_datetime(self):
+        """datetime is subclass of date — must be explicitly rejected,
+        same as bool for int."""
+        doc = _make_doc("created: 2026-03-04T12:00:00\n")
+        schema = load_frontmatter_schema(_schema(
+            "created:\n  type: date\n"
+        ))
+        results = validate(doc, schema)
+        assert len(results) == 1
+        assert results[0].rule_id == "schema.frontmatter.wrong_type"
+        assert "datetime" in results[0].message
 
 
 # --- Value not allowed ---

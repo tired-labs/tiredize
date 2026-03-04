@@ -128,6 +128,12 @@ def load_frontmatter_schema(yaml_string: str) -> FrontmatterSchema:
 
     fields = {}
     for name, definition in raw_fields.items():
+        if not isinstance(name, str):
+            raise ValueError(
+                f"Field name must be a string, got "
+                f"{type(name).__name__}: {name!r}. "
+                f"Quote it in YAML to prevent type coercion."
+            )
         fields[name] = _load_field(name, definition)
 
     return FrontmatterSchema(
@@ -213,6 +219,13 @@ def _validate_allowed_types(
                 raise ValueError(
                     f"'allowed' value {value!r} for field '{name}' "
                     f"has wrong type (bool, expected {field_type})."
+                )
+            # datetime-is-date guard
+            if expected_python_type is datetime.date \
+                    and isinstance(value, datetime.datetime):
+                raise ValueError(
+                    f"'allowed' value {value!r} for field '{name}' "
+                    f"has wrong type (datetime, expected {field_type})."
                 )
             if not isinstance(value, expected_python_type):
                 raise ValueError(
@@ -322,6 +335,11 @@ def validate(
         if expected_type is int:
             # Reject bool for int fields
             if isinstance(value, bool) or not isinstance(value, int):
+                type_ok = False
+        elif expected_type is datetime.date:
+            # Reject datetime for date fields
+            if isinstance(value, datetime.datetime) or \
+                    not isinstance(value, datetime.date):
                 type_ok = False
         elif not isinstance(value, expected_type):
             type_ok = False

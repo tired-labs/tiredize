@@ -41,7 +41,7 @@ def safe_load_yaml(text: str):
 ```
 
 Parses YAML with duplicate key detection. Raises `ValueError` when a
-top-level mapping key appears more than once. Uses a `SafeLoader`
+mapping key appears more than once. Uses a `SafeLoader`
 subclass with a custom constructor for `DEFAULT_MAPPING_TAG` that
 calls `construct_pairs` to detect duplicates before building the dict.
 Used in both the schema loader and the frontmatter validation path.
@@ -87,7 +87,7 @@ class FrontmatterSchema:
 | `int`       | `int` (not `bool`) |
 | `float`     | `float`            |
 | `bool`      | `bool`             |
-| `date`      | `datetime.date`    |
+| `date`      | `datetime.date` (not `datetime.datetime`) |
 | `list`      | `list`             |
 
 ### Constraints
@@ -102,6 +102,9 @@ class FrontmatterSchema:
 - Map values (YAML dicts) are not supported and produce a clear error.
 - `allowed` entries must match the declared type. For list fields,
   entries must be strings.
+- Field names in the schema must be strings. Non-string keys (e.g.,
+  bare `true`, `null`, or `42` in YAML) are rejected with a message
+  advising the user to quote them.
 - Unknown properties in field definitions or at the top level are
   rejected.
 
@@ -123,8 +126,17 @@ unreliable).
 ### Type Checking
 
 The validator compares YAML-parsed Python types against the declared
-schema type. No type coercion is performed. `bool` values are rejected
-for `int` fields (Python's `bool` is a subclass of `int`).
+schema type. No type coercion is performed. Two subclass guards are
+applied:
+
+- `bool` values are rejected for `int` fields (Python's `bool` is a
+  subclass of `int`).
+- `datetime.datetime` values are rejected for `date` fields (Python's
+  `datetime` is a subclass of `date`). YAML parses timestamps like
+  `2026-03-04T12:00:00` as `datetime.datetime`, not `datetime.date`.
+
+Both guards also apply to `allowed` value validation in the schema
+loader.
 
 ### Error Short-Circuiting
 
