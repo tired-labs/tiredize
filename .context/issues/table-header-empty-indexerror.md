@@ -46,10 +46,13 @@ was always passed to the table regex.
 
 ## Design Decisions
 
-- Fix in the regex, not in extraction logic. A GFM table header
-  must contain at least one pipe, so a pipeless match is semantically
-  invalid. Preventing the match at the regex level is cleaner than
-  guarding against it downstream.
+- Primary fix in the regex: changed the header cell group from
+  zero-or-more to one-or-more, requiring at least one pipe. A GFM
+  table header must contain a pipe, so a pipeless match is
+  semantically invalid. Peer review revealed a second crash path
+  where pipe-only headers (e.g., ` | `) become empty after stripping
+  outer pipes, so defensive empty-header guards were added in
+  `Table.extract()` to skip these degenerate matches.
 - The `+` quantifier change also rejects trailing-pipe-only
   single-column headers without a leading pipe (e.g., `Col |`). This
   is technically valid GFM but was never tested and is uncommon in
