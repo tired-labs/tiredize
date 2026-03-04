@@ -311,3 +311,43 @@ def test_document_unicode_content():
     doc.load(text="# Café Guide\n\n日本語テキスト\n")
     assert len(doc.sections) == 1
     assert doc.sections[0].header.title == "Café Guide"
+
+
+# --- Slug propagation through subsection tree ---
+
+
+def test_subsection_slugs_match_flat_list():
+    """Slugs accessed via subsections match slugs in the flat sections list."""
+    doc = Document()
+    doc.load(text="# Cosmic Voyage\n## Stellar Drift\n## Nebula Core\n")
+
+    # Flat list access
+    assert doc.sections[0].header.slug == "#cosmic-voyage"
+    assert doc.sections[1].header.slug == "#stellar-drift"
+    assert doc.sections[2].header.slug == "#nebula-core"
+
+    # Subsection access
+    assert len(doc.sections[0].subsections) == 2
+    assert doc.sections[0].subsections[0].header.slug == "#stellar-drift"
+    assert doc.sections[0].subsections[1].header.slug == "#nebula-core"
+
+    # Same objects, not stale copies
+    assert doc.sections[0].subsections[0] is doc.sections[1]
+    assert doc.sections[0].subsections[1] is doc.sections[2]
+
+
+def test_duplicate_title_dedup_in_subsection_tree():
+    """Dedup suffixes are correct when accessed via the subsection tree."""
+    doc = Document()
+    doc.load(text="# Quest Log\n## Dragon\n## Dragon\n## Dragon\n")
+
+    # Flat list
+    assert doc.sections[1].header.slug == "#dragon"
+    assert doc.sections[2].header.slug == "#dragon-1"
+    assert doc.sections[3].header.slug == "#dragon-2"
+
+    # Subsection tree
+    assert len(doc.sections[0].subsections) == 3
+    assert doc.sections[0].subsections[0].header.slug == "#dragon"
+    assert doc.sections[0].subsections[1].header.slug == "#dragon-1"
+    assert doc.sections[0].subsections[2].header.slug == "#dragon-2"
