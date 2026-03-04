@@ -473,6 +473,16 @@ def test_extract_no_crash_on_sanitized_code_fence_before_divider():
     assert len(results) == 0
 
 
+def test_extract_no_crash_on_whitespace_only_pipe_header():
+    """A header line containing only a pipe and whitespace (e.g., ' | ')
+    must not crash.  After stripping outer pipes the header is empty,
+    so the match should be skipped.
+    Regression test for table-header-empty-indexerror."""
+    text = " | \n|---|\n|1|\n"
+    results = Table.extract(text)
+    assert len(results) == 0
+
+
 @pytest.mark.skip(
     reason="gfm-parity: CRLF line endings not supported in tables"
 )
