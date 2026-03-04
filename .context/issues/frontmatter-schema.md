@@ -20,23 +20,23 @@ similar static site generators.
 
 ## Acceptance Criteria
 
-- [ ] Implement a duplicate-key-detecting YAML loader (subclass
+- [x] Implement a duplicate-key-detecting YAML loader (subclass
       `SafeLoader`) that raises `ValueError` on duplicate keys. Used
       only for loading the document's frontmatter during schema
       validation, not for general YAML loading.
-- [ ] Implement the schema loader (`load_frontmatter_schema`) that
+- [x] Implement the schema loader (`load_frontmatter_schema`) that
       parses and self-validates the schema YAML. The loader rejects
       invalid schemas with descriptive `ValueError` messages.
-- [ ] Implement the frontmatter validator (`validate`) that checks a
+- [x] Implement the frontmatter validator (`validate`) that checks a
       parsed `Document` against a loaded schema and returns
       `list[RuleResult]`.
-- [ ] Wire up the CLI stub `_run_frontmatter_schema()` in `cli.py` to
+- [x] Wire up the CLI stub `_run_frontmatter_schema()` in `cli.py` to
       load the schema, run validation, and return results. Error
       handling follows the existing pattern (catch `ValueError`,
       `FileNotFoundError`, `yaml.YAMLError`).
-- [ ] Add unit tests with full coverage for the schema loader,
+- [x] Add unit tests with full coverage for the schema loader,
       validator, and duplicate-key loader.
-- [ ] Create a `frontmatter-schema.md` specification in
+- [x] Create a `frontmatter-schema.md` specification in
       `.context/specifications/`.
 
 ## Out of Scope
