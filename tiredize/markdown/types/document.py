@@ -3,7 +3,6 @@ from __future__ import annotations
 import bisect
 from dataclasses import dataclass
 from dataclasses import field
-from dataclasses import replace
 from pathlib import Path
 
 # Local
@@ -85,6 +84,5 @@ class Document:
                 header.title,
                 existing=header_titles[:-1]
             )
-            new_header = replace(section.header, slug=slug)
-            self.sections[i] = replace(section, header=new_header)
+            section.header.slug = slug
         self._build_line_index()
