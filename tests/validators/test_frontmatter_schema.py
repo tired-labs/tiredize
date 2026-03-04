@@ -49,6 +49,12 @@ class TestSafeLoadYaml:
         with pytest.raises(ValueError, match="duplicate key.*x"):
             safe_load_yaml("x: 1\nx: 1\n")
 
+    def test_unhashable_key_raises_valueerror(self):
+        """Complex YAML keys (lists, dicts) are unhashable — must
+        produce ValueError, not TypeError."""
+        with pytest.raises(ValueError, match="unhashable"):
+            safe_load_yaml("? [a, b]: value\n")
+
     def test_non_duplicate_keys_pass(self):
         result = safe_load_yaml(
             "title: The Neverending Story\n"

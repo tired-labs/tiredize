@@ -27,11 +27,17 @@ def _construct_no_duplicates(loader, node):
     pairs = loader.construct_pairs(node)
     seen = {}
     for key, _ in pairs:
-        if key in seen:
+        try:
+            if key in seen:
+                raise ValueError(
+                    f"Frontmatter contains duplicate key: '{key}'"
+                )
+            seen[key] = True
+        except TypeError:
             raise ValueError(
-                f"Frontmatter contains duplicate key: '{key}'"
+                f"Mapping key {key!r} is unhashable "
+                f"({type(key).__name__})"
             )
-        seen[key] = True
     return dict(pairs)
 
 
