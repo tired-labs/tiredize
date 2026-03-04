@@ -1,5 +1,5 @@
 ---
-status: draft
+status: active
 type: feature
 priority: high
 created: 2026-02-28
