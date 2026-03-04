@@ -1,4 +1,4 @@
-Status: active
+Status: completed
 
 # Fix Document._parse Slug Propagation Bug
 
@@ -40,14 +40,14 @@ call sites remain.
 
 ## Acceptance Criteria
 
-- [ ] Replace `dataclasses.replace()` slug update with direct mutation
+- [x] Replace `dataclasses.replace()` slug update with direct mutation
       on `section.header.slug`
-- [ ] Remove unused `replace` import from `document.py`
-- [ ] Add test: document with nested headings has consistent slugs
+- [x] Remove unused `replace` import from `document.py`
+- [x] Add test: document with nested headings has consistent slugs
       when accessed via both `doc.sections` and subsection traversal
-- [ ] Add test: duplicate heading titles produce correct dedup suffixes
+- [x] Add test: duplicate heading titles produce correct dedup suffixes
       in both the flat list and subsection tree
-- [ ] All existing tests pass
+- [x] All existing tests pass
 
 ## Out of Scope
 
