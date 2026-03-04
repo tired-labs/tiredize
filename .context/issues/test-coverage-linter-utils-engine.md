@@ -138,8 +138,8 @@ unrelated files, or extend scope beyond what is specified here.
 ## Follow-up Issues
 
 - `fix-config-int-bool-guard.md` -- `get_config_int` accepts bool
-  inputs due to Python's `bool` subclassing `int`. Skipped spec test
-  awaits fix.
+  inputs due to Python's `bool` subclassing `int`. Fixed; skipped
+  test re-enabled.
 - `fix-slug-non-ascii.md` -- `slugify_header` strips non-ASCII
   characters. GFM preserves them. Fixed; skipped test re-enabled.
 
