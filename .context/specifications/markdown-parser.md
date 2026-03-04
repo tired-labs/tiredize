@@ -421,6 +421,14 @@ rules that need code-free text).
   the repeating group, eliminating backtracking. See issue
   `parser-robustness.md` for full details.
 
+- **Table header requires at least one pipe:** The header group in
+  `RE_TABLE` uses `([^\n|]*[|])+` (one or more) rather than
+  `([^\n|]*[|])*` (zero or more). This ensures the header only matches
+  lines containing at least one pipe character, preventing
+  whitespace-only lines (produced by `CodeBlock.sanitize()`) from
+  matching as table headers. See issue
+  `table-header-empty-indexerror.md`.
+
 - **Table extraction sanitizes internally:** `Table.extract()` calls
   `CodeBlock.sanitize()` on its input before matching, consistent with
   all other extractors. This prevents false table matches inside code

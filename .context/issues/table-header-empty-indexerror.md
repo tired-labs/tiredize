@@ -50,5 +50,10 @@ was always passed to the table regex.
   must contain at least one pipe, so a pipeless match is semantically
   invalid. Preventing the match at the regex level is cleaner than
   guarding against it downstream.
+- The `+` quantifier change also rejects trailing-pipe-only
+  single-column headers without a leading pipe (e.g., `Col |`). This
+  is technically valid GFM but was never tested and is uncommon in
+  practice. Accepted as a minor coverage regression — addressing it
+  would require additional regex complexity beyond this fix's scope.
 
 ## Open Questions
