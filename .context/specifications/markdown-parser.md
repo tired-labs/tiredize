@@ -324,7 +324,7 @@ QuoteBlock element. Multi-level nesting is indicated by the
 ```
 (?P<header>             # Header row:
     [|]?                #   Optional leading pipe
-    ([^\n|]*[|])*       #   Zero or more cells followed by pipe
+    ([^\n|]*[|])+       #   One or more cells followed by pipe
     [^\n|]+             #   Final cell (no trailing pipe required)
     [|]?                #   Optional trailing pipe
     \n                  #   Newline

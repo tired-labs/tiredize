@@ -1,4 +1,4 @@
-Status: draft
+Status: active
 
 # Table.extract() IndexError on whitespace-only header match
 
@@ -33,13 +33,11 @@ was always passed to the table regex.
 
 ## Acceptance Criteria
 
-- [ ] `Table.extract()` does not raise `IndexError` on
+- [x] `Table.extract()` does not raise `IndexError` on
       whitespace-only header matches
-- [ ] `RE_TABLE` header pattern requires at least one `|` character,
-      or matches with empty stripped headers are skipped before
-      indexing
-- [ ] Parser specification updated if regex is changed
-- [ ] Regression test added for the reproduction case above
+- [x] `RE_TABLE` header pattern requires at least one `|` character
+- [x] Parser specification updated if regex is changed
+- [x] Regression test added for the reproduction case above
 
 ## Out of Scope
 
@@ -48,10 +46,9 @@ was always passed to the table regex.
 
 ## Design Decisions
 
-## Open Questions
+- Fix in the regex, not in extraction logic. A GFM table header
+  must contain at least one pipe, so a pipeless match is semantically
+  invalid. Preventing the match at the regex level is cleaner than
+  guarding against it downstream.
 
-- Should the fix be in the regex (tighten the header pattern to
-  require a pipe) or in the extraction logic (skip matches where
-  the header is empty after stripping)? A regex fix prevents the
-  match entirely; a logic fix is more defensive but leaves a
-  semantically invalid match in the regex.
+## Open Questions
