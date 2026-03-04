@@ -38,15 +38,20 @@ unrelated files, or extend scope beyond what is specified here.
 
 ## Design Decisions
 
-- Use `\w` (Python 3 unicode-aware): `r"[^\w \-]"`. This keeps all
+- Use `\w` (Python 3 unicode-aware): `r"[^\w \-]"`. This keeps
   Unicode letters, digits, and underscores while stripping punctuation,
-  matching GFM behavior. GFM preserves underscores in slugs, so no
-  exclusion is needed. Chosen over explicit Unicode ranges (fragile,
-  incomplete) and the third-party `regex` module (unnecessary
-  dependency).
-- No Unicode normalization (NFC/NFD). GFM does not normalize — it
-  slugifies the source bytes as-is. Mixed normalization forms in a
-  single document are extremely rare. If it becomes a real problem,
-  it can be its own issue.
+  matching GFM behavior for NFC text. `\w` excludes Unicode combining
+  marks (category M), so NFD-decomposed diacritics are stripped — a
+  known limitation, not worth the complexity of a `unicodedata`-based
+  filter for an edge case that is vanishingly rare in real markdown.
+  Chosen over explicit Unicode ranges (fragile, incomplete) and the
+  third-party `regex` module (unnecessary dependency).
+- No Unicode normalization (NFC/NFD). No normalization step is
+  applied before slug generation — the implementation operates on
+  the Unicode string as received. NFC text (the common form) is
+  handled correctly. NFD combining marks are stripped due to the
+  `\w` limitation above. Mixed normalization forms in a single
+  document are extremely rare. If NFD support becomes a real
+  problem, it can be its own issue.
 
 ## Open Questions

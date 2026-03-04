@@ -197,16 +197,21 @@ Generates GFM-compatible anchor slugs from heading text:
 2. Remove characters that are not Unicode word characters (`\w`),
    spaces, or hyphens. This preserves non-ASCII letters (accented,
    CJK, Cyrillic, etc.), digits, and underscores while stripping
-   punctuation.
+   punctuation. **Limitation:** `\w` excludes Unicode combining marks
+   (category M), so NFD-decomposed diacritics (e.g., `Cafe\u0301`)
+   are stripped rather than preserved.
 3. Convert spaces to hyphens.
 4. Collapse consecutive hyphens into one.
 5. Strip leading and trailing hyphens.
 6. Prepend `#`.
-7. If the slug collides with a previous heading, append `-1`, `-2`,
-   etc.
+7. If the title matches a previously seen heading title, append
+   `-1`, `-2`, etc. Deduplication is by exact title match, not by
+   normalized slug.
 
-No Unicode normalization is applied — the slug preserves whichever
-form (NFC, NFD) appears in the source, matching GitHub's behavior.
+No Unicode normalization is applied. Text in NFC form (where
+accented characters are single codepoints) is preserved correctly.
+Text in NFD form may lose combining marks due to the `\w`
+limitation above.
 
 #### `InlineImage.RE_INLINE_IMAGE` (image.py)
 
