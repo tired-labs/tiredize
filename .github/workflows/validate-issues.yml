@@ -5,6 +5,7 @@ on:
     paths:
       - '.context/issues/**/*.md'
       - '.context/schemas/issue.yaml'
+      - '.context/schemas/issue-frontmatter.yaml'
 
 jobs:
   validate:
@@ -20,4 +21,8 @@ jobs:
         run: pip install git+https://github.com/tired-labs/tiredize.git
 
       - name: Validate issue files
-        run: tiredize --markdown-schema .context/schemas/issue.yaml .context/issues/*.md
+        run: >
+          tiredize
+          --markdown-schema .context/schemas/issue.yaml
+          --frontmatter-schema .context/schemas/issue-frontmatter.yaml
+          .context/issues/*.md
