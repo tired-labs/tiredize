@@ -461,6 +461,28 @@ def test_extract_preserves_position_after_sanitization():
 # ===================================================================
 
 
+def test_extract_no_crash_on_sanitized_code_fence_before_divider():
+    """Code fence delimiter sanitized to spaces must not match as a
+    table header.  The whitespace line satisfies the old header pattern
+    [^\\n|]+ but contains no pipe — it is not a valid table header.
+    Regression test for table-header-empty-indexerror."""
+    text = "```\nsome code\n```\n|---|\n|1|\n"
+    results = Table.extract(text)
+    # The code fence is sanitized, leaving whitespace where ``` was.
+    # The whitespace line + |---| must NOT be parsed as a table.
+    assert len(results) == 0
+
+
+def test_extract_no_crash_on_whitespace_only_pipe_header():
+    """A header line containing only a pipe and whitespace (e.g., ' | ')
+    must not crash.  After stripping outer pipes the header is empty,
+    so the match should be skipped.
+    Regression test for table-header-empty-indexerror."""
+    text = " | \n|---|\n|1|\n"
+    results = Table.extract(text)
+    assert len(results) == 0
+
+
 @pytest.mark.skip(
     reason="gfm-parity: CRLF line endings not supported in tables"
 )

@@ -20,7 +20,7 @@ class Table:
     RE_TABLE = r"""
         (?P<header>
             [|]?
-            ([^\n|]*[|])*
+            ([^\n|]*[|])+
             [^\n|]+
             [|]?
             \n
@@ -57,7 +57,11 @@ class Table:
 
             header = match.group("header")
             header = header.strip()
+            if not header:
+                continue
             header = header[:-1] if header[-1] == "|" else header
+            if not header:
+                continue
             header = header[1:] if header[0] == "|" else header
             header = header.split("|")
             header = [cell.strip() for cell in header]

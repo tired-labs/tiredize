@@ -324,7 +324,7 @@ QuoteBlock element. Multi-level nesting is indicated by the
 ```
 (?P<header>             # Header row:
     [|]?                #   Optional leading pipe
-    ([^\n|]*[|])*       #   Zero or more cells followed by pipe
+    ([^\n|]*[|])+       #   One or more cells followed by pipe
     [^\n|]+             #   Final cell (no trailing pipe required)
     [|]?                #   Optional trailing pipe
     \n                  #   Newline
@@ -420,6 +420,14 @@ rules that need code-free text).
   Rewritten as two alternatives, each with mandatory pipes inside
   the repeating group, eliminating backtracking. See issue
   `parser-robustness.md` for full details.
+
+- **Table header requires at least one pipe:** The header group in
+  `RE_TABLE` uses `([^\n|]*[|])+` (one or more) rather than
+  `([^\n|]*[|])*` (zero or more). This ensures the header only matches
+  lines containing at least one pipe character, preventing
+  whitespace-only lines (produced by `CodeBlock.sanitize()`) from
+  matching as table headers. See issue
+  `table-header-empty-indexerror.md`.
 
 - **Table extraction sanitizes internally:** `Table.extract()` calls
   `CodeBlock.sanitize()` on its input before matching, consistent with
