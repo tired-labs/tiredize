@@ -77,7 +77,7 @@ class Document:
         self.sections = Section.extract(text=md, base_offset=base_offset)
 
         header_titles: list[str] = []
-        for i, section in enumerate(self.sections):
+        for section in self.sections:
             header = section.header
             header_titles.append(header.title)
             slug = header.slugify_header(
