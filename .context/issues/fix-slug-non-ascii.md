@@ -1,4 +1,4 @@
-Status: draft
+Status: active
 
 # Fix slugify_header to preserve non-ASCII characters
 
@@ -18,13 +18,13 @@ and is currently skipped:
 
 ## Acceptance Criteria
 
-- [ ] `slugify_header` preserves non-ASCII letters (accented, CJK,
+- [x] `slugify_header` preserves non-ASCII letters (accented, CJK,
       etc.) while still removing punctuation
-- [ ] "Café Section" produces `#café-section`, not `#caf-section`
-- [ ] The skipped test `test_anchor_with_non_ascii_slug` is unskipped
+- [x] "Café Section" produces `#café-section`, not `#caf-section`
+- [x] The skipped test `test_anchor_with_non_ascii_slug` is unskipped
       and passes
-- [ ] All existing tests pass (no regressions)
-- [ ] Markdown parser specification updated to document slug
+- [x] All existing tests pass (no regressions)
+- [x] Markdown parser specification updated to document slug
       generation rules including non-ASCII handling
 
 ## Out of Scope
@@ -38,9 +38,15 @@ unrelated files, or extend scope beyond what is specified here.
 
 ## Design Decisions
 
-## Open Questions
+- Use `\w` (Python 3 unicode-aware): `r"[^\w \-]"`. This keeps all
+  Unicode letters, digits, and underscores while stripping punctuation,
+  matching GFM behavior. GFM preserves underscores in slugs, so no
+  exclusion is needed. Chosen over explicit Unicode ranges (fragile,
+  incomplete) and the third-party `regex` module (unnecessary
+  dependency).
+- No Unicode normalization (NFC/NFD). GFM does not normalize — it
+  slugifies the source bytes as-is. Mixed normalization forms in a
+  single document are extremely rare. If it becomes a real problem,
+  it can be its own issue.
 
-- Should the regex use `\w` (which is unicode-aware in Python 3) or
-  a more explicit unicode category pattern?
-- Does the existing slug collision logic (appending `-1`, `-2`) need
-  adjustment for unicode normalization (e.g., NFC vs NFD)?
+## Open Questions
