@@ -3,7 +3,6 @@ from __future__ import annotations
 import bisect
 from dataclasses import dataclass
 from dataclasses import field
-from dataclasses import replace
 from pathlib import Path
 
 # Local
@@ -78,13 +77,12 @@ class Document:
         self.sections = Section.extract(text=md, base_offset=base_offset)
 
         header_titles: list[str] = []
-        for i, section in enumerate(self.sections):
+        for section in self.sections:
             header = section.header
             header_titles.append(header.title)
             slug = header.slugify_header(
                 header.title,
                 existing=header_titles[:-1]
             )
-            new_header = replace(section.header, slug=slug)
-            self.sections[i] = replace(section, header=new_header)
+            section.header.slug = slug
         self._build_line_index()
