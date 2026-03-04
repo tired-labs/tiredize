@@ -18,7 +18,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install tiredize
-        run: pip install git+https://github.com/tired-labs/tiredize.git
+        run: pip install .
 
       - name: Validate issue files
         run: >
