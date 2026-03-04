@@ -1,4 +1,4 @@
-Status: active
+Status: completed
 
 # Fix slugify_header to preserve non-ASCII characters
 
