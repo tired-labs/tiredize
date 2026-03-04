@@ -1,0 +1,23 @@
+name: Validate Issue Files
+
+on:
+  pull_request:
+    paths:
+      - '.context/issues/**/*.md'
+      - '.context/schemas/issue.yaml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install tiredize
+        run: pip install git+https://github.com/tired-labs/tiredize.git
+
+      - name: Validate issue files
+        run: tiredize --markdown-schema .context/schemas/issue.yaml .context/issues/*.md

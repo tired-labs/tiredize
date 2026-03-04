@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: spike
+priority: high
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # Test Coverage: Linter Utils and Engine
 
@@ -12,7 +17,7 @@ Write tests for `tiredize/linter/utils.py` config helpers and
 
 ## Acceptance Criteria
 
-### Config helpers (0% coverage today)
+**Config helpers (0% coverage today)**
 
 - [x] `get_config_int` -- correct type returns value, wrong type
       returns None, missing key returns None, bool input returns None
@@ -26,13 +31,13 @@ Write tests for `tiredize/linter/utils.py` config helpers and
 - [x] `get_config_list` -- correct type returns value, wrong type
       returns None, missing key returns None
 
-### check_url_valid anchor path (0% coverage today)
+**check_url_valid anchor path (0% coverage today)**
 
 - [x] Anchor found in document sections -- returns (True, None, None)
 - [x] Anchor not found -- returns (False, None, "anchor not found...")
 - [x] Document with no sections -- returns not found
 
-### check_url_valid HTTP path (0% coverage today, use unittest.mock)
+**check_url_valid HTTP path (0% coverage today, use unittest.mock)**
 
 - [x] Successful response (2xx) -- mock requests.get to return 200,
       verify (True, 200, None)
@@ -47,7 +52,7 @@ Write tests for `tiredize/linter/utils.py` config helpers and
 - [x] Custom timeout passed through -- verify mock receives timeout
 - [x] allow_redirects defaults to True when None
 
-### engine.py gaps (92% coverage today)
+**engine.py gaps (92% coverage today)**
 
 - [x] `run_linter` with `rule_configs=None` -- returns empty list
       (line 24)
@@ -56,14 +61,14 @@ Write tests for `tiredize/linter/utils.py` config helpers and
 - [x] Line 64 (invalid Rule object) -- document as unreachable in
       test file if confirmed unreachable
 
-### rules/__init__.py gaps (96% coverage today)
+**rules/__init__.py gaps (96% coverage today)**
 
 - [x] Line 37 (package with no `__path__`) -- determine if reachable
       and test or document
 - [x] Line 45 (subpackage skipping) -- test with a package containing
       a subpackage
 
-### State mutation (audit point 8)
+**State mutation (audit point 8)**
 
 - [x] `check_url_valid` does not mutate the Document it receives --
       assert document attributes are unchanged after the call
@@ -72,27 +77,27 @@ Write tests for `tiredize/linter/utils.py` config helpers and
 - [x] `get_config_*` helpers do not mutate the config dict -- assert
       unchanged after each call
 
-### Unicode and non-ASCII (audit point 9)
+**Unicode and non-ASCII (audit point 9)**
 
 - [x] Anchor slug with non-ASCII characters (e.g., `#café-section`)
       -- verify anchor matching works correctly
 - [x] Relative path with non-ASCII filename -- verify path resolution
       handles unicode filenames
 
-### Partial failure in collections (audit point 10)
+**Partial failure in collections (audit point 10)**
 
 - [x] `run_linter` with multiple rules where rule 2 of 3 raises an
       unexpected exception -- verify whether rules 1 and 3 still
       produce results or the entire call fails. Document actual
       behavior.
 
-### Review existing tests for completeness
+**Review existing tests for completeness**
 
 - [x] Review `test_utils.py` (relative URL tests) -- verify the 3
       existing tests from `fix-relative-url-resolution` are complete.
       Add missing edge cases if found.
 
-### Coverage target
+**Coverage target**
 
 - [x] 100% coverage on `tiredize/linter/utils.py`,
       `tiredize/linter/engine.py`, and
@@ -108,6 +113,16 @@ unrelated files, or extend scope beyond what is specified here.
   `test-coverage-linter-rules.md`)
 - Writing new tests for markdown element types (covered by
   `test-coverage-markdown-types.md`)
+
+## Domain Specific Sections
+
+### Follow-up Issues
+
+- `fix-config-int-bool-guard.md` -- `get_config_int` accepts bool
+  inputs due to Python's `bool` subclassing `int`. Fixed; skipped
+  test re-enabled.
+- `fix-slug-non-ascii.md` -- `slugify_header` strips non-ASCII
+  characters. GFM preserves them. Fixed; skipped test re-enabled.
 
 ## Design Decisions
 
@@ -130,12 +145,50 @@ unrelated files, or extend scope beyond what is specified here.
   functions. An unexpected exception propagates and remaining rules
   are not executed.
 
-## Follow-up Issues
-
-- `fix-config-int-bool-guard.md` -- `get_config_int` accepts bool
-  inputs due to Python's `bool` subclassing `int`. Fixed; skipped
-  test re-enabled.
-- `fix-slug-non-ascii.md` -- `slugify_header` strips non-ASCII
-  characters. GFM preserves them. Fixed; skipped test re-enabled.
-
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

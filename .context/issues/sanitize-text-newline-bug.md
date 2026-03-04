@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: bug
+priority: high
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # sanitize_text() Trailing Newline Bug
 
@@ -17,7 +22,28 @@ Identified during the test coverage audit
 (`test-coverage-markdown-types.md`). 3 skipped spec tests document
 the bug.
 
-## Root Cause
+## Acceptance Criteria
+
+- [x] `sanitize_text()` preserves string length for all inputs,
+      including matches that end with `\n`
+- [x] All 3 skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
+- [x] The fix handles edge cases: match ending with multiple `\n`,
+      match that is entirely `\n` characters
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+- Sanitization chain ordering (tracked in
+  `parser-sanitization-gaps.md`)
+- GFM syntax support (tracked in `gfm-parity.md`)
+
+## Domain Specific Sections
+
+### Root Cause
 
 In `tiredize/markdown/utils.py` lines 32-36:
 
@@ -40,9 +66,9 @@ causes `splitlines()` to treat `---` as a complete line rather than
 creating an empty 4th element. So `"\n".join()` produces 2 `\n`
 characters instead of 3, making the result 1 character shorter.
 
-## Findings
+### Findings
 
-### Skipped spec tests (3)
+#### Skipped spec tests (3)
 
 1. **FrontMatter.sanitize() preserves length**
    `test_frontmatter.py::test_frontmatter_sanitize_preserves_length`
@@ -61,7 +87,7 @@ characters instead of 3, making the result 1 character shorter.
    regex's start-of-line anchor fails, causing the header to be
    invisible to downstream extraction.
 
-### Impact beyond length preservation
+#### Impact beyond length preservation
 
 Finding #3 reveals the bug is more severe than just string length:
 it corrupts downstream extraction by removing newlines that other
@@ -69,7 +95,7 @@ extractors depend on for start-of-line anchors. Any element type
 whose regex match ends with `\n` will cause the next element in the
 text to be incorrectly joined to the sanitized region.
 
-### Affected patterns
+#### Affected patterns
 
 Patterns whose matches typically end with `\n`:
 - FrontMatter (`---\n` closing delimiter includes `\n`)
@@ -80,21 +106,6 @@ Patterns whose matches never end with `\n`:
 - CodeInline, InlineLink, BracketLink, BareLink, InlineImage,
   Header, QuoteBlock, ReferenceDefinition, LinkReference,
   ImageReference
-
-## Acceptance Criteria
-
-- [x] `sanitize_text()` preserves string length for all inputs,
-      including matches that end with `\n`
-- [x] All 3 skipped spec tests unskipped and passing
-- [x] No regressions in existing tests
-- [x] The fix handles edge cases: match ending with multiple `\n`,
-      match that is entirely `\n` characters
-
-## Out of Scope
-
-- Sanitization chain ordering (tracked in
-  `parser-sanitization-gaps.md`)
-- GFM syntax support (tracked in `gfm-parity.md`)
 
 ## Design Decisions
 
@@ -114,3 +125,49 @@ Patterns whose matches never end with `\n`:
   will be revisited project-wide.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

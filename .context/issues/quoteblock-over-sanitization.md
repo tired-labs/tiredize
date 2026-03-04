@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: bug
+priority: medium
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # QuoteBlock Over-Sanitization
 
@@ -24,9 +29,38 @@ Identified during the test coverage audit
 (`test-coverage-markdown-types.md`). 3 skipped spec tests document
 the bug.
 
-## Findings
+## Acceptance Criteria
 
-### Skipped spec tests (3)
+- [x] `QuoteBlock.sanitize()` call removed from InlineLink.extract()
+- [x] `QuoteBlock.sanitize()` call removed from BracketLink.extract()
+- [x] `QuoteBlock.sanitize()` call removed from BareLink.extract()
+- [x] QuoteBlock import removed from `link.py` if no longer used
+- [x] All 3 skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
+- [x] Parser specification updated: sanitization chain table updated
+      to remove QuoteBlock from InlineLink, BracketLink, and BareLink
+      chains
+- [x] Parser specification known gaps section updated to remove the
+      QuoteBlock over-sanitization note
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+- Changes to `QuoteBlock.sanitize()` itself (it works as intended)
+- QuoteBlock as a container type with child elements (tracked in
+  `container-element-model.md`)
+- InlineImage sanitization chain (tracked in
+  `parser-sanitization-gaps.md`)
+- GFM syntax variant support (tracked in `gfm-parity.md`)
+
+## Domain Specific Sections
+
+### Findings
+
+#### Skipped spec tests (3)
 
 1. **InlineLink inside quote block**
    `test_link.py::test_inline_link_inside_quote_block`
@@ -45,7 +79,7 @@ the bug.
    `> https://example.com` -- same issue. BareLink sanitizes
    QuoteBlock, losing the valid bare link.
 
-### Correctly working cases (not affected)
+#### Correctly working cases (not affected)
 
 - **InlineImage inside quote block**: InlineImage does NOT sanitize
   QuoteBlock, so `> ![alt](url)` IS correctly extracted.
@@ -60,7 +94,7 @@ the bug.
   This is correct -- GFM reference definitions inside blockquotes
   are scoped to the blockquote, not the document.
 
-### Root cause
+#### Root cause
 
 The `>` prefix does not interfere with InlineLink, BracketLink, or
 BareLink regex patterns. None of these regexes use start-of-line
@@ -69,34 +103,11 @@ was added as a precaution but is unnecessary for these extractors.
 Removing it from their sanitization chains allows links inside
 blockquotes to be found correctly.
 
-### Extractors that sanitized QuoteBlock (removed by this fix)
+#### Extractors that sanitized QuoteBlock (removed by this fix)
 
 - InlineLink
 - BracketLink
 - BareLink
-
-## Acceptance Criteria
-
-- [x] `QuoteBlock.sanitize()` call removed from InlineLink.extract()
-- [x] `QuoteBlock.sanitize()` call removed from BracketLink.extract()
-- [x] `QuoteBlock.sanitize()` call removed from BareLink.extract()
-- [x] QuoteBlock import removed from `link.py` if no longer used
-- [x] All 3 skipped spec tests unskipped and passing
-- [x] No regressions in existing tests
-- [x] Parser specification updated: sanitization chain table updated
-      to remove QuoteBlock from InlineLink, BracketLink, and BareLink
-      chains
-- [x] Parser specification known gaps section updated to remove the
-      QuoteBlock over-sanitization note
-
-## Out of Scope
-
-- Changes to `QuoteBlock.sanitize()` itself (it works as intended)
-- QuoteBlock as a container type with child elements (tracked in
-  `container-element-model.md`)
-- InlineImage sanitization chain (tracked in
-  `parser-sanitization-gaps.md`)
-- GFM syntax variant support (tracked in `gfm-parity.md`)
 
 ## Design Decisions
 
@@ -107,3 +118,49 @@ blockquotes to be found correctly.
   contract should not change.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

@@ -1,4 +1,9 @@
-Status: completed
+---
+status: done
+type: bug
+priority: high
+created: 2026-03-03
+---
 
 # Table.extract() IndexError on whitespace-only header match
 
@@ -41,6 +46,10 @@ was always passed to the table regex.
 
 ## Out of Scope
 
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
 - Other table regex changes not related to this bug
 - Changes to divider or row parsing logic
 
@@ -60,3 +69,49 @@ was always passed to the table regex.
   would require additional regex complexity beyond this fix's scope.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

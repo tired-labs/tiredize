@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: spike
+priority: high
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # Test Coverage: Markdown Element Types
 
@@ -15,7 +20,7 @@ the test coverage audit (`test-coverage-audit.md`).
 
 ## Acceptance Criteria
 
-### New test files (zero coverage today)
+**New test files (zero coverage today)**
 
 - [x] `tests/markdown/types/test_link.py` -- BareLink, BracketLink,
       InlineLink (see test matrix below)
@@ -24,14 +29,14 @@ the test coverage audit (`test-coverage-audit.md`).
 - [x] `tests/markdown/types/test_list.py` -- stub behavior tests
       confirming List.extract() returns empty list (not yet implemented)
 
-### Sanitize method coverage (no direct tests today)
+**Sanitize method coverage (no direct tests today)**
 
 - [x] Direct sanitize() tests for: Header, FrontMatter, Table,
       BareLink, BracketLink, InlineLink, ReferenceDefinition,
       LinkReference, ImageReference. Each test verifies matched regions
       are replaced with whitespace and total string length is preserved.
 
-### Edge case coverage (partially tested today)
+**Edge case coverage (partially tested today)**
 
 - [x] FrontMatter.extract() with malformed YAML (lines 52-53:
       exception handler path)
@@ -42,7 +47,7 @@ the test coverage audit (`test-coverage-audit.md`).
 - [x] Document.line_col() with negative offset and offset beyond
       document length (lines 44, 47: bounds clamping)
 
-### Cross-type interaction tests
+**Cross-type interaction tests**
 
 For each element type being tested, verify behavior when it appears
 inside every other element type that could contain or mimic it. These
@@ -98,7 +103,7 @@ fix the parser (sanitization chain fixes belong in
       blocks, or headers. Verify FrontMatter.extract() handles these
       and other extractors don't match inside frontmatter.
 
-### Review existing tests for completeness
+**Review existing tests for completeness**
 
 - [x] Review `test_codeblock.py` -- verify CodeBlock extract and
       sanitize cover edge cases (empty input, nested backticks,
@@ -128,14 +133,14 @@ fix the parser (sanitization chain fixes belong in
       tests are complete (already at 100% but check for logical gaps).
       Add missing tests.
 
-### Boundary and degenerate inputs
+**Boundary and degenerate inputs**
 
 - [x] For every extract() method: empty string, single-character input,
       input that is entirely one match, input with no trailing newline
 - [x] For every sanitize() method: empty string, single-character input,
       input where the entire string matches the pattern
 
-### Idempotency
+**Idempotency**
 
 - [x] For every sanitize() method: `sanitize(sanitize(text))` produces
       the same result as `sanitize(text)` and preserves string length.
@@ -145,7 +150,7 @@ fix the parser (sanitization chain fixes belong in
       building): calling extract twice on the same input produces
       identical results
 
-### State mutation
+**State mutation**
 
 - [x] Section.extract() does not mutate the input text string
 - [x] Section._extract() does not corrupt shared state between
@@ -153,7 +158,7 @@ fix the parser (sanitization chain fixes belong in
 - [x] Document.load() called twice on the same Document -- verify
       second call cleanly replaces state rather than accumulating
 
-### Unicode and non-ASCII
+**Unicode and non-ASCII**
 
 - [x] Headers with emoji and accented characters -- verify position
       offsets and slugification are correct
@@ -165,7 +170,7 @@ fix the parser (sanitization chain fixes belong in
       correct string length (characters, not bytes)
 - [x] FrontMatter with unicode YAML values -- verify extraction
 
-### Syntax variant coverage (regex audit)
+**Syntax variant coverage (regex audit)**
 
 For each element type, test all GFM-valid syntax variants against the
 actual regex patterns. Tests assert GFM-spec-correct behavior. When
@@ -173,7 +178,7 @@ the code does not match the spec, the test is marked with
 `@pytest.mark.skip(reason="...")` referencing the tracking issue.
 Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 
-#### CodeBlock
+**CodeBlock**
 
 - [x] Tilde-fenced code blocks (`~~~content~~~`) -- not matched.
       Regex only handles backtick fences.
@@ -191,7 +196,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] Code fence after `|` character -- false positive match. The
       `(?<![^|\n])` anchor treats `|` as valid start-of-line.
 
-#### CodeInline
+**CodeInline**
 
 - [x] Double-backtick inline code (``` `` code `` ```) -- not matched.
       Pattern only handles single-backtick delimiters.
@@ -203,7 +208,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] CRLF: `\r` not excluded from content -- captured in code field
       when intent is to prevent line-crossing.
 
-#### Header
+**Header**
 
 - [x] Closing hashes (`# Heading #`, `## Heading ##`) -- trailing
       `#` characters captured as part of title text.
@@ -218,7 +223,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       `(?<![^|\n])` anchor.
 - [x] CRLF: title field contains trailing `\r`.
 
-#### InlineLink
+**InlineLink**
 
 - [x] Title in single quotes (`[t](url 'title')`) -- title not
       captured. Regex only matches double-quoted titles.
@@ -235,14 +240,14 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] Title with escaped quote (`"title \" here"`) -- truncated at
       the escaped quote.
 
-#### BracketLink
+**BracketLink**
 
 - [x] Non-HTTP schemes (`<ftp://example.com>`, `<mailto:user@host>`)
       -- not matched. Pattern requires `https?://`.
 - [x] Email autolinks (`<user@example.com>`) -- not matched. No scheme
       prefix to match.
 
-#### BareLink
+**BareLink**
 
 - [x] `www.` prefix without scheme (`www.example.com`) -- not matched.
       Pattern requires `http[s]?://` or `./` or `\`.
@@ -252,7 +257,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] Relative paths with `../` prefix -- not matched. Only `./` is
       supported.
 
-#### InlineImage
+**InlineImage**
 
 - [x] Title in single quotes (`![a](url 'title')`) -- same as
       InlineLink: title not captured.
@@ -262,7 +267,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] Alt text containing `]` -- broken, same as InlineLink text.
 - [x] Title with escaped quote -- truncated, same as InlineLink.
 
-#### ReferenceDefinition
+**ReferenceDefinition**
 
 - [x] Title in single quotes (`[ref]: url 'title'`) -- not captured.
 - [x] URL in angle brackets (`[ref]: <url>`) -- not matched.
@@ -275,7 +280,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       the lookahead. Prediction was wrong.
 - [x] Label containing `]` -- broken, `[^]]*?` stops at first `]`.
 
-#### LinkReference
+**LinkReference**
 
 - [x] Collapsed reference link (`[text][]`) -- detected as shortcut
       reference instead; `text` field is None instead of content.
@@ -285,7 +290,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       preceded by `)`, not `]`, so the lookbehind correctly allows it.
       Prediction was wrong. Test documents actual (correct) behavior.
 
-#### ImageReference
+**ImageReference**
 
 - [x] Dead lookbehind (`(?<!(\]))`) -- always passes because it checks
       whether `!` (the preceding literal) is `]`. Test confirms it
@@ -294,7 +299,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       LinkReference.
 - [x] Reference label containing `]` -- broken, same as LinkReference.
 
-#### Table
+**Table**
 
 - [x] Over-greedy row matching -- `([^\n]+(\n|$))*` consumes non-table
       content after the table. Verify rows capture extends beyond the
@@ -309,7 +314,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       Permissive header pattern does not match non-table lines
       containing pipes followed by a dash line. Prediction was wrong.
 
-#### QuoteBlock
+**QuoteBlock**
 
 - [x] Lazy continuation (`> first\nsecond` as single quote) -- not
       matched. Only lines starting with `>` are captured.
@@ -321,7 +326,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] CRLF: `\r` captured in quote content.
 - [x] `|` preceding `>` -- false positive via `(?<![^|\n])` anchor.
 
-#### FrontMatter
+**FrontMatter**
 
 - [x] Closing delimiter `...` (three dots) -- not matched. Pattern
       requires `---` for both opening and closing.
@@ -332,7 +337,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
 - [x] CRLF: complete match failure. Pattern uses literal `\n`.
 - [x] Leading whitespace on delimiter (`  ---`) -- not matched.
 
-#### Cross-cutting issues (test across all applicable types)
+**Cross-cutting issues (test across all applicable types)**
 
 - [x] **CRLF line endings** -- affects all patterns using `\n`.
       CodeBlock, Header, Table, QuoteBlock, and FrontMatter have data
@@ -349,7 +354,7 @@ Do not fix regexes in this issue; regex fixes belong in `gfm-parity.md`.
       ReferenceDefinition patterns matching content after `|` inside
       table cells. Document whether this is intentional.
 
-### Coverage target
+**Coverage target**
 
 - [x] 99% coverage on all markdown/types/ source files. `section.py`
       line 167 is unreachable: defensive `break` in `_map_subsections`
@@ -375,7 +380,7 @@ unrelated files, or extend scope beyond what is specified here.
 - get_position_from_match() dead code (covered by
   `dead-code-cleanup.md`)
 
-### Unsupported GFM variants (planned, not yet implemented)
+**Unsupported GFM variants (planned, not yet implemented)**
 
 The following GFM features are not yet handled by the parser. Support
 is tracked by `gfm-parity.md`. No tests required in this issue, but
@@ -411,3 +416,49 @@ document in test files as known limitations when encountered:
   coverage work.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

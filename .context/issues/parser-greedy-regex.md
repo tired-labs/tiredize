@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: bug
+priority: high
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # Parser Greedy Regex Bugs
 
@@ -15,9 +20,35 @@ Identified during the test coverage audit
 (`test-coverage-markdown-types.md`). 1 skipped spec test plus several
 documented-behavior tests capture the findings.
 
-## Findings
+## Acceptance Criteria
 
-### Skipped spec test (1)
+- [x] InlineImage URL regex does not consume past closing `)`
+- [x] Table rows pattern stops at first non-table line (e.g.,
+      line not containing `|` or empty line)
+- [x] Pipe-as-start-of-line behavior evaluated: intentional design
+      decision or bug to fix
+- [x] BareLink regex does not partial-match `../` paths
+- [x] ImageReference lookbehind fixed or removed
+- [x] All affected skipped spec tests unskipped and passing
+- [x] No regressions in existing tests
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+- GFM syntax variant support (tracked in `gfm-parity.md`)
+- Missing sanitization chains (tracked in
+  `parser-sanitization-gaps.md`)
+- sanitize_text utility bug (tracked in
+  `sanitize-text-newline-bug.md`)
+
+## Domain Specific Sections
+
+### Findings
+
+#### Skipped spec test (1)
 
 1. **InlineImage greedy URL**
    `test_image.py::test_image_adjacent_to_link`
@@ -34,7 +65,7 @@ documented-behavior tests capture the findings.
    likely to trigger because InlineLink has a negative lookbehind
    for `!` that prevents matching after `![`.
 
-### Documented-behavior tests (not skipped)
+#### Documented-behavior tests (not skipped)
 
 2. **Table over-greedy row matching**
    `test_table.py::test_table_over_greedy_row_matching`
@@ -78,26 +109,6 @@ documented-behavior tests capture the findings.
    suggests the regex was intended to prevent matching after `]`
    but was implemented incorrectly.
 
-## Acceptance Criteria
-
-- [x] InlineImage URL regex does not consume past closing `)`
-- [x] Table rows pattern stops at first non-table line (e.g.,
-      line not containing `|` or empty line)
-- [x] Pipe-as-start-of-line behavior evaluated: intentional design
-      decision or bug to fix
-- [x] BareLink regex does not partial-match `../` paths
-- [x] ImageReference lookbehind fixed or removed
-- [x] All affected skipped spec tests unskipped and passing
-- [x] No regressions in existing tests
-
-## Out of Scope
-
-- GFM syntax variant support (tracked in `gfm-parity.md`)
-- Missing sanitization chains (tracked in
-  `parser-sanitization-gaps.md`)
-- sanitize_text utility bug (tracked in
-  `sanitize-text-newline-bug.md`)
-
 ## Design Decisions
 
 - **The `|` in `(?<![^|\n])` is a bug, not a design choice.**
@@ -116,3 +127,49 @@ documented-behavior tests capture the findings.
   the rows pattern from consuming non-table content.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: spike
+priority: high
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # Test Coverage: Linter Rules
 
@@ -12,7 +17,7 @@ gap in line_length. Part of the test coverage audit
 
 ## Acceptance Criteria
 
-### tabs.py (25% coverage today)
+**tabs.py (25% coverage today)**
 
 - [x] Tab detected, not allowed -- single tab, multiple tabs on one
       line, tabs on multiple lines
@@ -25,7 +30,7 @@ gap in line_length. Part of the test coverage audit
 - [x] Empty document -- no violations
 - [x] CRLF line endings -- verify tab detection handles `\r\n`
 
-### trailing_whitespace.py (26% coverage today)
+**trailing_whitespace.py (26% coverage today)**
 
 - [x] Trailing spaces detected, not allowed -- single space, multiple
       spaces, trailing tab
@@ -39,7 +44,7 @@ gap in line_length. Part of the test coverage audit
       trailing
 - [x] CRLF line endings -- verify detection handles `\r\n`
 
-### links.py (22% coverage today)
+**links.py (22% coverage today)**
 
 - [x] Config `validate` is false or missing -- returns empty results
 - [x] Config `validate` is true with no links in document -- returns
@@ -55,12 +60,12 @@ gap in line_length. Part of the test coverage audit
 - [x] Use `unittest.mock.patch` to mock `check_url_valid`, not HTTP
       requests directly
 
-### line_length.py (96% coverage today)
+**line_length.py (96% coverage today)**
 
 - [x] CRLF line endings -- verify line length excludes `\r\n`
       (line 37: `\r` stripping path)
 
-### Cross-component interactions (audit point 5)
+**Cross-component interactions (audit point 5)**
 
 - [x] Links rule: same URL appears as both InlineLink and BareLink in
       same section -- verify both are checked (or document if
@@ -68,12 +73,12 @@ gap in line_length. Part of the test coverage audit
 - [x] Links rule: document with multiple sections containing links --
       verify all sections are iterated, not just the first
 
-### Idempotency (audit point 7)
+**Idempotency (audit point 7)**
 
 - [x] Run each rule's validate() twice on the same document -- verify
       identical results both times (rules should be pure functions)
 
-### State mutation (audit point 8)
+**State mutation (audit point 8)**
 
 - [x] Each rule's validate() does not mutate the Document it receives
       -- assert document.string and section data are unchanged after
@@ -81,7 +86,7 @@ gap in line_length. Part of the test coverage audit
 - [x] Each rule's validate() does not mutate the config dict --
       assert config is unchanged after the call
 
-### Unicode and non-ASCII (audit point 9)
+**Unicode and non-ASCII (audit point 9)**
 
 - [x] tabs.py: line containing tabs mixed with non-ASCII characters --
       verify tab positions are correct (character index, not byte)
@@ -92,7 +97,7 @@ gap in line_length. Part of the test coverage audit
 - [x] links.py: link with unicode URL -- verify it reaches
       check_url_valid with the URL intact
 
-### Partial failure in collections (audit point 10)
+**Partial failure in collections (audit point 10)**
 
 - [x] links.py: mock check_url_valid to raise an unexpected exception
       on link 2 of 3 -- verify whether link 3 is still checked or the
@@ -101,7 +106,7 @@ gap in line_length. Part of the test coverage audit
       iterate lines without external calls, but verify a document with
       many lines processes all of them (no early termination)
 
-### Review existing tests for completeness
+**Review existing tests for completeness**
 
 - [x] Review `test_engine.py` -- verify run_linter and _select_rules
       tests cover all branching logic (no rules, all rules, subset,
@@ -110,7 +115,7 @@ gap in line_length. Part of the test coverage audit
       happy path, edge cases (no rules, private modules, subpackages).
       Add missing tests.
 
-### Coverage target
+**Coverage target**
 
 - [x] 100% coverage on all four rule modules, or documented exclusions
       for unreachable lines
@@ -143,3 +148,49 @@ unrelated files, or extend scope beyond what is specified here.
   types. These are not tested and are excluded from coverage targets.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

@@ -1,4 +1,9 @@
-Status: completed
+---
+status: done
+type: bug
+priority: high
+created: 2026-02-28
+---
 
 # Fix Document._parse Slug Propagation Bug
 
@@ -11,32 +16,6 @@ subsection references via `_map_subsections`). The recalculation uses
 and assigns them to `self.sections[i]`, but the `subsections` lists
 inside each section still hold references to the original pre-replace
 objects. This means subsection slugs are stale after parsing.
-
-## Root Cause
-
-In `document.py` lines 88-89:
-
-```python
-new_header = replace(section.header, slug=slug)
-self.sections[i] = replace(section, header=new_header)
-```
-
-`_map_subsections()` runs on line 78 of `section.py` before this loop,
-so subsection references are already wired to the original objects.
-Replacing objects in the flat list does not update those references.
-
-## Fix
-
-Both `Header` and `Section` are `frozen=False`, so direct mutation
-works. Replace the two `replace()` calls with:
-
-```python
-section.header.slug = slug
-```
-
-No new objects are created, so subsection references stay valid.
-The `replace` import can be removed from `document.py` if no other
-call sites remain.
 
 ## Acceptance Criteria
 
@@ -59,6 +38,34 @@ unrelated files, or extend scope beyond what is specified here.
 - Changes to the Section extraction logic
 - Slug dedup strategy changes (title-based vs slug-based)
 
+## Domain Specific Sections
+
+### Root Cause
+
+In `document.py` lines 88-89:
+
+```python
+new_header = replace(section.header, slug=slug)
+self.sections[i] = replace(section, header=new_header)
+```
+
+`_map_subsections()` runs on line 78 of `section.py` before this loop,
+so subsection references are already wired to the original objects.
+Replacing objects in the flat list does not update those references.
+
+### Fix
+
+Both `Header` and `Section` are `frozen=False`, so direct mutation
+works. Replace the two `replace()` calls with:
+
+```python
+section.header.slug = slug
+```
+
+No new objects are created, so subsection references stay valid.
+The `replace` import can be removed from `document.py` if no other
+call sites remain.
+
 ## Design Decisions
 
 - Mutate in place rather than rebuild tree. Both dataclasses are
@@ -68,3 +75,49 @@ unrelated files, or extend scope beyond what is specified here.
   construction, so no other fields suffer from the same problem.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

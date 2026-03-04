@@ -1,4 +1,9 @@
-Status: draft
+---
+status: draft
+type: refactor
+priority: low
+created: 2026-02-28
+---
 
 # Tooling Migration
 
@@ -37,3 +42,49 @@ unrelated files, or extend scope beyond what is specified here.
 
 - Does Ruff cover all flake8 rules currently in use, or are there gaps?
 - Should the import migration happen in one commit or file-by-file?
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [ ] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [ ] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

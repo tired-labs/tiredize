@@ -1,4 +1,9 @@
-Status: draft
+---
+status: draft
+type: documentation
+priority: low
+created: 2026-03-02
+---
 
 # Document Built-in Linter Rules as Individual Specifications
 
@@ -56,3 +61,49 @@ unrelated files, or extend scope beyond what is specified here.
 - Should the spec document the exact error message format for each
   rule, or just the semantic meaning? Exact messages are brittle to
   maintain but useful for testing.
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [ ] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [ ] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback
