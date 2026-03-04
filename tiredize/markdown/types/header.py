@@ -87,7 +87,8 @@ class Header:
         3. Convert spaces to hyphens.
         4. Collapse multiple hyphens.
         5. Strip leading/trailing hyphens.
-        6. If the title matches a previously seen heading, append
+        6. Prepend ``#``.
+        7. If the title matches a previously seen heading, append
            "-1", "-2", etc.
 
         Parameters:
