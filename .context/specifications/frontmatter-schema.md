@@ -41,9 +41,10 @@ def safe_load_yaml(text: str):
 ```
 
 Parses YAML with duplicate key detection. Raises `ValueError` when a
-mapping key appears more than once. Uses a `SafeLoader` subclass with
-a custom `construct_mapping` override. Used only in the frontmatter
-validation path.
+top-level mapping key appears more than once. Uses a `SafeLoader`
+subclass with a custom constructor for `DEFAULT_MAPPING_TAG` that
+calls `construct_pairs` to detect duplicates before building the dict.
+Used in both the schema loader and the frontmatter validation path.
 
 ### Data Model
 

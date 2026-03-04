@@ -88,7 +88,12 @@ class FrontmatterSchema:
 
 def load_frontmatter_schema(yaml_string: str) -> FrontmatterSchema:
     """Parse and validate a frontmatter schema YAML string."""
-    raw = yaml.safe_load(yaml_string)
+    try:
+        raw = safe_load_yaml(yaml_string)
+    except ValueError as exc:
+        raise ValueError(
+            f"Schema contains duplicate key: {exc}"
+        ) from exc
     if raw is None:
         raw = {}
     if not isinstance(raw, dict):
@@ -259,6 +264,17 @@ def validate(
 
     content = fm.content if fm is not None else {}
     if content is None:
+        content = {}
+
+    if not isinstance(content, dict):
+        results.append(RuleResult(
+            message=(
+                f"Frontmatter must be a YAML mapping, "
+                f"got {type(content).__name__}"
+            ),
+            position=pos,
+            rule_id="schema.frontmatter.wrong_type",
+        ))
         content = {}
 
     # Check for missing required fields

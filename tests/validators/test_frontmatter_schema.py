@@ -360,6 +360,17 @@ class TestLoadSchemaErrors:
                 "      - true\n"
             )
 
+    def test_duplicate_key_in_schema(self):
+        """Duplicate keys in the schema YAML are rejected."""
+        with pytest.raises(ValueError, match="duplicate"):
+            load_frontmatter_schema(
+                "fields:\n"
+                "  title:\n"
+                "    type: string\n"
+                "  title:\n"
+                "    type: int\n"
+            )
+
 
 # ============================================================
 # validate — frontmatter validation against schema
@@ -1030,9 +1041,9 @@ class TestValidateEdgeCases:
         assert len(results) == 1
         assert results[0].rule_id == "schema.frontmatter.wrong_type"
 
-    def test_float_accepted_for_float_field(self):
-        """Ensure int is NOT accepted for float (YAML parses 1.0 as
-        float but 1 as int)."""
+    def test_int_rejected_for_float_field(self):
+        """YAML parses 1.0 as float but 1 as int — int must be
+        rejected when the schema declares float."""
         doc = _make_doc("ratio: 1\n")
         schema = load_frontmatter_schema(_schema(
             "ratio:\n  type: float\n"
@@ -1085,3 +1096,37 @@ class TestValidateEdgeCases:
         ))
         results = validate(doc, schema)
         assert results == []
+
+    def test_scalar_frontmatter_rejected(self):
+        """Frontmatter that is a bare scalar (not a mapping) is
+        caught with a clear error instead of crashing."""
+        doc = Document()
+        doc.load(text="---\n42\n---\n# Title\n")
+        schema = load_frontmatter_schema(_schema(
+            "title:\n  type: string\n"
+        ))
+        results = validate(doc, schema)
+        assert any(
+            r.rule_id == "schema.frontmatter.wrong_type"
+            and "mapping" in r.message
+            for r in results
+        )
+        # Required field should also be reported as missing
+        assert any(
+            r.rule_id == "schema.frontmatter.missing_field"
+            for r in results
+        )
+
+    def test_list_frontmatter_rejected(self):
+        """Frontmatter that is a bare list (not a mapping) is caught."""
+        doc = Document()
+        doc.load(text="---\n- one\n- two\n---\n# Title\n")
+        schema = load_frontmatter_schema(_schema(
+            "title:\n  type: string\n"
+        ))
+        results = validate(doc, schema)
+        assert any(
+            r.rule_id == "schema.frontmatter.wrong_type"
+            and "mapping" in r.message
+            for r in results
+        )
