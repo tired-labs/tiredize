@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: bug
+priority: high
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # Parser Sanitization Gaps
 
@@ -11,9 +16,34 @@ type appears inside another. Identified during the test coverage audit
 (`test-coverage-markdown-types.md`). 4 skipped spec tests document
 the gaps, plus additional documented-behavior tests.
 
-## Findings
+## Acceptance Criteria
 
-### Skipped spec tests (4)
+- [x] InlineImage.extract() sanitizes CodeBlock and CodeInline
+      before matching
+- [x] CodeInline.extract() sanitizes CodeBlock before matching
+- [x] LinkReference.extract() sanitizes CodeInline before matching
+- [x] ImageReference.extract() sanitizes CodeInline before matching
+- [x] All 4 skipped spec tests unskipped and passing
+- [x] CodeInline-inside-CodeBlock test updated to assert no match
+- [x] No regressions in existing tests
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+- QuoteBlock over-sanitization (tracked separately)
+- GFM syntax variant support (tracked in `gfm-parity.md`)
+- Regex pattern changes (tracked in `parser-greedy-regex.md`)
+- sanitize_text utility bug (tracked in
+  `sanitize-text-newline-bug.md`, now completed)
+
+## Domain Specific Sections
+
+### Findings
+
+#### Skipped spec tests (4)
 
 1. **InlineImage does not sanitize CodeBlock**
    `test_image.py::test_image_not_inside_code_block`
@@ -35,7 +65,7 @@ the gaps, plus additional documented-behavior tests.
    `![alt][ref]` inside backtick spans is incorrectly extracted.
    ImageReference sanitizes CodeBlock but not CodeInline.
 
-### Documented-behavior tests (not skipped)
+#### Documented-behavior tests (not skipped)
 
 5. **CodeInline does not sanitize CodeBlock**
    `test_codeblock.py::test_inline_code_inside_code_block`
@@ -43,7 +73,7 @@ the gaps, plus additional documented-behavior tests.
    CodeInline false positives. CodeInline.extract() has no
    sanitization chain.
 
-### Sanitization chain summary
+#### Sanitization chain summary
 
 Current sanitization chains per extractor:
 
@@ -65,31 +95,12 @@ Current sanitization chains per extractor:
 | Table               | (none, but Section._extract passes           |
 |                     |  CodeBlock-sanitized text)                   |
 
-### Missing sanitizations needed
+#### Missing sanitizations needed
 
 - InlineImage: needs CodeBlock, CodeInline (minimum)
 - CodeInline: needs CodeBlock
 - LinkReference: needs CodeInline
 - ImageReference: needs CodeInline
-
-## Acceptance Criteria
-
-- [x] InlineImage.extract() sanitizes CodeBlock and CodeInline
-      before matching
-- [x] CodeInline.extract() sanitizes CodeBlock before matching
-- [x] LinkReference.extract() sanitizes CodeInline before matching
-- [x] ImageReference.extract() sanitizes CodeInline before matching
-- [x] All 4 skipped spec tests unskipped and passing
-- [x] CodeInline-inside-CodeBlock test updated to assert no match
-- [x] No regressions in existing tests
-
-## Out of Scope
-
-- QuoteBlock over-sanitization (tracked separately)
-- GFM syntax variant support (tracked in `gfm-parity.md`)
-- Regex pattern changes (tracked in `parser-greedy-regex.md`)
-- sanitize_text utility bug (tracked in
-  `sanitize-text-newline-bug.md`, now completed)
 
 ## Design Decisions
 
@@ -118,3 +129,49 @@ Current sanitization chains per extractor:
   context.
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

@@ -1,4 +1,9 @@
-Status: draft
+---
+status: draft
+type: feature
+priority: medium
+created: 2026-03-03
+---
 
 # Container Element Model
 
@@ -15,7 +20,30 @@ This issue tracks redesigning container types to parse their content
 into child elements, producing a richer AST that reflects the actual
 document structure per GFM.
 
-## GFM Container Types to Evaluate
+## Acceptance Criteria
+
+- [ ] GFM spec reviewed to identify all container element types and
+      which child types are valid inside each
+- [ ] Container types redesigned to parse content into child elements
+- [ ] Child element positions are correct relative to the document
+      root (not relative to the container's content)
+- [ ] Downstream consumers (linter rules, schema validator) updated
+      to traverse into container children where appropriate
+- [ ] Parser specification updated to document container model
+- [ ] No regressions in existing tests
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+- GFM syntax variant support (tracked in `gfm-parity.md`)
+- Sanitization chain changes unrelated to the container model
+
+## Domain Specific Sections
+
+### GFM Container Types to Evaluate
 
 The following types may qualify as containers per GFM. Each needs to
 be evaluated against the GFM spec to determine whether it should
@@ -39,23 +67,6 @@ parse child elements and which child types are valid.
   have container semantics that the current parser treats as leaf
   nodes.
 
-## Acceptance Criteria
-
-- [ ] GFM spec reviewed to identify all container element types and
-      which child types are valid inside each
-- [ ] Container types redesigned to parse content into child elements
-- [ ] Child element positions are correct relative to the document
-      root (not relative to the container's content)
-- [ ] Downstream consumers (linter rules, schema validator) updated
-      to traverse into container children where appropriate
-- [ ] Parser specification updated to document container model
-- [ ] No regressions in existing tests
-
-## Out of Scope
-
-- GFM syntax variant support (tracked in `gfm-parity.md`)
-- Sanitization chain changes unrelated to the container model
-
 ## Design Decisions
 
 ## Open Questions
@@ -75,3 +86,49 @@ parse child elements and which child types are valid.
 - Do linter rules need to traverse into container children? For
   example, should a link-checking rule find links inside blockquotes
   and table cells?
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [ ] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [ ] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

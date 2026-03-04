@@ -1,9 +1,14 @@
-Status: completed
-Sub-issues:
+---
+status: done
+type: spike
+priority: high
+created: 2026-02-28
+sub_issues:
   - test-coverage-markdown-types.md
   - test-coverage-markdown-utils.md
   - test-coverage-linter-rules.md
   - test-coverage-linter-utils-engine.md
+---
 
 # Test Coverage Audit for Linter and Markdown Packages
 
@@ -17,21 +22,6 @@ proper base case, edge case, and boundary coverage.
 This is a parent issue. The work is split into four sub-issues. This
 issue is not closed until all sub-issues are complete and every test
 file in the linter and markdown packages has been reviewed.
-
-## Sub-Issues
-
-- `test-coverage-markdown-types.md` -- Element type tests: new test
-  files for links, references, list stub; sanitize method tests;
-  cross-type interaction tests; review of all existing element type
-  test files
-- `test-coverage-markdown-utils.md` -- Direct tests for search_all_re
-  and sanitize_text
-- `test-coverage-linter-rules.md` -- Full test suites for links, tabs,
-  trailing_whitespace rules; CRLF gap in line_length; review of
-  existing engine and loader tests
-- `test-coverage-linter-utils-engine.md` -- Config helper tests;
-  check_url_valid anchor/HTTP paths; engine gaps; review of existing
-  relative URL tests
 
 ## Acceptance Criteria
 
@@ -58,7 +48,24 @@ unrelated files, or extend scope beyond what is specified here.
 - Sanitization chain audit (covered by `parser-sanitization-audit.md`)
 - Code changes beyond what is needed to fix bugs found during audit
 
-## Known Gaps Discovered Before Audit
+## Domain Specific Sections
+
+### Sub-Issues
+
+- `test-coverage-markdown-types.md` -- Element type tests: new test
+  files for links, references, list stub; sanitize method tests;
+  cross-type interaction tests; review of all existing element type
+  test files
+- `test-coverage-markdown-utils.md` -- Direct tests for search_all_re
+  and sanitize_text
+- `test-coverage-linter-rules.md` -- Full test suites for links, tabs,
+  trailing_whitespace rules; CRLF gap in line_length; review of
+  existing engine and loader tests
+- `test-coverage-linter-utils-engine.md` -- Config helper tests;
+  check_url_valid anchor/HTTP paths; engine gaps; review of existing
+  relative URL tests
+
+### Known Gaps Discovered Before Audit
 
 These gaps were found during other work and should be verified and
 addressed as part of the audit:
@@ -76,27 +83,12 @@ addressed as part of the audit:
   feedback. Four tests exist but should be reviewed for completeness
   during the audit.
 
-## Design Decisions
-
-- Tests are written to match specification behavior, not current code
-  behavior. If code doesn't match the spec, fix the code as part of
-  this audit (within the "fix bugs found during audit" criterion).
-- Target is 100% coverage with documented exclusions for unreachable
-  lines. No lower bar.
-- Full test suites for undertested rule modules, not just gap-filling.
-- HTTP mocking uses `unittest.mock` (standard library), no new
-  dependencies.
-- Cross-type interaction tests in the markdown types sub-issue
-  document actual parser behavior. False positives caused by missing
-  sanitization are asserted with comments noting the known gap, not
-  fixed (sanitization fixes belong in `parser-sanitization-audit.md`).
-
-## Final Coverage Report
+### Final Coverage Report
 
 Baseline: commit `07ed8f4` (pre-audit main, after fix-relative-url-resolution).
 Final: commit `a643e6c` (audit merged to main).
 
-### Linter package
+#### Linter package
 
 | File | Before | After | Notes |
 |------|--------|-------|-------|
@@ -108,7 +100,7 @@ Final: commit `a643e6c` (audit merged to main).
 | linter/rules/trailing_whitespace.py | 26% (20 miss) | 100% | |
 | linter/utils.py | 42% (32 miss) | 100% | |
 
-### Markdown package
+#### Markdown package
 
 | File | Before | After | Notes |
 |------|--------|-------|-------|
@@ -126,7 +118,7 @@ Final: commit `a643e6c` (audit merged to main).
 | markdown/types/table.py | 98% (1 miss) | 100% | |
 | markdown/utils.py | 81% (5 miss) | 81% (5 miss) | Lines 15-19: `get_position_from_match` dead code (`dead-code-cleanup.md`) |
 
-### Totals
+#### Totals
 
 | | Before | After |
 |---|--------|-------|
@@ -135,7 +127,7 @@ Final: commit `a643e6c` (audit merged to main).
 | Coverage | 85% | 99% |
 | Tests | 99 passed | 462 passed, 66 skipped |
 
-### Documented exclusions
+#### Documented exclusions
 
 - `engine.py` line 64: `isinstance(rule, Rule)` guard is unreachable.
   `_select_rules` guarantees Rule objects from the discovered rules dict.
@@ -145,7 +137,7 @@ Final: commit `a643e6c` (audit merged to main).
 - `utils.py` lines 15-19: `get_position_from_match()` is dead code.
   Tracked by `dead-code-cleanup.md`.
 
-## Follow-Up Issues Opened
+### Follow-Up Issues Opened
 
 Bugs and gaps discovered during the audit, tracked as separate issues:
 
@@ -161,4 +153,65 @@ Bugs and gaps discovered during the audit, tracked as separate issues:
 | `dead-code-cleanup.md` | `get_position_from_match` unused function | 0 |
 | `relative-url-prefix-handling.md` | URLs without `./` or `../` prefix | 0 |
 
+## Design Decisions
+
+- Tests are written to match specification behavior, not current code
+  behavior. If code doesn't match the spec, fix the code as part of
+  this audit (within the "fix bugs found during audit" criterion).
+- Target is 100% coverage with documented exclusions for unreachable
+  lines. No lower bar.
+- Full test suites for undertested rule modules, not just gap-filling.
+- HTTP mocking uses `unittest.mock` (standard library), no new
+  dependencies.
+- Cross-type interaction tests in the markdown types sub-issue
+  document actual parser behavior. False positives caused by missing
+  sanitization are asserted with comments noting the known gap, not
+  fixed (sanitization fixes belong in `parser-sanitization-audit.md`).
+
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

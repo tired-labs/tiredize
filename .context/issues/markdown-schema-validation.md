@@ -1,4 +1,9 @@
-Status: completed
+---
+status: done
+type: feature
+priority: high
+created: 2026-02-28
+---
 
 # Implement Markdown Schema Validation
 
@@ -13,7 +18,26 @@ Go-based `trrlint` in the TIRED Labs techniques repository, while being
 general-purpose enough for any markdown document that follows a
 predictable structure.
 
-## Motivation
+## Acceptance Criteria
+
+This issue predates the current issue file format. This section was not
+part of the original issue.
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+- Content validation within sections (table fields, link formats).
+  These belong in linter rules.
+- Frontmatter schema validation (separate feature, separate flag).
+- Cross-section content correlation (e.g., Procedures table rows
+  matching subsection names). This is linter rule territory.
+
+## Domain Specific Sections
+
+### Motivation
 
 - Contributors to TIRED Labs TRRs frequently forget sections, misname
   them, or add sections that don't belong. Schema validation catches
@@ -24,7 +48,7 @@ predictable structure.
 - Linting for structure issues early in the workflow eliminates 90% of
   formatting feedback during review.
 
-## Design Principles
+### Design Principles
 
 - **Schema validates structure, linter rules validate content.** The
   schema engine checks that sections exist, are in the right order, at
@@ -40,11 +64,9 @@ predictable structure.
   values inside tables or correlating content across sections is linter
   rule territory.
 
-## Schema File Format
+### Schema File Format
 
-The schema is a YAML file passed to the CLI via `--markdown-schema`.
-
-### Top-Level Properties
+#### Top-Level Properties
 
 | Property               | Type | Default | Description                    |
 |------------------------|------|---------|--------------------------------|
@@ -52,7 +74,7 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
 | `allow_extra_sections` | bool | `false` | Allow sections not in schema   |
 | `sections`             | list | —       | Ordered list of section defs   |
 
-### Section Definition Properties
+#### Section Definition Properties
 
 | Property   | Type        | Default        | Description                     |
 |------------|-------------|----------------|---------------------------------|
@@ -82,7 +104,7 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
   `allow_extra_sections: false` (default), unexpected sections produce
   an error.
 
-### Example: TRR Schema
+#### Example: TRR Schema
 
 ```yaml
 sections:
@@ -131,9 +153,9 @@ sections:
         level: 2
 ```
 
-## Validation Algorithm
+### Validation Algorithm
 
-### Ordered Mode (`enforce_order: true`)
+#### Ordered Mode (`enforce_order: true`)
 
 Ordering is enforced among sibling sections under the same parent,
 not across nesting levels. When the validator matches a parent
@@ -171,7 +193,7 @@ example, if Procedure (H3) repeats 3 times and has a required
 Detection Data Model (H4) child, the validator expects 3 DDMs — one
 per Procedure instance.
 
-### Unordered Mode (`enforce_order: false`)
+#### Unordered Mode (`enforce_order: false`)
 
 1. Check that every `required: true` schema entry has at least one
    matching section in the document.
@@ -179,13 +201,13 @@ per Procedure instance.
    matches at least one schema entry.
 3. For `repeat` entries, validate match count against `min`/`max`.
 
-### Matching Rules
+#### Matching Rules
 
 - `name`: case-sensitive exact match against the section header title.
 - `pattern`: full-match regex against the section header title.
 - `level`: heading level must match exactly.
 
-## Error Output
+### Error Output
 
 All errors follow the existing linter output format:
 
@@ -193,7 +215,7 @@ All errors follow the existing linter output format:
 file:line:col: [schema.markdown.<error_type>] <message>
 ```
 
-### Error Types
+#### Error Types
 
 | Rule ID                                | Trigger                        |
 |----------------------------------------|--------------------------------|
@@ -204,7 +226,7 @@ file:line:col: [schema.markdown.<error_type>] <message>
 | `schema.markdown.repeat_below_minimum` | Fewer occurrences than min     |
 | `schema.markdown.repeat_above_maximum` | More occurrences than max      |
 
-## Integration Points
+### Integration Points
 
 - **CLI:** The `--markdown-schema` flag already exists with a
   placeholder in `_run_markdown_schema()`. The implementation replaces
@@ -217,22 +239,9 @@ file:line:col: [schema.markdown.<error_type>] <message>
   `section.subsections` — the recursive structure mirrors the nested
   schema, allowing the validator to walk both trees in parallel.
 
-## Design Decisions
+### Progress
 
-- **Schema self-validation:** The loader validates the schema file
-  itself before running document validation, with clear error messages.
-  Validated constraints: `name`/`pattern` mutual exclusivity, child
-  level consistency, repeat bound types (must be int), repeat bound
-  values (must not be negative, max must not be less than min), and
-  regex pattern syntax (compiled at load time via `re.compile()`).
-
-## Open Questions
-
-None at this time.
-
-## Progress
-
-### Completed
+#### Completed
 
 - **Data model:** `SchemaConfig` and `SchemaSection` frozen dataclasses
   in `tiredize/markdown/types/schema.py`. Nested `sections` field
@@ -342,7 +351,7 @@ None at this time.
   Added test for invalid regex pattern in schema producing graceful
   error output.
 
-### Next
+#### Next
 
 - Feature complete. No remaining implementation work for the schema
   validator itself.
@@ -353,13 +362,18 @@ None at this time.
   subsections under procedures that aren't Detection Data Model.
   These are true positives per the TRR format specification.
 
-## Out of Scope
+## Design Decisions
 
-- Content validation within sections (table fields, link formats).
-  These belong in linter rules.
-- Frontmatter schema validation (separate feature, separate flag).
-- Cross-section content correlation (e.g., Procedures table rows
-  matching subsection names). This is linter rule territory.
+- **Schema self-validation:** The loader validates the schema file
+  itself before running document validation, with clear error messages.
+  Validated constraints: `name`/`pattern` mutual exclusivity, child
+  level consistency, repeat bound types (must be int), repeat bound
+  values (must not be negative, max must not be less than min), and
+  regex pattern syntax (compiled at load time via `re.compile()`).
+
+## Open Questions
+
+None at this time.
 
 ## References
 
@@ -367,3 +381,49 @@ None at this time.
 - TRR template: `/home/user/techniques/docs/examples/trr0000/win/README.md`
 - TRR style guide: `/home/user/techniques/docs/STYLE-GUIDE.md`
 - Existing Go linter: `/home/user/techniques/tools/trrlint/main.go`
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

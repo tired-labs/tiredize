@@ -1,0 +1,112 @@
+# Schema: Issue File
+#
+# Validates the section structure of issue files in .context/issues/.
+# Enforces the issue file format specification from
+# .context/specifications/issue-file-format.md.
+#
+# Usage:
+#   tiredize --markdown-schema .context/schemas/issue.yaml .context/issues/*.md
+#
+# Note: This schema validates section structure only. Frontmatter
+# validation (status, type, priority, created) requires linter rules.
+
+enforce_order: true
+allow_extra_sections: false
+
+sections:
+  - pattern: ".+"
+    level: 1
+    sections:
+      - name: "Summary"
+        level: 2
+
+      - name: "Acceptance Criteria"
+        level: 2
+
+      - name: "Test Specifications"
+        level: 2
+        required: false
+
+      - name: "Out of Scope"
+        level: 2
+
+      - name: "Domain Specific Sections"
+        level: 2
+        required: false
+        sections:
+          - pattern: ".+"
+            level: 3
+            repeat: true
+            sections:
+              - pattern: ".+"
+                level: 4
+                required: false
+                repeat:
+                  min: 0
+                sections:
+                  - pattern: ".+"
+                    level: 5
+                    required: false
+                    repeat:
+                      min: 0
+
+      - name: "Design Decisions"
+        level: 2
+
+      - name: "Open Questions"
+        level: 2
+
+      - name: "References"
+        level: 2
+        required: false
+
+      - name: "Completion Report"
+        level: 2
+        sections:
+          - name: "Progress"
+            level: 3
+
+          - name: "Problem"
+            level: 3
+
+          - name: "Solution"
+            level: 3
+
+          - name: "Test Summary"
+            level: 3
+
+          - name: "Coverage"
+            level: 3
+
+          - name: "SE Peer Review"
+            level: 3
+            sections:
+              - name: "Incorporated"
+                level: 4
+              - name: "Not Incorporated"
+                level: 4
+
+          - name: "QA Engineer Review"
+            level: 3
+            sections:
+              - name: "Incorporated"
+                level: 4
+              - name: "Not Incorporated"
+                level: 4
+
+          - name: "Technical Architect Review"
+            level: 3
+            sections:
+              - name: "Incorporated"
+                level: 4
+              - name: "Not Incorporated"
+                level: 4
+
+          - name: "Follow-Up Work"
+            level: 3
+
+          - name: "Breaking Changes"
+            level: 3
+
+          - name: "Process Feedback"
+            level: 3

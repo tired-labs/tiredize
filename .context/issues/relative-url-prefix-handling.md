@@ -1,4 +1,9 @@
-Status: draft
+---
+status: draft
+type: bug
+priority: low
+created: 2026-02-28
+---
 
 # Handle relative URLs without dot prefix in check_url_valid
 
@@ -42,3 +47,49 @@ unrelated files, or extend scope beyond what is specified here.
 - What heuristic should distinguish a bare relative path from other
   non-HTTP URL schemes? Should we check for the presence of `://` or
   maintain an explicit allowlist of recognized schemes?
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [ ] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [ ] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

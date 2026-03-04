@@ -1,5 +1,10 @@
-Status: completed
-Parent: test-coverage-audit.md
+---
+status: done
+type: spike
+priority: medium
+created: 2026-03-02
+parent: test-coverage-audit.md
+---
 
 # Test Coverage: Markdown Utils
 
@@ -18,20 +23,21 @@ test coverage audit (`test-coverage-audit.md`).
       `sanitize_text` covering: single match replaced with whitespace,
       multiple matches, no matches, empty string, verify string length
       is preserved after sanitization
-### Boundary and degenerate inputs (audit point 6)
+
+**Boundary and degenerate inputs (audit point 6)**
 
 - [x] `search_all_re` with single-character input, input that is
       entirely one match, input with overlapping potential matches
 - [x] `sanitize_text` with input where the entire string matches the
       pattern, input with adjacent back-to-back matches
 
-### Idempotency (audit point 7)
+**Idempotency (audit point 7)**
 
 - [x] `sanitize_text` called twice with the same pattern and text --
       verify result is identical to a single call and string length is
       still preserved
 
-### Unicode and non-ASCII (audit point 9)
+**Unicode and non-ASCII (audit point 9)**
 
 - [x] `search_all_re` with pattern matching non-ASCII content (emoji,
       accented characters) -- verify match positions are correct
@@ -39,7 +45,7 @@ test coverage audit (`test-coverage-audit.md`).
       characters -- verify length is preserved in characters (Python
       str length), not bytes
 
-### Coverage target
+**Coverage target**
 
 - [x] 100% coverage on `tiredize/markdown/utils.py`, excluding
       `get_position_from_match` (dead code, tracked by
@@ -57,3 +63,49 @@ unrelated files, or extend scope beyond what is specified here.
 ## Design Decisions
 
 ## Open Questions
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

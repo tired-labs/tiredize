@@ -1,4 +1,9 @@
-Status: completed
+---
+status: done
+type: bug
+priority: critical
+created: 2026-02-28
+---
 
 # Parser Robustness: Regex Backtracking and Sanitization Gaps
 
@@ -10,9 +15,25 @@ files. Both have been fixed, but the investigation revealed broader
 concerns about regex safety and sanitization consistency across all
 markdown type extractors.
 
-## Bugs Fixed
+## Acceptance Criteria
 
-### 1. Catastrophic Regex Backtracking in Table Divider
+This issue predates the current issue file format. This section was not
+part of the original issue.
+
+## Out of Scope
+
+Modifications not directly related to the functionality requested in
+this issue are strictly forbidden. Do not refactor adjacent code, update
+unrelated files, or extend scope beyond what is specified here.
+
+This issue predates the current issue file format. This section was not
+part of the original issue.
+
+## Domain Specific Sections
+
+### Bugs Fixed
+
+#### 1. Catastrophic Regex Backtracking in Table Divider
 
 **File:** `tiredize/markdown/types/table.py`
 
@@ -41,7 +62,7 @@ group eliminates backtracking because dashes cannot satisfy `[|]`.
 `test_long_dashes_no_backtracking`, `test_dashes_inside_code_block_text`,
 `test_aligned_divider`.
 
-### 2. Table Extraction on Unsanitized Code Block Content
+#### 2. Table Extraction on Unsanitized Code Block Content
 
 **File:** `tiredize/markdown/types/section.py`
 
@@ -56,9 +77,9 @@ false table matches and triggering the backtracking bug above.
 **Test:** 1 new test in `tests/markdown/types/test_section.py`:
 `test_table_inside_code_block_not_extracted`.
 
-## Broader Concerns
+### Broader Concerns
 
-### Regex Safety Audit Needed
+#### Regex Safety Audit Needed
 
 The table regex was the only confirmed catastrophic backtracking case,
 but other patterns in `markdown/types/` have not been stress-tested
@@ -75,7 +96,7 @@ constant in the codebase, feeding each one strings of increasing length
 backtracking. Any test that exceeds a time threshold indicates a
 vulnerable pattern.
 
-### Sanitization Consistency Audit Needed
+#### Sanitization Consistency Audit Needed
 
 The sanitize chain in `Section._extract()` is inconsistent. Some
 extractors receive raw `string`, others use `string_safe` (which has
@@ -106,7 +127,7 @@ This is particularly relevant for `InlineImage`, `ImageReference`,
 `List`, and `QuoteBlock` — all of which could match syntax inside
 code fences.
 
-## Trigger Document
+### Trigger Document
 
 The bug was discovered when running tiredize against TRR0016 in the
 techniques repository. Lines 81-93 of
@@ -115,8 +136,64 @@ techniques repository. Lines 81-93 of
 dash separator lines (`-----------------`). The table divider regex
 ran against these dashes and hung.
 
+## Design Decisions
+
+This issue predates the current issue file format. This section was not
+part of the original issue.
+
+## Open Questions
+
+This issue predates the current issue file format. This section was not
+part of the original issue.
+
 ## References
 
 - Table regex: `tiredize/markdown/types/table.py:19-35`
 - Section extraction: `tiredize/markdown/types/section.py:81-158`
 - Sanitize helpers: `tiredize/markdown/utils.py`
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [x] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [x] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback

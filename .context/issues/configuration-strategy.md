@@ -1,4 +1,9 @@
-Status: draft
+---
+status: draft
+type: spike
+priority: medium
+created: 2026-02-28
+---
 
 # Configuration File Strategy
 
@@ -35,3 +40,49 @@ unrelated files, or extend scope beyond what is specified here.
 - If consolidated, what YAML structure groups the three concerns?
 - Should there be a config file discovery mechanism (e.g.,
   `.tiredize.yaml` in project root)?
+
+## Completion Report
+
+This issue predates the current issue file format. Completion report
+sections will be populated if the issue is revisited.
+
+### Progress
+
+- [ ] Implementation complete
+- [ ] SE peer review passed
+- [ ] QA Engineer review passed
+- [ ] Technical Architect review passed
+- [ ] Director review passed
+- [ ] User accepted
+
+### Problem
+
+### Solution
+
+### Test Summary
+
+### Coverage
+
+### SE Peer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### QA Engineer Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Technical Architect Review
+
+#### Incorporated
+
+#### Not Incorporated
+
+### Follow-Up Work
+
+### Breaking Changes
+
+### Process Feedback
