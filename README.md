@@ -179,20 +179,109 @@ A YAML file where each top-level key is a rule ID and its value is the
 rule's configuration. Only rules with an entry in the config file are
 enabled.
 
+#### line_length
+
+Flags lines that exceed a maximum character count. Line endings and
+newline characters are excluded from the count. Length is measured in
+Unicode characters, not bytes.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `maximum_length` | int | Maximum allowed line length in characters. |
+| `exclude` | list | Element types whose lines are skipped. See [Recognized markdown element names](#recognized-markdown-element-names). Any line that overlaps with a listed element is exempt. |
+
 ```yaml
 line_length:
   maximum_length: 80
+  exclude:
+    - table
+    - link_inline
+```
 
+#### tabs
+
+Flags tab characters anywhere in the document.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `allowed` | bool | When `false`, any tab character is a violation. |
+
+```yaml
 tabs:
   allowed: false
+```
 
+#### trailing_whitespace
+
+Flags lines that end with one or more whitespace characters before the
+line ending.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `allowed` | bool | When `false`, trailing whitespace on any line is a violation. |
+
+```yaml
 trailing_whitespace:
   allowed: false
+```
 
+#### links
+
+Validates that URLs in the document are reachable. Checks inline links,
+angle-bracket links, bare URLs, and reference definitions. Anchors
+(`#slug`) are resolved against section headings in the document. Relative
+paths are checked for file existence on disk.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `validate` | bool | Enable link validation. When `false`, no links are checked. |
+| `timeout` | int | Timeout in seconds for HTTP requests. |
+| `headers` | dict | HTTP headers to include in every request (e.g. `Authorization`). |
+| `exclusions` | list | Domain patterns to skip. Supports `*` as a wildcard (e.g. `*.mycompany.com`). Relative paths and anchors are unaffected. |
+
+```yaml
 links:
   validate: true
   timeout: 5
+  exclusions:
+    - "*.mycompany.com"
+    - mycompany.atlassian.net
 ```
+
+#### elements
+
+Prohibits specific markdown element types from appearing in the document.
+Each occurrence of a disallowed type is reported as a separate violation.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `disallow` | list | Element types that must not appear. See [Recognized markdown element names](#recognized-markdown-element-names). |
+
+```yaml
+elements:
+  disallow:
+    - link_inline
+    - link_bare
+```
+
+#### Recognized markdown element names
+
+The following names are valid in `exclude` and `disallow` lists:
+
+| Name | Description |
+| --- | --- |
+| `code_block` | Fenced code block |
+| `code_inline` | Inline code |
+| `header` | Section header |
+| `image_inline` | Inline image |
+| `image_reference` | Reference-style image |
+| `link_bare` | Bare URL |
+| `link_bracket` | Angle-bracket link (`<url>`) |
+| `link_inline` | Inline link |
+| `link_reference` | Reference-style link |
+| `quoteblock` | Blockquote |
+| `reference_definition` | Reference link definition |
+| `table` | Pipe-delimited table |
 
 ## Custom Rules
 

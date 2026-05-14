@@ -1,6 +1,8 @@
 # Standard library
 from __future__ import annotations
+import fnmatch
 from typing import Any
+from urllib.parse import urlparse
 
 # Local
 from tiredize.core_types import RuleResult
@@ -8,7 +10,17 @@ from tiredize.linter.utils import check_url_valid
 from tiredize.linter.utils import get_config_bool
 from tiredize.linter.utils import get_config_dict
 from tiredize.linter.utils import get_config_int
+from tiredize.linter.utils import get_config_list
 from tiredize.markdown.types.document import Document
+
+
+def _is_excluded(url: str, exclusions: list[str]) -> bool:
+    if not exclusions:
+        return False
+    hostname = urlparse(url).hostname or ""
+    if not hostname:
+        return False
+    return any(fnmatch.fnmatch(hostname, pattern) for pattern in exclusions)
 
 
 def validate(
@@ -30,11 +42,13 @@ def validate(
 
     cfg_timeout = get_config_int(config, "timeout")
     cfg_headers = get_config_dict(config, "headers")
-    # cfg_ignore_codes = get_config_list(config, "ignore_status_codes")
+    cfg_exclusions = get_config_list(config, "exclusions") or []
 
     results: list[RuleResult] = []
     for section in document.sections:
         for link in section.links_inline:
+            if _is_excluded(link.url, cfg_exclusions):
+                continue
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
                 url=link.url,
@@ -54,6 +68,8 @@ def validate(
                 results.append(result)
 
         for link in section.links_bracket:
+            if _is_excluded(link.url, cfg_exclusions):
+                continue
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
                 url=link.url,
@@ -73,6 +89,8 @@ def validate(
                 results.append(result)
 
         for link in section.links_bare:
+            if _is_excluded(link.url, cfg_exclusions):
+                continue
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
                 url=link.url,
@@ -92,6 +110,8 @@ def validate(
                 results.append(result)
 
         for link in section.reference_definitions:
+            if _is_excluded(link.url, cfg_exclusions):
+                continue
             is_valid, status_code, error_message = check_url_valid(
                 document=document,
                 url=link.url,
