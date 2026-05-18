@@ -1,29 +1,15 @@
 # Standard library
 from __future__ import annotations
+import bisect
 from typing import Any
 
 # Local
 from tiredize.core_types import Position
 from tiredize.core_types import RuleResult
+from tiredize.linter.rules._elements import _ELEMENT_MAP
 from tiredize.linter.utils import get_config_int
 from tiredize.linter.utils import get_config_list
 from tiredize.markdown.types.document import Document
-
-
-_ELEMENT_MAP = {
-    "code_block": lambda s: s.code_block,
-    "code_inline": lambda s: s.code_inline,
-    "header": lambda s: [s.header] if s.header.position.length > 0 else [],
-    "image_inline": lambda s: s.images_inline,
-    "image_reference": lambda s: s.images_reference,
-    "link_bare": lambda s: s.links_bare,
-    "link_bracket": lambda s: s.links_bracket,
-    "link_inline": lambda s: s.links_inline,
-    "link_reference": lambda s: s.links_reference,
-    "quoteblock": lambda s: s.quoteblocks,
-    "reference_definition": lambda s: s.reference_definitions,
-    "table": lambda s: s.tables,
-}
 
 
 def _build_excluded_ranges(
@@ -31,18 +17,34 @@ def _build_excluded_ranges(
     exclude: list[str],
 ) -> list[tuple[int, int]]:
     for name in exclude:
+        if not isinstance(name, str):
+            raise ValueError(
+                "exclude entries must be strings, got "
+                f"{type(name).__name__!r}: {name!r}"
+            )
         if name not in _ELEMENT_MAP:
             raise ValueError(f"Unknown element name in exclude: '{name}'")
 
-    ranges: list[tuple[int, int]] = []
+    raw: list[tuple[int, int]] = []
     for section in document.sections:
         for name in exclude:
             for elem in _ELEMENT_MAP[name](section):
                 start = elem.position.offset
                 end = start + elem.position.length
                 if end > start:
-                    ranges.append((start, end))
-    return ranges
+                    raw.append((start, end))
+
+    if not raw:
+        return []
+
+    raw.sort()
+    merged: list[tuple[int, int]] = [raw[0]]
+    for start, end in raw[1:]:
+        if start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return merged
 
 
 def validate(
@@ -54,7 +56,8 @@ def validate(
 
     Configuration:
         maximum_length: int - The maximum allowed line length.
-        exclude: list[str] - Element types whose lines are exempt from the limit.
+        exclude: list[str] - Element types whose lines are exempt from
+            the limit.
     """
     maximum_length = get_config_int(config, "maximum_length")
     if maximum_length is None:
@@ -62,6 +65,7 @@ def validate(
 
     exclude = get_config_list(config, "exclude") or []
     excluded_ranges = _build_excluded_ranges(document, exclude)
+    exc_starts = [s for s, _ in excluded_ranges]
 
     results: list[RuleResult] = []
     text = document.string
@@ -70,9 +74,12 @@ def validate(
     for line in text.splitlines(keepends=True):
         line_end = cursor + len(line)
 
-        line_excluded = any(
-            cursor < exc_end and line_end > exc_start
-            for exc_start, exc_end in excluded_ranges
+        idx = bisect.bisect_right(exc_starts, cursor) - 1
+        line_excluded = (
+            idx >= 0 and excluded_ranges[idx][1] > cursor
+        ) or (
+            idx + 1 < len(excluded_ranges)
+            and excluded_ranges[idx + 1][0] < line_end
         )
 
         if not line_excluded:

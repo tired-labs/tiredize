@@ -20,7 +20,10 @@ def _is_excluded(url: str, exclusions: list[str]) -> bool:
     hostname = urlparse(url).hostname or ""
     if not hostname:
         return False
-    return any(fnmatch.fnmatch(hostname, pattern) for pattern in exclusions)
+    return any(
+        fnmatch.fnmatchcase(hostname, pattern.lower())
+        for pattern in exclusions
+    )
 
 
 def validate(
@@ -32,9 +35,10 @@ def validate(
 
     Configuration:
         validate: bool - Enable link validation
-        ignore_domains: list[str] - Domains to ignore during validation
-        ignore_status_codes: list[int] - HTTP status codes to ignore
-        timeout: int - Timeout for link validation requests
+        exclusions: list[str] - Hostname glob patterns to skip
+            (e.g. '*.example.com')
+        headers: dict[str, str] - HTTP headers to include in requests
+        timeout: int - Timeout in seconds for link validation requests
     """
     cfg_validate = get_config_bool(config, "validate")
     if not cfg_validate:
@@ -43,6 +47,12 @@ def validate(
     cfg_timeout = get_config_int(config, "timeout")
     cfg_headers = get_config_dict(config, "headers")
     cfg_exclusions = get_config_list(config, "exclusions") or []
+    for pattern in cfg_exclusions:
+        if not isinstance(pattern, str):
+            raise ValueError(
+                "exclusions entries must be strings, got "
+                f"{type(pattern).__name__!r}: {pattern!r}"
+            )
 
     results: list[RuleResult] = []
     for section in document.sections:

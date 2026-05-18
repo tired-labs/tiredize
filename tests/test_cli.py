@@ -201,7 +201,7 @@ def test_multiple_files_one_violation(capsys, tmp_path):
     assert result == 1
     captured = capsys.readouterr()
     assert str(doc_dirty) in captured.out
-    assert "no issues found" in captured.out
+    assert f"{doc_clean}: no issues found." in captured.out
 
 
 # --- Output format ---
