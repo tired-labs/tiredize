@@ -154,7 +154,8 @@ def test_exclude_table_still_checks_non_table_lines():
 
 
 def test_exclude_link_inline_skips_line_containing_link():
-    """A line containing an inline link is skipped when 'link_inline' is excluded."""
+    """A line containing an inline link is skipped when 'link_inline'
+    is excluded."""
     doc = Document()
     doc.load(text=(
         "# H\n"
@@ -165,7 +166,8 @@ def test_exclude_link_inline_skips_line_containing_link():
 
 
 def test_exclude_link_inline_non_link_lines_still_checked():
-    """Lines without inline links are still checked when 'link_inline' is excluded."""
+    """Lines without inline links are still checked when 'link_inline'
+    is excluded."""
     doc = Document()
     doc.load(text=(
         "# H\n"
@@ -179,7 +181,9 @@ def test_exclude_link_inline_non_link_lines_still_checked():
 def test_exclude_header_skips_header_line():
     """The header line is skipped when 'header' is excluded."""
     doc = Document()
-    doc.load(text="# This Header Is Definitely Way Too Long For Twenty Chars\n")
+    doc.load(text=(
+        "# This Header Is Definitely Way Too Long For Twenty Chars\n"
+    ))
     results = validate(doc, {"maximum_length": 20, "exclude": ["header"]})
     assert results == []
 
@@ -187,7 +191,9 @@ def test_exclude_header_skips_header_line():
 def test_exclude_empty_list_applies_no_exclusions():
     """An empty exclude list leaves all lines subject to the limit."""
     doc = Document()
-    doc.load(text="# H\nThis line is definitely too long for a limit of ten.\n")
+    doc.load(text=(
+        "# H\nThis line is definitely too long for a limit of ten.\n"
+    ))
     results = validate(doc, {"maximum_length": 10, "exclude": []})
     assert len(results) == 1
 

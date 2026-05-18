@@ -101,9 +101,12 @@ def test_disallow_quoteblock():
 
 
 def test_multiple_occurrences_each_flagged():
-    """Each occurrence of a disallowed element produces a separate violation."""
+    """Each occurrence of a disallowed element produces a separate
+    violation."""
     doc = Document()
-    doc.load(text="# H\n[a](https://example.com) and [b](https://example.org)\n")
+    doc.load(text=(
+        "# H\n[a](https://example.com) and [b](https://example.org)\n"
+    ))
     results = validate(doc, {"disallow": ["link_inline"]})
     assert len(results) == 2
 
@@ -111,7 +114,9 @@ def test_multiple_occurrences_each_flagged():
 def test_disallow_multiple_types():
     """Violations are reported for each disallowed type present."""
     doc = Document()
-    doc.load(text="# H\n[click](https://example.com)\n| a | b |\n| --- | --- |\n")
+    doc.load(text=(
+        "# H\n[click](https://example.com)\n| a | b |\n| --- | --- |\n"
+    ))
     results = validate(doc, {"disallow": ["link_inline", "table"]})
     assert len(results) == 2
     messages = {r.message for r in results}
@@ -139,7 +144,8 @@ def test_disallow_across_multiple_sections():
 
 
 def test_violation_position_matches_element():
-    """The violation position matches the element's position in the document."""
+    """The violation position matches the element's position in the
+    document."""
     doc = Document()
     doc.load(text="# H\n[click](https://example.com)\n")
     results = validate(doc, {"disallow": ["link_inline"]})
