@@ -185,6 +185,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{doc.path}:{line}:{col}: [{res.rule_id}] {res.message}")
         if all_results:
             exit_code = 1
+        else:
+            print(f"{doc.path}: no issues found.")
     return exit_code
 
 

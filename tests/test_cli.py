@@ -54,7 +54,7 @@ def test_valid_document_passes_schema(capsys, tmp_path):
     ])
     assert result == 0
     captured = capsys.readouterr()
-    assert captured.out == ""
+    assert "no issues found" in captured.out
 
 
 def test_valid_document_passes_rules(capsys, tmp_path):
@@ -71,7 +71,7 @@ def test_valid_document_passes_rules(capsys, tmp_path):
     ])
     assert result == 0
     captured = capsys.readouterr()
-    assert captured.out == ""
+    assert "no issues found" in captured.out
 
 
 # --- Validation errors (exit code 1) ---
@@ -179,7 +179,7 @@ def test_multiple_files_all_clean(capsys, tmp_path):
     ])
     assert result == 0
     captured = capsys.readouterr()
-    assert captured.out == ""
+    assert captured.out.count("no issues found") == 2
 
 
 def test_multiple_files_one_violation(capsys, tmp_path):
@@ -201,7 +201,7 @@ def test_multiple_files_one_violation(capsys, tmp_path):
     assert result == 1
     captured = capsys.readouterr()
     assert str(doc_dirty) in captured.out
-    assert str(doc_clean) not in captured.out
+    assert f"{doc_clean}: no issues found." in captured.out
 
 
 # --- Output format ---
@@ -318,7 +318,7 @@ def test_frontmatter_schema_valid_document(capsys, tmp_path):
     ])
     assert result == 0
     captured = capsys.readouterr()
-    assert captured.out == ""
+    assert "no issues found" in captured.out
 
 
 def test_frontmatter_schema_missing_field(capsys, tmp_path):

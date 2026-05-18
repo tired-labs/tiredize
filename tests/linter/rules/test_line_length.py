@@ -6,6 +6,8 @@ the CRLF and unicode coverage gaps identified in the audit.
 
 import copy
 
+import pytest
+
 from tiredize.linter.rules.line_length import validate
 from tiredize.markdown.types.document import Document
 
@@ -118,3 +120,87 @@ def test_validate_does_not_mutate_config():
     config_copy = copy.deepcopy(config)
     validate(doc, config)
     assert config == config_copy
+
+
+# ===================================================================
+#  exclude option
+# ===================================================================
+
+
+def test_exclude_table_skips_long_table_lines():
+    """All lines within a table are skipped when 'table' is excluded."""
+    doc = Document()
+    doc.load(text=(
+        "# H\n"
+        "| Column One | Column Two | Column Three |\n"
+        "| --- | --- | --- |\n"
+        "| data | data | data |\n"
+    ))
+    results = validate(doc, {"maximum_length": 20, "exclude": ["table"]})
+    assert results == []
+
+
+def test_exclude_table_still_checks_non_table_lines():
+    """Non-table lines are still checked even when 'table' is excluded."""
+    doc = Document()
+    doc.load(text=(
+        "# H\n"
+        "This line is definitely way too long for the twenty char limit.\n"
+        "| a | b |\n"
+        "| --- | --- |\n"
+    ))
+    results = validate(doc, {"maximum_length": 20, "exclude": ["table"]})
+    assert len(results) == 1
+
+
+def test_exclude_link_inline_skips_line_containing_link():
+    """A line containing an inline link is skipped when 'link_inline'
+    is excluded."""
+    doc = Document()
+    doc.load(text=(
+        "# H\n"
+        "See [this very long link text](https://example.com/long/path) here.\n"
+    ))
+    results = validate(doc, {"maximum_length": 20, "exclude": ["link_inline"]})
+    assert results == []
+
+
+def test_exclude_link_inline_non_link_lines_still_checked():
+    """Lines without inline links are still checked when 'link_inline'
+    is excluded."""
+    doc = Document()
+    doc.load(text=(
+        "# H\n"
+        "This plain line is definitely too long for twenty characters.\n"
+        "See [short](https://x.com).\n"
+    ))
+    results = validate(doc, {"maximum_length": 20, "exclude": ["link_inline"]})
+    assert len(results) == 1
+
+
+def test_exclude_header_skips_header_line():
+    """The header line is skipped when 'header' is excluded."""
+    doc = Document()
+    doc.load(text=(
+        "# This Header Is Definitely Way Too Long For Twenty Chars\n"
+    ))
+    results = validate(doc, {"maximum_length": 20, "exclude": ["header"]})
+    assert results == []
+
+
+def test_exclude_empty_list_applies_no_exclusions():
+    """An empty exclude list leaves all lines subject to the limit."""
+    doc = Document()
+    doc.load(text=(
+        "# H\nThis line is definitely too long for a limit of ten.\n"
+    ))
+    results = validate(doc, {"maximum_length": 10, "exclude": []})
+    assert len(results) == 1
+
+
+def test_exclude_unknown_element_raises():
+    """An unrecognised element name in exclude raises ValueError."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="unknown_element"):
+        validate(doc, {"maximum_length": 80, "exclude": ["unknown_element"]})
