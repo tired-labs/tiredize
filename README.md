@@ -276,10 +276,10 @@ The following names are valid in `exclude` and `disallow` lists:
 | `image_inline` | Inline image |
 | `image_reference` | Reference-style image |
 | `link_bare` | Bare URL |
-| `link_bracket` | Angle-bracket link (`<url>`) |
+| `link_bracket` | Bracket link (`<url>`) |
 | `link_inline` | Inline link |
 | `link_reference` | Reference-style link |
-| `quoteblock` | Blockquote |
+| `quoteblock` | Block quote |
 | `reference_definition` | Reference link definition |
 | `table` | Pipe-delimited table |
 
