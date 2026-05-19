@@ -361,7 +361,7 @@ def test_validate_does_not_mutate_config():
 
 
 # ===================================================================
-#  exclusions config option
+#  exclude config option
 # ===================================================================
 
 
@@ -374,7 +374,7 @@ def test_excluded_wildcard_domain_not_checked():
     ) as mock_check:
         results = validate(doc, {
             "validate": True,
-            "exclusions": ["*.mycompany.com"],
+            "exclude": ["*.mycompany.com"],
         })
     assert results == []
     mock_check.assert_not_called()
@@ -391,7 +391,7 @@ def test_excluded_exact_domain_not_checked():
     ) as mock_check:
         results = validate(doc, {
             "validate": True,
-            "exclusions": ["mycompany.atlassian.net"],
+            "exclude": ["mycompany.atlassian.net"],
         })
     assert results == []
     mock_check.assert_not_called()
@@ -406,13 +406,13 @@ def test_non_excluded_domain_still_checked():
     ) as mock_check:
         results = validate(doc, {
             "validate": True,
-            "exclusions": ["*.mycompany.com"],
+            "exclude": ["*.mycompany.com"],
         })
     assert len(results) == 1
     mock_check.assert_called_once()
 
 
-def test_exclusions_mixed_document():
+def test_exclude_mixed_document():
     """Excluded links are skipped; non-excluded links are still checked."""
     md = (
         "# Links\n"
@@ -424,26 +424,26 @@ def test_exclusions_mixed_document():
     with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:
         results = validate(doc, {
             "validate": True,
-            "exclusions": ["*.mycompany.com"],
+            "exclude": ["*.mycompany.com"],
         })
     assert results == []
     assert mock_check.call_count == 1
 
 
-def test_empty_exclusions_validates_all():
-    """An empty exclusions list leaves all links subject to validation."""
+def test_empty_exclude_validates_all():
+    """An empty exclude list leaves all links subject to validation."""
     doc = Document()
     doc.load(text="# Links\n[x](https://mycompany.com/page.html)\n")
     with patch(
         MOCK_TARGET, return_value=(False, 404, "not found")
     ) as mock_check:
-        results = validate(doc, {"validate": True, "exclusions": []})
+        results = validate(doc, {"validate": True, "exclude": []})
     assert len(results) == 1
     mock_check.assert_called_once()
 
 
-def test_multiple_exclusion_patterns():
-    """Multiple exclusion patterns are each applied."""
+def test_multiple_exclude_patterns():
+    """Multiple exclude patterns are each applied."""
     md = (
         "# Links\n"
         "[a](https://github.mycompany.com/org/repo)\n"
@@ -455,12 +455,12 @@ def test_multiple_exclusion_patterns():
     with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:
         validate(doc, {
             "validate": True,
-            "exclusions": ["*.mycompany.com", "mycompany.atlassian.net"],
+            "exclude": ["*.mycompany.com", "mycompany.atlassian.net"],
         })
     assert mock_check.call_count == 1
 
 
-def test_exclusion_applies_to_all_link_types():
+def test_exclude_applies_to_all_link_types():
     """Domain exclusions apply to inline, bracket, bare, and reference
     links."""
     md = (
@@ -477,7 +477,7 @@ def test_exclusion_applies_to_all_link_types():
     ) as mock_check:
         results = validate(doc, {
             "validate": True,
-            "exclusions": ["*.mycompany.com"],
+            "exclude": ["*.mycompany.com"],
         })
     assert results == []
     mock_check.assert_not_called()
@@ -493,6 +493,6 @@ def test_relative_url_not_affected_by_domain_exclusion():
     ) as mock_check:
         validate(doc, {
             "validate": True,
-            "exclusions": ["*.mycompany.com"],
+            "exclude": ["*.mycompany.com"],
         })
     mock_check.assert_called_once()
