@@ -35,7 +35,7 @@ def validate(
 
     Configuration:
         validate: bool - Enable link validation
-        exclusions: list[str] - Hostname glob patterns to skip
+        exclude: list[str] - Hostname glob patterns to skip
             (e.g. '*.example.com')
         headers: dict[str, str] - HTTP headers to include in requests
         timeout: int - Timeout in seconds for link validation requests
@@ -46,11 +46,11 @@ def validate(
 
     cfg_timeout = get_config_int(config, "timeout")
     cfg_headers = get_config_dict(config, "headers")
-    cfg_exclusions = get_config_list(config, "exclusions") or []
+    cfg_exclusions = get_config_list(config, "exclude") or []
     for pattern in cfg_exclusions:
         if not isinstance(pattern, str):
             raise ValueError(
-                "exclusions entries must be strings, got "
+                "exclude entries must be strings, got "
                 f"{type(pattern).__name__!r}: {pattern!r}"
             )
 

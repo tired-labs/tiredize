@@ -212,6 +212,12 @@ def test_bare_link_backslash():
     assert results[0].url == r"\docs\readme.md"
 
 
+def test_bare_link_backslash_not_matched_mid_word():
+    text = r'Registry key: "HKLM\SYSTEM\CurrentControlSet\Control"'
+    results = BareLink.extract(text)
+    assert results == []
+
+
 def test_bare_link_multiple():
     text = "Visit https://a.com and https://b.com today."
     results = BareLink.extract(text)

@@ -237,13 +237,13 @@ paths are checked for file existence on disk.
 | `validate` | bool | Enable link validation. When `false`, no links are checked. |
 | `timeout` | int | Timeout in seconds for HTTP requests. |
 | `headers` | dict | HTTP headers to include in every request (e.g. `Authorization`). |
-| `exclusions` | list | Domain patterns to skip. Supports `*` as a wildcard (e.g. `*.mycompany.com`). Relative paths and anchors are unaffected. |
+| `exclude` | list | Domain patterns to skip. Supports `*` as a wildcard (e.g. `*.mycompany.com`). Relative paths and anchors are unaffected. |
 
 ```yaml
 links:
   validate: true
   timeout: 5
-  exclusions:
+  exclude:
     - "*.mycompany.com"
     - mycompany.atlassian.net
 ```
