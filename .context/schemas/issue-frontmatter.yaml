@@ -15,9 +15,10 @@ fields:
     allowed:
       - draft
       - ready
-      - active
-      - blocked
+      - in-progress
+      - in-review
       - done
+      - blocked
       - cancelled
 
   type:
@@ -26,8 +27,8 @@ fields:
       - bug
       - feature
       - refactor
-      - documentation
       - spike
+      - documentation
 
   priority:
     type: string
@@ -40,18 +41,32 @@ fields:
   created:
     type: date
 
-  parent:
+  workflow:
+    type: string
+    allowed:
+      - software-engineering
+      - documentation
+      - to-be-determined
+
+  tags:
+    type: list
+
+  knowledge:
+    type: list
+
+  assignee:
     type: string
     required: false
+    allowed:
+      - PM
+      - qa-engineer
+      - software-engineer
+      - technical-architect
+      - ghostwriter
+      - proofreader
+      - workflow-owner
+      - user
 
-  sub_issues:
-    type: list
-    required: false
-
-  specs:
-    type: list
-    required: false
-
-  labels:
-    type: list
+  step:
+    type: string
     required: false
