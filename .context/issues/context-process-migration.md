@@ -27,25 +27,34 @@ compliant `issues/` branch rather than an ad-hoc maintenance branch.
 - [x] Issue frontmatter schema rewritten to the v2 format (statuses,
       fields, alphabetized; `assignee`/`step` optional; `workflow`
       includes the `to-be-determined` sentinel)
-- [ ] Issue markdown (section) schema rewritten to the v2 five-section
+- [x] Issue markdown (section) schema rewritten to the v2 five-section
       shape
-- [ ] `issue-file-format` specification rewritten to describe v2
-- [ ] `.context/issues/completed/` created; the 19 done issues moved
-      there as-is
-- [ ] The 8 active drafts migrated to v2 frontmatter and sections
+- [x] `issue-file-format` spec removed from tiredize (it describes a
+      cross-project standard, not a tiredize subsystem); canonical spec
+      authoring tracked in dotclaude `issue-format-specification`
+- [x] `.context/issues/completed/` created; the 19 done issues (plus the
+      now-complete `frontmatter-validator-empty-fields`) moved there
+- [x] The 8 active drafts migrated to v2 frontmatter and sections
 - [ ] `AGENTS.md` knowledge mapping added for the software-engineering
       workflow steps
 - [ ] `PROJECT.md` aligned to `templates/PROJECT.md` (follow-up
       acceptable)
-- [ ] `.context/specifications/` audited against
-      `templates/SPECIFICATION.md` (follow-up acceptable)
-- [ ] Migrated issues validate against the new schemas (blank optional
-      fields gated on `frontmatter-validator-empty-fields`)
+- [ ] `.context/specifications/` aligned to `templates/SPECIFICATION.md`
+      (only `frontmatter-schema-validator` needs a section reorder;
+      follow-up acceptable)
+- [x] Migrated issues validate against the new schemas
 
 ## Design Decisions
 
 - Adopt the dotclaude templates as canonical; rewrite tiredize's local
-  schema and spec to the v2 format (dogfooding).
+  validation schemas to the v2 format (dogfooding).
+- The `issue-file-format` spec describes a cross-project standard, not a
+  tiredize subsystem, so it was removed from tiredize and its authoring
+  moved to dotclaude (`issue-format-specification`); the schema headers
+  now point at the standard.
+- The `frontmatter-validator-empty-fields` fix was implemented inline in
+  this PR (not via the workflow pipeline) so migrated issues' blank
+  optional fields validate.
 - Done issues are archived as-is to `completed/`, not migrated.
 - Canonical schema content authored here can later be lifted into
   dotclaude (see dotclaude issue `tiredize-markdown-validation-ci`).

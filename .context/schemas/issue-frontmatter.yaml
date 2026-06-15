@@ -1,8 +1,9 @@
 # Schema: Issue File Frontmatter
 #
 # Validates the YAML frontmatter of issue files in .context/issues/.
-# Enforces the issue file format specification from
-# .context/specifications/issue-file-format.md.
+# Encodes the v2 issue-file format defined by the dotclaude standard
+# (templates/ISSUE.md; canonical spec tracked in the dotclaude issue
+# issue-format-specification).
 #
 # Usage:
 #   tiredize --frontmatter-schema .context/schemas/issue-frontmatter.yaml .context/issues/*.md
