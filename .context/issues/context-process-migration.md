@@ -35,13 +35,12 @@ compliant `issues/` branch rather than an ad-hoc maintenance branch.
 - [x] `.context/issues/completed/` created; the 19 done issues (plus the
       now-complete `frontmatter-validator-empty-fields`) moved there
 - [x] The 8 active drafts migrated to v2 frontmatter and sections
-- [ ] `AGENTS.md` knowledge mapping added for the software-engineering
+- [x] `AGENTS.md` knowledge mapping added for the software-engineering
       workflow steps
-- [ ] `PROJECT.md` aligned to `templates/PROJECT.md` (follow-up
-      acceptable)
-- [ ] `.context/specifications/` aligned to `templates/SPECIFICATION.md`
-      (only `frontmatter-schema-validator` needs a section reorder;
-      follow-up acceptable)
+- [x] `PROJECT.md` aligned to `templates/PROJECT.md`
+- [x] `.context/specifications/` aligned to `templates/SPECIFICATION.md`
+      (`frontmatter-schema-validator` File Layout reordered; others
+      already conformed)
 - [x] Migrated issues validate against the new schemas
 
 ## Design Decisions

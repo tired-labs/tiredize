@@ -5,7 +5,7 @@ primary reference for project-level overview and architecture.
 Specification files in `.context/specifications/` contain the technical
 depth.
 
-## Project Overview
+## Overview
 
 **What it does:**
 Tiredize is a schema-driven markdown validation and linting tool. It
@@ -70,14 +70,17 @@ across projects while schemas differ per project. See issue
 
 ## Dependencies
 
-Production dependencies are declared in `pyproject.toml`:
+### Production
+
+Declared in `pyproject.toml`:
 
 - `PyYAML` -- YAML parsing (frontmatter, config files)
 - `requests` -- HTTP requests (link validation)
 
-Development dependencies are not declared in `pyproject.toml` and must
-be installed manually. This is a known gap -- see issue
-`tooling-migration.md`.
+### Development
+
+Not yet declared in `pyproject.toml` and must be installed manually --
+a known gap; see issue `tooling-migration`.
 
 - `pytest` -- test runner
 - `pytest-cov` -- coverage reporting

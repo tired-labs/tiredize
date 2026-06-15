@@ -62,6 +62,13 @@ class FrontmatterSchema:
     fields: dict[str, FieldSchema] = field(default_factory=dict)
 ```
 
+## File Layout
+
+| File                                          | Purpose                    |
+|-----------------------------------------------|----------------------------|
+| `tiredize/validators/frontmatter_schema.py`   | Schema loader and validator |
+| `tests/validators/test_frontmatter_schema.py` | Unit tests                 |
+
 ## Schema File Format
 
 ### Top-Level Properties
@@ -166,13 +173,6 @@ errors from a single root cause.
 | `schema.frontmatter.map_not_supported`    | Field value is a YAML map        |
 | `schema.frontmatter.duplicate_key`        | YAML key appears more than once  |
 | `schema.frontmatter.list_item_not_string` | List item is not a string        |
-
-## File Layout
-
-| File                                          | Purpose                    |
-|-----------------------------------------------|----------------------------|
-| `tiredize/validators/frontmatter_schema.py`   | Schema loader and validator |
-| `tests/validators/test_frontmatter_schema.py` | Unit tests                 |
 
 ## CLI Integration
 
