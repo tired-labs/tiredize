@@ -1,8 +1,13 @@
 ---
-status: draft
-type: documentation
-priority: low
+assignee:
 created: 2026-03-02
+knowledge: []
+priority: low
+status: draft
+step:
+tags: []
+type: documentation
+workflow: to-be-determined
 ---
 
 # Document Built-in Linter Rules as Individual Specifications
@@ -38,17 +43,10 @@ and edge case behavior. Each deserves its own specification file.
       individual rule specs from the File Layout or a new "Built-in
       Rules" section
 
-## Out of Scope
-
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- Rule code changes
-- New rules
-- Engine, discovery, or config helper changes
-
 ## Design Decisions
+
+Out of scope: rule code changes, new rules, and engine, discovery, or
+config helper changes.
 
 - Each rule gets its own spec file rather than a shared
   `linter-rules.md` or a section in `linter.md`. Rules are
@@ -62,48 +60,14 @@ unrelated files, or extend scope beyond what is specified here.
   rule, or just the semantic meaning? Exact messages are brittle to
   maintain but useful for testing.
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. `workflow` is `to-be-determined`: authoring internal
+    specifications fits neither existing pipeline and is parked pending
+    the technical-documentation workflow (tracked in dotclaude). Out of
+    Scope folded into Design Decisions; the v1 Completion Report dropped.

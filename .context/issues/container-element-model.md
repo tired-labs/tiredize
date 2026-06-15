@@ -1,8 +1,13 @@
 ---
-status: draft
-type: feature
-priority: medium
+assignee:
 created: 2026-03-03
+knowledge: []
+priority: medium
+status: draft
+step:
+tags: []
+type: feature
+workflow: software-engineering
 ---
 
 # Container Element Model
@@ -32,16 +37,10 @@ document structure per GFM.
 - [ ] Parser specification updated to document container model
 - [ ] No regressions in existing tests
 
-## Out of Scope
+## Design Decisions
 
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- GFM syntax variant support (tracked in `gfm-parity.md`)
-- Sanitization chain changes unrelated to the container model
-
-## Domain Specific Sections
+Out of scope: GFM syntax variant support (tracked in `gfm-parity`) and
+sanitization-chain changes unrelated to the container model.
 
 ### GFM Container Types to Evaluate
 
@@ -67,8 +66,6 @@ parse child elements and which child types are valid.
   have container semantics that the current parser treats as leaf
   nodes.
 
-## Design Decisions
-
 ## Open Questions
 
 - Which child types are valid inside each container? GFM allows
@@ -87,48 +84,13 @@ parse child elements and which child types are valid.
   example, should a link-checking rule find links inside blockquotes
   and table cells?
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. The old Domain Specific Sections content ("GFM Container
+    Types to Evaluate") moved under Design Decisions; Out of Scope
+    folded in; the v1 Completion Report was dropped.

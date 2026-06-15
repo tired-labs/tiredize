@@ -1,8 +1,13 @@
 ---
-status: draft
-type: documentation
-priority: low
+assignee:
 created: 2026-02-28
+knowledge: []
+priority: low
+status: draft
+step:
+tags: []
+type: documentation
+workflow: software-engineering
 ---
 
 # Add Docstrings
@@ -21,18 +26,11 @@ development to avoid documenting moving targets.
       function level)
 - [ ] Verify docstrings follow the project's Python conventions
 
-## Out of Scope
-
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- Code logic changes
-- API refactoring
-- Docstrings for internal/private methods unless they are particularly
-  non-obvious
-
 ## Design Decisions
+
+Out of scope (carried from the v1 format): no code logic changes, no API
+refactoring, and no docstrings for internal or private methods unless
+they are particularly non-obvious.
 
 ## Open Questions
 
@@ -40,48 +38,12 @@ unrelated files, or extend scope beyond what is specified here.
 - What docstring format should be used? (Google style, NumPy style,
   reStructuredText?)
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. Out of Scope folded into Design Decisions; the v1
+    Completion Report was dropped. Frontmatter updated to v2.

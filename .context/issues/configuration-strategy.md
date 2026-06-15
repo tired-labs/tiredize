@@ -1,8 +1,13 @@
 ---
-status: draft
-type: spike
-priority: medium
+assignee:
 created: 2026-02-28
+knowledge: []
+priority: medium
+status: draft
+step:
+tags: []
+type: spike
+workflow: software-engineering
 ---
 
 # Configuration File Strategy
@@ -21,16 +26,10 @@ them as separate files. Document the decision and implement accordingly.
 - [ ] Update CLI argument handling if needed
 - [ ] Update relevant specifications
 
-## Out of Scope
-
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- New validation features
-- Changes to the validation logic itself
-
 ## Design Decisions
+
+Out of scope: new validation features and changes to the validation
+logic itself.
 
 ## Open Questions
 
@@ -41,48 +40,12 @@ unrelated files, or extend scope beyond what is specified here.
 - Should there be a config file discovery mechanism (e.g.,
   `.tiredize.yaml` in project root)?
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. Out of Scope folded into Design Decisions; the v1
+    Completion Report was dropped.
