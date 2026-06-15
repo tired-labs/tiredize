@@ -1,8 +1,13 @@
 ---
-status: draft
-type: refactor
-priority: low
+assignee:
 created: 2026-02-28
+knowledge: []
+priority: low
+status: draft
+step:
+tags: []
+type: refactor
+workflow: software-engineering
 ---
 
 # Tooling Migration
@@ -27,64 +32,22 @@ installed via `pip install -e ".[dev]"`.
       `[project.optional-dependencies]` or `[tool.hatch.envs]` so
       `pip install -e ".[dev]"` works
 
-## Out of Scope
-
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- Code logic changes
-- New features or bug fixes bundled with the migration
-
 ## Design Decisions
+
+Out of scope: code logic changes, and new features or bug fixes bundled
+with the migration.
 
 ## Open Questions
 
 - Does Ruff cover all flake8 rules currently in use, or are there gaps?
 - Should the import migration happen in one commit or file-by-file?
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. Out of Scope folded into Design Decisions; the v1
+    Completion Report was dropped.

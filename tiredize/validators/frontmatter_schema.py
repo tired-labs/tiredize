@@ -296,9 +296,11 @@ def validate(
         ))
         content = {}
 
-    # Check for missing required fields
+    # Check for missing required fields. A field present with an empty
+    # value (YAML null, e.g. a bare "assignee:") counts as not provided.
     for name, field_schema in schema.fields.items():
-        if name not in content and field_schema.required:
+        absent = name not in content or content[name] is None
+        if absent and field_schema.required:
             results.append(RuleResult(
                 message=f"Missing required field: '{name}'",
                 position=pos,
@@ -321,6 +323,12 @@ def validate(
             continue
 
         value = content[name]
+
+        # A present-but-empty value (YAML null) is treated as absent: it
+        # is reported as missing above when required, and ignored when
+        # optional. Either way there is nothing to type-check here.
+        if value is None:
+            continue
 
         # Map check (before type check)
         if isinstance(value, dict):

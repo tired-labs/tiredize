@@ -1,8 +1,13 @@
 ---
-status: draft
-type: bug
-priority: low
+assignee:
 created: 2026-02-28
+knowledge: []
+priority: low
+status: draft
+step:
+tags: []
+type: bug
+workflow: software-engineering
 ---
 
 # Handle relative URLs without dot prefix in check_url_valid
@@ -16,7 +21,7 @@ created: 2026-02-28
 The function returns `(False, None, "<exception text>")` instead of
 resolving the path as a local file.
 
-Discovered during peer review of `fix-relative-url-resolution.md`.
+Discovered during peer review of `fix-relative-url-resolution`.
 
 ## Acceptance Criteria
 
@@ -30,17 +35,10 @@ Discovered during peer review of `fix-relative-url-resolution.md`.
 - [ ] Linter specification updated to document the full set of
       recognized URL patterns
 
-## Out of Scope
-
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- Anchor validation (`#` URLs)
-- HTTP/HTTPS URL validation
-- Existing `./` and `../` relative path handling (already fixed)
-
 ## Design Decisions
+
+Out of scope: anchor validation (`#` URLs), HTTP/HTTPS URL validation,
+and the existing `./` and `../` relative path handling (already fixed).
 
 ## Open Questions
 
@@ -48,48 +46,12 @@ unrelated files, or extend scope beyond what is specified here.
   non-HTTP URL schemes? Should we check for the presence of `://` or
   maintain an explicit allowlist of recognized schemes?
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. Out of Scope folded into Design Decisions; the v1
+    Completion Report was dropped.

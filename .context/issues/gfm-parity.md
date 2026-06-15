@@ -1,9 +1,13 @@
 ---
-status: draft
-type: feature
-priority: medium
+assignee:
 created: 2026-03-02
-parent: test-coverage-audit.md
+knowledge: []
+priority: medium
+status: draft
+step:
+tags: []
+type: feature
+workflow: software-engineering
 ---
 
 # GFM Parity: Unsupported Syntax Variants
@@ -12,7 +16,7 @@ parent: test-coverage-audit.md
 
 The markdown parser does not handle several syntax variants that are
 valid in GitHub-Flavored Markdown. These were identified during the
-syntax variant audit (`test-coverage-markdown-types.md`) and are
+syntax variant audit (`test-coverage-markdown-types`) and are
 currently documented as skipped spec tests. This issue tracks adding
 support for them to achieve closer GFM parity.
 
@@ -37,25 +41,22 @@ support for them to achieve closer GFM parity.
       InlineLink ignores URLs inside code blocks). Fill any gaps
       found.
 
-## Out of Scope
+## Design Decisions
 
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
+Out of scope: CRLF line-ending handling (cross-cutting; may warrant its
+own issue), and variants already fixed elsewhere — pipe-as-start-of-line
+anchor (`parser-greedy-regex`), missing sanitization chains
+(`parser-sanitization-gaps`), the sanitize_text trailing-newline bug
+(`sanitize-text-newline-bug`), QuoteBlock over-sanitization
+(`quoteblock-over-sanitization`), and greedy regex patterns
+(`parser-greedy-regex`).
 
-- CRLF line ending handling (cross-cutting concern, may warrant its
-  own issue)
-- Pipe-as-start-of-line anchor behavior (fixed in
-  `parser-greedy-regex.md`)
-- Missing sanitization chains (tracked in
-  `parser-sanitization-gaps.md`)
-- sanitize_text trailing newline bug (tracked in
-  `sanitize-text-newline-bug.md`)
-- QuoteBlock over-sanitization (tracked in
-  `quoteblock-over-sanitization.md`)
-- Greedy regex patterns (tracked in `parser-greedy-regex.md`)
-
-## Domain Specific Sections
+- **CRLF handling is deferred to this issue.** Other bug fixes that
+  touch line-splitting logic (e.g., `sanitize-text-newline-bug`
+  switching from `splitlines()` to `split('\n')`) consciously do not
+  account for CRLF. When CRLF support is implemented here, all
+  line-splitting call sites must be revisited project-wide, including
+  `sanitize_text()` in `tiredize/markdown/utils.py`.
 
 ### Findings
 
@@ -191,15 +192,6 @@ Several types match with CRLF input but capture `\r` as content:
 - ReferenceDefinition matches succeed (CRLF doesn't break the
   match because `\s*?` absorbs `\r`)
 
-## Design Decisions
-
-- **CRLF handling is deferred to this issue.** Other bug fixes that
-  touch line-splitting logic (e.g., `sanitize-text-newline-bug.md`
-  switching from `splitlines()` to `split('\n')`) consciously do not
-  account for CRLF. When CRLF support is implemented here, all
-  line-splitting call sites must be revisited project-wide, including
-  `sanitize_text()` in `tiredize/markdown/utils.py`.
-
 ## Open Questions
 
 - Should these be tackled as a single issue or split by category
@@ -209,48 +201,13 @@ Several types match with CRLF input but capture `\r` as content:
 - Should CRLF handling be addressed here or as a separate
   cross-cutting issue since it affects every pattern?
 
-## Completion Report
+## Comments
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
+### 2026-06-15T00:00:00+00:00
 
-### Progress
+Author: program-manager
 
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. The `parent` field (test-coverage-audit) was dropped —
+    v2 groups via tags, not hierarchy. Findings moved under Design
+    Decisions; Out of Scope folded in; the v1 Completion Report dropped.

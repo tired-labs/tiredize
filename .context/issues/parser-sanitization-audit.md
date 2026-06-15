@@ -1,8 +1,13 @@
 ---
-status: draft
-type: spike
-priority: medium
+assignee:
 created: 2026-02-28
+knowledge: []
+priority: medium
+status: draft
+step:
+tags: []
+type: spike
+workflow: software-engineering
 ---
 
 # Parser Sanitization and Regex Safety Audit
@@ -11,7 +16,7 @@ created: 2026-02-28
 
 Audit all markdown parser extractors for sanitization gaps and regex
 backtracking vulnerabilities. The table extractor was fixed (see
-`parser-robustness.md`), but the remaining extractors have not been
+`parser-robustness`), but the remaining extractors have not been
 systematically audited.
 
 ## Acceptance Criteria
@@ -26,17 +31,13 @@ systematically audited.
       constructs, repeated special characters) with time thresholds
 - [ ] Fix any backtracking vulnerabilities or false-match bugs found
 
-## Out of Scope
-
-Modifications not directly related to the functionality requested in
-this issue are strictly forbidden. Do not refactor adjacent code, update
-unrelated files, or extend scope beyond what is specified here.
-
-- Linter rule changes
-- Schema validator changes
-- New markdown element types
-
 ## Design Decisions
+
+Out of scope: linter rule changes, schema validator changes, and new
+markdown element types.
+
+References: sanitize chain current state in
+`specifications/markdown-parser.md`; prior fix in `parser-robustness`.
 
 ## Open Questions
 
@@ -46,53 +47,12 @@ unrelated files, or extend scope beyond what is specified here.
   types) be refactored to use the centralized sanitize chain, or is
   the current approach acceptable?
 
-## References
+## Comments
 
-- Sanitize chain current state: `specifications/markdown-parser.md`
-- Prior fix: `parser-robustness.md`
+### 2026-06-15T00:00:00+00:00
 
-## Completion Report
+Author: program-manager
 
-This issue predates the current issue file format. Completion report
-sections will be populated if the issue is revisited.
-
-### Progress
-
-- [ ] Implementation complete
-- [ ] SE peer review passed
-- [ ] QA Engineer review passed
-- [ ] Technical Architect review passed
-- [ ] Director review passed
-- [ ] User accepted
-
-### Problem
-
-### Solution
-
-### Test Summary
-
-### Coverage
-
-### SE Peer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### QA Engineer Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Technical Architect Review
-
-#### Incorporated
-
-#### Not Incorporated
-
-### Follow-Up Work
-
-### Breaking Changes
-
-### Process Feedback
+    Migrated to the v2 issue format during the `.context/` process
+    migration. Out of Scope and References folded into Design Decisions;
+    the v1 Completion Report was dropped.

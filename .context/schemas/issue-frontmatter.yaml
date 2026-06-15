@@ -1,8 +1,9 @@
 # Schema: Issue File Frontmatter
 #
 # Validates the YAML frontmatter of issue files in .context/issues/.
-# Enforces the issue file format specification from
-# .context/specifications/issue-file-format.md.
+# Encodes the v2 issue-file format defined by the dotclaude standard
+# (templates/ISSUE.md; canonical spec tracked in the dotclaude issue
+# issue-format-specification).
 #
 # Usage:
 #   tiredize --frontmatter-schema .context/schemas/issue-frontmatter.yaml .context/issues/*.md
@@ -15,9 +16,10 @@ fields:
     allowed:
       - draft
       - ready
-      - active
-      - blocked
+      - in-progress
+      - in-review
       - done
+      - blocked
       - cancelled
 
   type:
@@ -26,8 +28,8 @@ fields:
       - bug
       - feature
       - refactor
-      - documentation
       - spike
+      - documentation
 
   priority:
     type: string
@@ -40,18 +42,32 @@ fields:
   created:
     type: date
 
-  parent:
+  workflow:
+    type: string
+    allowed:
+      - software-engineering
+      - documentation
+      - to-be-determined
+
+  tags:
+    type: list
+
+  knowledge:
+    type: list
+
+  assignee:
     type: string
     required: false
+    allowed:
+      - PM
+      - qa-engineer
+      - software-engineer
+      - technical-architect
+      - ghostwriter
+      - proofreader
+      - workflow-owner
+      - user
 
-  sub_issues:
-    type: list
-    required: false
-
-  specs:
-    type: list
-    required: false
-
-  labels:
-    type: list
+  step:
+    type: string
     required: false

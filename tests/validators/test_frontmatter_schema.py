@@ -1089,15 +1089,42 @@ class TestValidateEdgeCases:
         results = validate(doc, schema)
         assert results == []
 
-    def test_null_field_value_wrong_type(self):
-        """YAML `null` / `~` is parsed as None — always a type error."""
+    def test_null_required_field_reported_missing(self):
+        """A bare `title:` is YAML null — treated as not provided. For a
+        required field that means missing_field, not a type error."""
         doc = _make_doc("title:\n")
         schema = load_frontmatter_schema(_schema(
             "title:\n  type: string\n"
         ))
         results = validate(doc, schema)
         assert len(results) == 1
-        assert results[0].rule_id == "schema.frontmatter.wrong_type"
+        assert results[0].rule_id == "schema.frontmatter.missing_field"
+
+    def test_null_optional_field_passes(self):
+        """A bare (null) value for a non-required field is treated as
+        absent and produces no error."""
+        doc = _make_doc("assignee:\n")
+        schema = load_frontmatter_schema(_schema(
+            "assignee:\n  type: string\n  required: false\n"
+        ))
+        results = validate(doc, schema)
+        assert results == []
+
+    def test_blank_optional_fields_validate_clean(self):
+        """dotclaude-style frontmatter leaves optional fields blank
+        (assignee:/step:); these must validate cleanly."""
+        doc = _make_doc(
+            "status: draft\n"
+            "assignee:\n"
+            "step:\n"
+        )
+        schema = load_frontmatter_schema(_schema(
+            "status:\n  type: string\n"
+            "assignee:\n  type: string\n  required: false\n"
+            "step:\n  type: string\n  required: false\n"
+        ))
+        results = validate(doc, schema)
+        assert results == []
 
     def test_int_rejected_for_float_field(self):
         """YAML parses 1.0 as float but 1 as int — int must be

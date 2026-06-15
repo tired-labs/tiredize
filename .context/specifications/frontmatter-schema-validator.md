@@ -62,6 +62,13 @@ class FrontmatterSchema:
     fields: dict[str, FieldSchema] = field(default_factory=dict)
 ```
 
+## File Layout
+
+| File                                          | Purpose                    |
+|-----------------------------------------------|----------------------------|
+| `tiredize/validators/frontmatter_schema.py`   | Schema loader and validator |
+| `tests/validators/test_frontmatter_schema.py` | Unit tests                 |
+
 ## Schema File Format
 
 ### Top-Level Properties
@@ -116,6 +123,16 @@ If the document has no frontmatter block, the validator treats it as
 an empty dict. Required fields report as missing; optional-only schemas
 pass cleanly.
 
+### Empty Field Values
+
+A field that is present but has an empty (YAML `null`) value — for
+example a bare `assignee:` line — is treated as **not provided**. A
+required field with a null value reports `missing_field`; an optional
+(`required: false`) field with a null value passes with no error and is
+not type-checked. This supports the convention of leaving optional
+frontmatter fields blank until they are populated. An empty list
+(`tags: []`) is a real list value, not null, and is validated as a list.
+
 ### Duplicate YAML Keys
 
 Before validation, the frontmatter is re-parsed with `safe_load_yaml`
@@ -156,13 +173,6 @@ errors from a single root cause.
 | `schema.frontmatter.map_not_supported`    | Field value is a YAML map        |
 | `schema.frontmatter.duplicate_key`        | YAML key appears more than once  |
 | `schema.frontmatter.list_item_not_string` | List item is not a string        |
-
-## File Layout
-
-| File                                          | Purpose                    |
-|-----------------------------------------------|----------------------------|
-| `tiredize/validators/frontmatter_schema.py`   | Schema loader and validator |
-| `tests/validators/test_frontmatter_schema.py` | Unit tests                 |
 
 ## CLI Integration
 
