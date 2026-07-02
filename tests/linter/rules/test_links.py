@@ -219,6 +219,67 @@ def test_missing_headers_passes_none():
     assert kwargs["headers"] is None
 
 
+def test_valid_status_codes_passed_to_check_url_valid():
+    """The configured valid_status_codes list is forwarded to check_url_valid."""
+    doc = Document()
+    doc.load(text="# Links\n[v](https://example.com)\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:
+        validate(doc, {"validate": True, "valid_status_codes": [200, 404]})
+    _, kwargs = mock_check.call_args
+    assert kwargs["valid_status_codes"] == [200, 404]
+
+
+def test_missing_valid_status_codes_passes_none():
+    """When valid_status_codes is absent, None is passed to check_url_valid."""
+    doc = Document()
+    doc.load(text="# Links\n[v](https://example.com)\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:
+        validate(doc, {"validate": True})
+    _, kwargs = mock_check.call_args
+    assert kwargs["valid_status_codes"] is None
+
+
+def test_valid_status_codes_wildcard_accepted():
+    """A wildcard entry like '2xx' is forwarded without error."""
+    doc = Document()
+    doc.load(text="# Links\n[v](https://example.com)\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:
+        validate(doc, {"validate": True, "valid_status_codes": ["2xx", "3xx"]})
+    _, kwargs = mock_check.call_args
+    assert kwargs["valid_status_codes"] == ["2xx", "3xx"]
+
+
+def test_valid_status_codes_mixed_wildcard_and_int_accepted():
+    """Wildcards and exact codes can be mixed."""
+    doc = Document()
+    doc.load(text="# Links\n[v](https://example.com)\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:
+        validate(doc, {
+            "validate": True,
+            "valid_status_codes": ["2xx", 404],
+        })
+    _, kwargs = mock_check.call_args
+    assert kwargs["valid_status_codes"] == ["2xx", 404]
+
+
+def test_valid_status_codes_invalid_string_raises():
+    """A string that is not a valid wildcard raises ValueError."""
+    doc = Document()
+    doc.load(text="# Links\n[v](https://example.com)\n")
+    import pytest
+    with pytest.raises(ValueError, match="valid_status_codes"):
+        validate(doc, {"validate": True, "valid_status_codes": ["ok"]})
+
+
+def test_valid_status_codes_non_integer_raises():
+    """A non-integer, non-wildcard entry raises ValueError."""
+    doc = Document()
+    doc.load(text="# Links\n[v](https://example.com)\n")
+    import pytest
+    with pytest.raises(ValueError, match="valid_status_codes"):
+        validate(doc, {"validate": True, "valid_status_codes": [200, "ok"]})
+
+
 # ===================================================================
 #  Cross-component interactions (audit point 5)
 # ===================================================================
@@ -295,7 +356,7 @@ def test_exception_on_middle_link_crashes_rule():
     doc.load(text=md)
     call_count = 0
 
-    def side_effect(document, url, timeout=None, headers=None):
+    def side_effect(document, url, timeout=None, headers=None, **_):
         nonlocal call_count
         call_count += 1
         if call_count == 2:

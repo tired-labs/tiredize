@@ -75,13 +75,23 @@ def get_config_list(
     return raw_value
 
 
+def _matches_status(code: int, patterns: list[int | str]) -> bool:
+    for p in patterns:
+        if isinstance(p, int) and code == p:
+            return True
+        if isinstance(p, str) and code // 100 == int(p[0]):
+            return True
+    return False
+
+
 def check_url_valid(
     document: Document,
     url: str,
     timeout: float | None = None,
     headers: dict[str, Any] | None = None,
     allow_redirects: bool | None = None,
-    verify_ssl: bool | None = None
+    verify_ssl: bool | None = None,
+    valid_status_codes: list[int | str] | None = None,
 ) -> tuple[bool, int | None, str | None]:
     """
     Perform a lightweight check to determine if a URL is reachable.
@@ -90,7 +100,8 @@ def check_url_valid(
         (is_valid, status_code, error_message)
 
     is_valid:
-        True if the request completed with a 2xx or 3xx status code.
+        True if the response status code is considered valid. By default,
+        2xx and 3xx codes are valid. Pass valid_status_codes to override.
     status_code:
         The HTTP response code if one was returned. Otherwise None.
     error_message:
@@ -130,10 +141,11 @@ def check_url_valid(
             allow_redirects=allow_redirects,
             verify=verify_ssl,
         )
-        # Treat 2xx and 3xx as valid. You can change this policy later.
-        if 200 <= response.status_code < 400:
-            return True, response.status_code, None
-        return False, response.status_code, None
+        if valid_status_codes is not None:
+            is_valid = _matches_status(response.status_code, valid_status_codes)
+        else:
+            is_valid = 200 <= response.status_code < 400
+        return is_valid, response.status_code, None
 
     except requests.exceptions.Timeout:
         return False, None, "timeout"

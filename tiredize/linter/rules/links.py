@@ -39,6 +39,8 @@ def validate(
             (e.g. '*.example.com')
         headers: dict[str, str] - HTTP headers to include in requests
         timeout: int - Timeout in seconds for link validation requests
+        valid_status_codes: list[int] - HTTP status codes treated as valid.
+            Defaults to all 2xx and 3xx codes.
     """
     cfg_validate = get_config_bool(config, "validate")
     if not cfg_validate:
@@ -54,6 +56,26 @@ def validate(
                 f"{type(pattern).__name__!r}: {pattern!r}"
             )
 
+    cfg_valid_status = get_config_list(config, "valid_status_codes")
+    valid_status_codes: list[int | str] | None = None
+    if cfg_valid_status is not None:
+        for code in cfg_valid_status:
+            if isinstance(code, bool):
+                raise ValueError(
+                    "valid_status_codes entries must be integers or class "
+                    f"wildcards like '2xx', got bool: {code!r}"
+                )
+            if isinstance(code, int):
+                continue
+            if (isinstance(code, str) and len(code) == 3
+                    and code[0].isdigit() and code[1:].lower() == "xx"):
+                continue
+            raise ValueError(
+                "valid_status_codes entries must be integers or class "
+                f"wildcards like '2xx', got {type(code).__name__!r}: {code!r}"
+            )
+        valid_status_codes = list(cfg_valid_status)
+
     results: list[RuleResult] = []
     for section in document.sections:
         for link in section.links_inline:
@@ -63,7 +85,8 @@ def validate(
                 document=document,
                 url=link.url,
                 timeout=cfg_timeout,
-                headers=cfg_headers
+                headers=cfg_headers,
+                valid_status_codes=valid_status_codes,
             )
             if not is_valid:
                 position = link.position
@@ -84,7 +107,8 @@ def validate(
                 document=document,
                 url=link.url,
                 timeout=cfg_timeout,
-                headers=cfg_headers
+                headers=cfg_headers,
+                valid_status_codes=valid_status_codes,
             )
             if not is_valid:
                 position = link.position
@@ -105,7 +129,8 @@ def validate(
                 document=document,
                 url=link.url,
                 timeout=cfg_timeout,
-                headers=cfg_headers
+                headers=cfg_headers,
+                valid_status_codes=valid_status_codes,
             )
             if not is_valid:
                 position = link.position
@@ -126,7 +151,8 @@ def validate(
                 document=document,
                 url=link.url,
                 timeout=cfg_timeout,
-                headers=cfg_headers
+                headers=cfg_headers,
+                valid_status_codes=valid_status_codes,
             )
             if not is_valid:
                 position = link.position
