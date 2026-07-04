@@ -220,7 +220,8 @@ def test_missing_headers_passes_none():
 
 
 def test_valid_status_codes_passed_to_check_url_valid():
-    """The configured valid_status_codes list is forwarded to check_url_valid."""
+    """The configured valid_status_codes list is forwarded to
+    check_url_valid."""
     doc = Document()
     doc.load(text="# Links\n[v](https://example.com)\n")
     with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock_check:

@@ -142,7 +142,9 @@ def check_url_valid(
             verify=verify_ssl,
         )
         if valid_status_codes is not None:
-            is_valid = _matches_status(response.status_code, valid_status_codes)
+            is_valid = _matches_status(
+                response.status_code, valid_status_codes
+            )
         else:
             is_valid = 200 <= response.status_code < 400
         return is_valid, response.status_code, None
