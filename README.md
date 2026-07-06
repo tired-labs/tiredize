@@ -225,6 +225,35 @@ trailing_whitespace:
   allowed: false
 ```
 
+#### unicode
+
+Enforces whether unicode (non-ASCII) characters are permitted in the document.
+Use `exclude` to carve out element types that are treated opposite to the
+`allowed` setting — for example, to forbid unicode everywhere *except* inside
+code blocks.
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `allowed` | bool | When `true`, unicode is permitted throughout the document. When `false`, unicode is forbidden. Omitting this option disables the rule. |
+| `exclude` | list | Element types that are treated opposite to `allowed`. See [Recognized markdown element names](#recognized-markdown-element-names). |
+
+```yaml
+# Forbid unicode everywhere except in code blocks and inline code
+unicode:
+  allowed: false
+  exclude:
+    - code_block
+    - code_inline
+```
+
+```yaml
+# Permit unicode everywhere except in headers
+unicode:
+  allowed: true
+  exclude:
+    - header
+```
+
 #### links
 
 Validates that URLs in the document are reachable. Checks inline links,
