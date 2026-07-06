@@ -459,6 +459,83 @@ def test_http_allow_redirects_defaults_to_true():
 
 
 # ===================================================================
+#  check_url_valid: valid_status_codes
+# ===================================================================
+
+
+def test_valid_status_codes_accepts_listed_code():
+    """A status code in valid_status_codes is treated as valid."""
+    doc = Document()
+    with patch(MOCK_TARGET, return_value=_make_mock_response(404)):
+        is_valid, status, error = check_url_valid(
+            doc, "https://example.com",
+            valid_status_codes=[200, 404],
+        )
+    assert is_valid is True
+    assert status == 404
+    assert error is None
+
+
+def test_valid_status_codes_rejects_unlisted_code():
+    """A status code not in valid_status_codes is treated as invalid."""
+    doc = Document()
+    with patch(MOCK_TARGET, return_value=_make_mock_response(200)):
+        is_valid, status, error = check_url_valid(
+            doc, "https://example.com",
+            valid_status_codes=[201, 204],
+        )
+    assert is_valid is False
+    assert status == 200
+    assert error is None
+
+
+def test_valid_status_codes_none_uses_default_range():
+    """When valid_status_codes is None the default 2xx/3xx range applies."""
+    doc = Document()
+    with patch(MOCK_TARGET, return_value=_make_mock_response(302)):
+        is_valid, status, _ = check_url_valid(
+            doc, "https://example.com",
+            valid_status_codes=None,
+        )
+    assert is_valid is True
+
+
+def test_valid_status_codes_wildcard_matches_class():
+    """A '2xx' wildcard accepts any code in the 200-299 range."""
+    doc = Document()
+    for code in (200, 201, 250, 299):
+        with patch(MOCK_TARGET, return_value=_make_mock_response(code)):
+            is_valid, _, _ = check_url_valid(
+                doc, "https://example.com",
+                valid_status_codes=["2xx"],
+            )
+        assert is_valid is True, f"expected {code} to be valid"
+
+
+def test_valid_status_codes_wildcard_rejects_other_class():
+    """A '2xx' wildcard rejects codes outside the 200-299 range."""
+    doc = Document()
+    for code in (301, 404, 500):
+        with patch(MOCK_TARGET, return_value=_make_mock_response(code)):
+            is_valid, _, _ = check_url_valid(
+                doc, "https://example.com",
+                valid_status_codes=["2xx"],
+            )
+        assert is_valid is False, f"expected {code} to be invalid"
+
+
+def test_valid_status_codes_mixed_wildcard_and_int():
+    """Wildcards and exact codes can be mixed in the same list."""
+    doc = Document()
+    with patch(MOCK_TARGET, return_value=_make_mock_response(404)):
+        is_valid, _, _ = check_url_valid(
+            doc, "https://example.com",
+            valid_status_codes=["2xx", 404],
+        )
+    assert is_valid is True
+
+
+# ===================================================================
 #  check_url_valid: state mutation (audit point 8)
 # ===================================================================
 

@@ -237,6 +237,7 @@ paths are checked for file existence on disk.
 | `validate` | bool | Enable link validation. When `false`, no links are checked. |
 | `timeout` | int | Timeout in seconds for HTTP requests. |
 | `headers` | dict | HTTP headers to include in every request (e.g. `Authorization`). |
+| `valid_status_codes` | list | HTTP status codes treated as valid. Defaults to all 2xx and 3xx codes. Entries may be exact integers (`200`) or class wildcards (`2xx`, `3xx`). |
 | `exclude` | list | Domain patterns to skip. Supports `*` as a wildcard (e.g. `*.mycompany.com`). Relative paths and anchors are unaffected. |
 
 ```yaml
