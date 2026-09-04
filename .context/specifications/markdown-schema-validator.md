@@ -34,8 +34,9 @@ def load_schema(yaml_string: str) -> SchemaConfig:
 Parses a YAML string into a `SchemaConfig`. Validates the schema
 itself before returning: name/pattern mutual exclusivity, child level
 consistency, repeat bound types (must be int), repeat bound values
-(must not be negative, max must not be less than min), and regex
-pattern syntax (compiled at load time via `re.compile()`). Raises
+(must not be negative, max must not be less than min), regex
+pattern syntax (compiled at load time via `re.compile()`), and that
+`allow_subsections` is not combined with `sections`. Raises
 `ValueError` for all validation failures.
 
 ### Data Model
@@ -47,6 +48,7 @@ class SchemaSection:
     level: int = 1
     name: str | None = None
     pattern: str | None = None
+    allow_subsections: bool | None = None
     repeat_max: int | None = None
     repeat_min: int | None = None
     required: bool = True
@@ -80,6 +82,7 @@ before any validation logic runs.
 | `schema.markdown.out_of_order`         | Section in wrong position      |
 | `schema.markdown.repeat_below_minimum` | Fewer occurrences than min     |
 | `schema.markdown.repeat_above_maximum` | More occurrences than max      |
+| `schema.markdown.subsections_not_allowed` | Subsection under `allow_subsections: false` |
 
 ## File Layout
 
@@ -114,6 +117,7 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
 | `required` | bool        | `true`         | Section must be present         |
 | `repeat`   | bool or map | --             | Section may appear repeatedly   |
 | `sections` | list        | --             | Nested child section defs       |
+| `allow_subsections` | bool | --            | `true` accepts any subsection tree without validating it; `false` forbids subsections. Mutually exclusive with `sections` |
 
 ### Constraints
 
@@ -125,6 +129,14 @@ The schema is a YAML file passed to the CLI via `--markdown-schema`.
   strictly greater than the parent level. Explicit levels may skip
   levels (e.g., parent level 1, child level 3 is valid).
 - When `required` is omitted, it defaults to `true`.
+- `allow_subsections` and `sections` cannot both be set on one entry;
+  `load_schema` raises `ValueError` if they are. When `allow_subsections`
+  is omitted the entry's `sections` list is validated as usual, so
+  existing schemas are unaffected.
+- `allow_subsections: true` short-circuits descent into the matched
+  section: nothing below it is inspected, at any depth. It exists so that
+  prose sections with free-form structure do not need a catch-all
+  `pattern` declared at every heading level down to 6.
 - `repeat: true` means one or more occurrences with no upper bound.
 - `repeat: {min: N, max: N}` sets explicit bounds. `min` defaults to 1
   if omitted. `max` defaults to no limit if omitted.

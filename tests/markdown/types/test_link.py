@@ -249,6 +249,42 @@ def test_bare_link_base_offset():
 
 
 # ===================================================================
+#  BareLink -- backslash paths vs. markdown escapes
+# ===================================================================
+
+
+def test_bare_link_escaped_bracket_not_matched():
+    text = r"See \[MS-ADTS\] section 3.1 for details."
+    results = BareLink.extract(text)
+    assert results == []
+
+
+def test_bare_link_escaped_asterisk_not_matched():
+    text = r"Use \* to match everything."
+    results = BareLink.extract(text)
+    assert results == []
+
+
+def test_bare_link_backslash_without_extension_not_matched():
+    text = r"Opens the \PIPE\eventlog endpoint."
+    results = BareLink.extract(text)
+    assert results == []
+
+
+def test_bare_link_latex_not_matched():
+    text = r"Kinetic energy is \frac{1}{2}mv^2 in this model."
+    results = BareLink.extract(text)
+    assert results == []
+
+
+def test_bare_link_backslash_with_extension_still_matched():
+    text = r"Config lives in \etc\app\settings.json here."
+    results = BareLink.extract(text)
+    assert len(results) == 1
+    assert results[0].url == r"\etc\app\settings.json"
+
+
+# ===================================================================
 #  BareLink -- sanitize
 # ===================================================================
 

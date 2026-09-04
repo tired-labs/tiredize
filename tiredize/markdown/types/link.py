@@ -19,7 +19,20 @@ class BareLink:
     url: str
 
     RE_URL = r"""
-        (?P<url>(?:http[s]?:\/\/|(?:\A|(?<=[\s\[(]))(?:\.\.\/|\.\/|\\))[^\s\])]+)
+        (?P<url>
+            http[s]?:\/\/[^\s\])]+       # Absolute URL
+          |
+            (?:\A|(?<=[\s\[(]))          # Start, or after whitespace/[/(
+            (?:\.\.\/|\.\/)              # Relative path, forward slashes
+            [^\s\])]+
+          |
+            (?:\A|(?<=[\s\[(]))          # Start, or after whitespace/[/(
+            \\                           # Relative path, backslashes
+            (?![^\w\s])                   # ...not a markdown escape (\[, \*)
+            [^\s\])]*
+            \.[A-Za-z0-9]{1,8}           # ...ending in a file extension
+            (?![^\s\])])
+        )
     """
 
     @staticmethod

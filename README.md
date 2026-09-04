@@ -107,6 +107,13 @@ A YAML file defining the expected section structure. Sections can be
 required or optional, matched by exact name or regex pattern, and
 allowed to repeat with min/max bounds. Nested sections are supported.
 
+Use `allow_subsections` when a section's internal structure is free-form:
+`true` accepts any subsection tree beneath it without inspecting it, and
+`false` forbids subsections entirely. This avoids having to declare a
+catch-all `pattern` at every heading level just to permit prose that
+authors organize differently. It cannot be combined with `sections` on the
+same entry.
+
 ```yaml
 # Enforce that documents have these sections in order
 enforce_order: true
@@ -130,8 +137,12 @@ sections:
           min: 1
   - name: "Results"
     level: 1
+    # Authors structure results differently; accept whatever they write.
+    allow_subsections: true
   - name: "References"
     level: 1
+    # A flat list of references, no subsections.
+    allow_subsections: false
 ```
 
 See the [markdown schema validator specification][spec-validator] for the
