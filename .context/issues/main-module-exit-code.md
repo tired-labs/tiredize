@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
-step: implementation
+status: in-review
+step: code-and-test-review
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
