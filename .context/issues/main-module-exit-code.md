@@ -3281,3 +3281,135 @@ Author: program-manager
 
     All ten acceptance criteria stay ticked. On step 8's return the loop
     goes to step 9 again, iteration 3 of 5.
+
+### 2026-09-06T18:00:00+00:00
+
+Author: ghostwriter/software-engineering
+
+    Step 8, user documentation, revision mode, iteration 2. Both of
+    step 9's findings applied. `README.md` is the only file changed
+    besides this Comments section — no code, no tests, nothing under
+    `.context/specifications/`, and no other issue section. No
+    acceptance criterion was ticked or unticked; all ten stay as the
+    PM left them. No knowledge files were loaded, for the reason
+    given at 2026-09-06T14:00:00+00:00: `AGENTS.md` maps none to the
+    `user-documentation` step and the issue's frontmatter
+    `knowledge` field is empty. All sections of the issue are present
+    and complete per `templates/ISSUE.md`.
+
+    Finding 1 — the output paragraph in the Usage section. The
+    sentence now reads:
+
+        For each file, in the order the paths were given, the command
+        prints that file's findings to stdout as
+        `file:line:col: [rule_id] message`, or a single
+        `file: no issues found.` line if the file produced none.
+        Runtime errors go to stderr as `error: <message>`.
+
+    That is step 9's suggested wording with two departures, both
+    deliberate.
+
+      - "findings" rather than "rule violations". The either/or half
+        of the finding is only true of findings in general. `cli.py`
+        prints and counts `all_results`, which holds lint violations,
+        markdown schema mismatches and frontmatter schema violations
+        alike, and the clean line at `cli.py:205-208` is suppressed by
+        any of them. Ran it: a markdown-schema mismatch prints
+        `intro.md:1:0: [schema.markdown.unexpected_section] Unexpected
+        section 'Intro'` — the same `file:line:col: [rule_id] message`
+        shape — and that file gets no `no issues found.` line. Written
+        as "rule violations", the replacement sentence would promise a
+        clean line for a file whose only finding came from a schema,
+        which would be a new inaccuracy in place of the old one. The
+        term is defined in bold twenty lines below, under
+        `### Exit status`, so it is not being introduced cold.
+      - "in the order the paths were given" rather than "in the order
+        given", which names what the order is of.
+
+    Everything else is step 9's: the per-file grouping, the either/or,
+    and the final stderr sentence left untouched.
+
+    Finding 2 — `_RULE_ID` in the Custom Rules section. Two edits, as
+    step 9 proposed. The comment above the constants was widened from
+    two of the three names to all three:
+
+        # The name this rule reports configuration errors under, every
+        # key it accepts mapped to its type, and the subset it requires.
+
+    And a paragraph was added to the prose, immediately after the
+    `validate_config()` paragraph rather than at the end of the
+    section — `_RULE_ID` is an argument to that call and matters only
+    for its messages, so it belongs where the messages are being
+    discussed:
+
+        `_RULE_ID` names your rule in those messages, and it is the
+        only place the rule's ID is written by hand: the engine never
+        reads it, and derives the ID it stamps on findings from the
+        module filename. Keep the two equal. Set `_RULE_ID` to
+        anything else and a configuration mistake is reported against
+        an ID that appears nowhere in your rules file, while findings
+        from the same rule carry the filename.
+
+    This is step 9's substance in my own words. Its suggested sentence
+    — "`_RULE_ID` names the rule in `validate_config()`'s error
+    messages; keep it equal to the module filename, which is the ID
+    the engine uses and the one readers write in their rules file" —
+    is accurate, and I departed from it only for register and for
+    consequence. The README's Custom Rules section addresses the
+    reader as "you" throughout ("your validation logic here", "the
+    convention is yours to keep"), so "readers" became "your"; and the
+    section's habit, established by the `validate_config()` paragraph
+    above it, is to state the failure a convention prevents rather
+    than only the convention. Hence the last sentence, which is what a
+    reader would otherwise discover from a confusing error message.
+
+    Verified by running, not taken from step 9's account or from the
+    routing.
+
+      - The interleaving. With `intro.md` and `guide.md` clean and
+        `bad.md` over an 80-character limit, `tiredize --rules
+        rules.yaml intro.md bad.md guide.md` prints `intro.md: no
+        issues found.`, then the `bad.md` violation, then `guide.md:
+        no issues found.`, and exits `1`. Identical through `python3
+        -m tiredize`. Reversing the arguments to `bad.md intro.md`
+        reverses the output, which is what makes it argument order and
+        not coincidence. `bad.md` gets no clean line in either run.
+        Checked the stream split separately: all four lines are on
+        stdout and stderr is empty.
+      - The `_RULE_ID` divergence, reproduced rather than reasoned
+        about. I wrote the README skeleton into a module named
+        `my_rule.py`, set `_RULE_ID = "wrong_name"`, appended its
+        directory to `tiredize.linter.rules.__path__` and ran it
+        through `run_linter`. Findings came back with
+        `rule_id='my_rule'`; the configuration errors read `Rule
+        'wrong_name': unknown configuration key 'max_count'.` and
+        `Rule 'wrong_name': required configuration key
+        'maximum_count' is missing.` One rule, two different IDs, and
+        only the filename appears in the rules file. That is the
+        failure the new paragraph describes.
+      - The skeleton after my edit. Extracted from `README.md`
+        programmatically and run the same way: `discover_rules()`
+        finds `my_rule`, `validate()` returns `[]` for a good config,
+        and the three `ValueError`s now all name `my_rule` — the ID
+        the reader writes in their rules file. My change to the
+        comment did not disturb it.
+
+    Verified by reading, for the facts behind the wording:
+    `cli.py:129-208` for the per-path loop and the either/or at
+    `205-208`; `utils.py:152-180` for the three messages and the
+    `rule_id` argument that labels them; `rules/__init__.py:63-73`
+    and `engine.py:68-71` for the ID actually stamped on results.
+
+    No fourth site. The two edits are confined to the two paragraphs
+    step 9 named, and I checked what they touch: "findings" is used at
+    its established meaning and defined below; `README.md:450`'s "The
+    rule ID is derived from the module filename" is what the new
+    paragraph points at rather than something it contradicts. Nothing
+    else in the README describes stdout ordering or `_RULE_ID`. The
+    Features-section observation from 2026-09-06T14:00:00+00:00,
+    which step 9 assessed and confirmed pre-existing on `main`, stays
+    where it is — not acted on here.
+
+    No action tag raised. Nothing was disputed: both findings are
+    correct, and I confirmed both against the running tool before
+    applying either.

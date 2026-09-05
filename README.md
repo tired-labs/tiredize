@@ -111,9 +111,9 @@ tiredize --markdown-schema schema.yaml --frontmatter-schema frontmatter.yaml --r
 tiredize --markdown-schema schema.yaml docs/*.md
 ```
 
-The command prints rule violations to stdout in
-`file:line:col: [rule_id] message` format, followed by a
-`file: no issues found.` line for every file that came back clean.
+For each file, in the order the paths were given, the command prints
+that file's findings to stdout as `file:line:col: [rule_id] message`,
+or a single `file: no issues found.` line if the file produced none.
 Runtime errors go to stderr as `error: <message>`.
 
 ### Exit status
@@ -403,8 +403,8 @@ add a custom rule:
    from tiredize.linter.utils import validate_config
    from tiredize.markdown.types.document import Document
 
-   # Every key this rule accepts, mapped to its type, and the
-   # subset it requires.
+   # The name this rule reports configuration errors under, every
+   # key it accepts mapped to its type, and the subset it requires.
    _RULE_ID = "my_rule"
    _ALLOWED_KEYS = {"maximum_count": "int"}
    _REQUIRED_KEYS = ("maximum_count",)
@@ -430,6 +430,14 @@ add a custom rule:
    key. A rule that skips the call reads a mistyped key as an absent
    one and then silently checks nothing, which is the failure the
    call exists to prevent.
+
+   `_RULE_ID` names your rule in those messages, and it is the only
+   place the rule's ID is written by hand: the engine never reads it,
+   and derives the ID it stamps on findings from the module filename.
+   Keep the two equal. Set `_RULE_ID` to anything else and a
+   configuration mistake is reported against an ID that appears
+   nowhere in your rules file, while findings from the same rule
+   carry the filename.
 
    Declare a key as required when the rule does nothing without it,
    and optional when the rule can fall back to a default and still do
