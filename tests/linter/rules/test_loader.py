@@ -111,6 +111,21 @@ def _minimal_config(rule_id: str) -> dict[str, object]:
     }
 
 
+# Rules that require at least one key. tabs and trailing_whitespace
+# require none: with `allowed` absent they still forbid what they
+# exist to forbid, so enabling them is never a no-op.
+_RULES_WITH_REQUIRED_KEYS = sorted(
+    rule_id
+    for rule_id in discover_rules()
+    if _rule_module(rule_id)._REQUIRED_KEYS
+)
+
+
+def test_some_built_in_rule_requires_a_key():
+    """Guard: the missing-required-key case below is not vacuous."""
+    assert _RULES_WITH_REQUIRED_KEYS
+
+
 @pytest.mark.parametrize("rule_id", sorted(discover_rules()))
 def test_built_in_rule_declares_its_configuration_keys(rule_id):
     """Each rule module declares its id and its key sets."""
@@ -153,14 +168,12 @@ def test_built_in_rule_rejects_an_unknown_key(rule_id):
     assert "snooze_button" in message
 
 
-@pytest.mark.parametrize("rule_id", sorted(discover_rules()))
+@pytest.mark.parametrize("rule_id", _RULES_WITH_REQUIRED_KEYS)
 def test_built_in_rule_rejects_a_missing_required_key(rule_id):
     """Dropping any required key is an error naming that key."""
     doc = Document()
     doc.load(text="# Nothing To See Here\n")
     module = _rule_module(rule_id)
-    if not module._REQUIRED_KEYS:
-        pytest.skip(f"rule '{rule_id}' requires no configuration key")
     for missing in module._REQUIRED_KEYS:
         config = _minimal_config(rule_id)
         del config[missing]
