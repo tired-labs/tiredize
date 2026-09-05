@@ -1576,3 +1576,202 @@ Author: program-manager
     The pipeline stops after step 5 and returns to the user regardless
     of outcome. The user approved re-running the two gates, not the
     steps beyond them.
+
+### 2026-09-06T01:00:00+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Acceptance verification, iteration 1 of 5. Verdict: pass. The
+    contract holds end to end through the public interface. No
+    findings, and no action tag raised.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md` — Summary, Acceptance Criteria, Design
+    Decisions, Open Questions, Comments — and nothing blocked the
+    step.
+
+    Definition of Done, observed here rather than carried over.
+    `flake8 tiredize tests` clean, exit 0. Full suite: 844 passed /
+    50 skipped / 0 failed, matching the step-3 and step-4 numbers.
+    All 50 skips are the pre-existing `gfm-parity` skips in the
+    markdown parser tests — confirmed by reading every reason under
+    `pytest -rs`, all 50 prefixed `gfm-parity:` and none in
+    `tests/test_main_module.py`. Coverage 99% overall (1553
+    statements, 11 uncovered); `tiredize/__main__.py` 100%,
+    `tiredize/linter/utils.py` 100%, `cli.py` 98%, and every
+    uncovered line is one of the pre-existing gaps step 3
+    enumerated. Working tree clean before and after; every fixture I
+    wrote went to a scratchpad outside the repository.
+
+    The acceptance tier, identified from the outside. The four
+    black-box classes in `tests/test_main_module.py` —
+    `TestExitStatus`, `TestStreamParity`,
+    `TestIssueAssigneeVocabulary`, `TestRuleConfigurationValidation`
+    — are 43 of the file's 49 items and all 43 pass with zero skips.
+    `TestModuleExecution` (6 items) sits below an explicit banner
+    marking it the step-3 white-box tier and was excluded from the
+    acceptance run. The file carries no `@pytest.mark.skip` and no
+    `PENDING`; the only `skip` is the runtime guard in
+    `_console_script` for an absent console script, and it did not
+    fire — so the console-script cases genuinely ran.
+
+    Entry-point identity checked first, because parity is worthless
+    if the two entry points are different builds. `tiredize` on PATH
+    resolves to `/home/admin/.local/bin/tiredize`, an editable
+    install whose project location is this working tree, and it
+    imports `tiredize.cli:main` from the same tree `-m` executes.
+    The two entry points are the same code.
+
+    Independent black-box exercise, not the suite. I drove 59
+    argument lists through both entry points — 118 process
+    invocations — comparing exit status, stdout and stderr on every
+    one. Parity held on all 59, and every exit status observed
+    across the whole sweep fell in {0, 1, 2}. Even the argparse
+    usage text matches, because `prog` is pinned to `tiredize`
+    rather than defaulting to `__main__.py`.
+
+    By criterion:
+
+    1. `-m` exits with exactly what `main()` returns. Confirmed by
+       hand at all three values. `0`: one clean document, two clean
+       documents, and all three configuration flags together. `1`,
+       findings: all three categories the contract names — a
+       markdown schema mismatch, a `line_length` violation, and a
+       frontmatter `value_not_allowed`. `1`, runtime errors: five
+       kinds — a missing input document, a missing configuration
+       file, an unparseable configuration file, an unknown rule id,
+       and an invalid schema (an unrecognized section key), each on
+       stderr. `2`: all three usage permutations — no arguments,
+       paths with no configuration flag, configuration flag with no
+       paths — plus both argparse paths, an unknown flag and a flag
+       missing its value.
+
+    2. `__main__.py` propagates `main()`'s return value. Its whole
+       observable consequence is criterion 1, confirmed above. The
+       module is `raise SystemExit(main())`, the idiom Design
+       Decisions prefers.
+
+    3. A subprocess test asserts `0`, `1` and `2`.
+       `test_clean_document_exits_zero`,
+       `test_markdown_schema_finding_exits_one` and
+       `test_no_arguments_exits_two` all spawn
+       `sys.executable -m tiredize` and all pass.
+
+    4. `tests/test_cli.py` passes unchanged bar the one carve-out.
+       `git diff main..HEAD -- tests/test_cli.py` is exactly two
+       hunks: `max_length` to `maximum_length` inside
+       `test_valid_document_passes_rules`, which criterion 4 permits
+       by name, and one wholly new test. No other existing test in
+       the file is edited or deleted. The file runs 22 passed.
+
+    5. Identical stdout, stderr and exit status. Held on all 59
+       argument lists, including the case most likely to diverge: a
+       document mixing emoji, accented Latin and CJK. Offsets are
+       character-based and correct — `😴` is one character at column
+       2, `🛌` at column 21 — so no astral-plane or byte-offset
+       discrepancy separates the entry points.
+
+    6. A runtime error aborts the run, on both entry points. Missing
+       document first and a clean document after: the later path is
+       absent from stdout entirely. Clean, missing, clean: only the
+       first path is reported, the second errors to stderr, the
+       third is never reached. Findings-continue confirmed as the
+       counterpart — a document with findings followed by a clean
+       one reports both and exits `1`. Findings followed by a
+       runtime error prints the findings, then aborts on the error.
+
+    7. Assignee vocabulary. `git diff main..HEAD` on
+       `.context/schemas/issue-frontmatter.yaml` is the assignee list
+       alone: `PM` removed, `program-manager` added, order matching
+       upstream. `context-process-migration.md` now carries
+       `assignee: program-manager`, and no `assignee: PM` survives
+       anywhere in the repository. All ten files in
+       `.context/issues/` validate clean against both project
+       schemas, exit `0`, through both entry points.
+
+    8. `.context/specifications/cli.md` — see below.
+
+    9. An invalid rule configuration is a runtime error. All three
+       states verified by hand on the CLI, each exiting `1` with the
+       rule id and the offending key on stderr, and each aborting.
+       The negative case holds too: an omitted optional key stays
+       legal and exits `0` — checked for `line_length.exclude`,
+       `unicode.exclude`, the four optional `links` keys, and
+       `tabs.allowed` / `trailing_whitespace.allowed` under their
+       optional classification. "Required means present, not
+       truthy" holds: `links: {validate: false}` and
+       `elements: {disallow: []}` both exit `0`.
+
+    10. Every built-in rule validates its configuration this way.
+        Confirmed across all six non-private rule modules
+        individually, not by sampling: for each of `elements`,
+        `line_length`, `links`, `tabs`, `trailing_whitespace` and
+        `unicode` I ran a valid baseline (exit `0`), the same
+        baseline plus a key no rule accepts (exit `1`, rule id and
+        key on stderr), and an accepted key holding a wrong-typed
+        value (exit `1`, rule id and key on stderr). The
+        required-key-omitted state was verified on all four keys
+        classified required — `line_length.maximum_length`,
+        `unicode.allowed`, `elements.disallow`, `links.validate`.
+        A useful cross-check fell out of this: the "Accepted keys:"
+        list each rule reports matches the README's documented
+        option table for that rule exactly, all six.
+
+    The two step-6 items, verified by inspection and reported as
+    state rather than as findings, per the routing.
+
+      - Criterion 8. `.context/specifications/cli.md` does not
+        exist. Not authored; the technical-architect's at step 6.
+      - Criterion 10, second half. `.context/specifications/
+        linter.md` exists but does not yet document the convention.
+        Its "Rule Module Convention" section lists three
+        requirements — non-private filename, a `validate` signature,
+        `rule_id=None` — and none of them mentions validating
+        configuration. Its "Configuration Helpers" section lists the
+        five `get_config_*` accessors and still says they return
+        `None` when a key is missing or wrong-typed with "No
+        exceptions raised on type mismatch"; `validate_config` is
+        absent from it. Reading the section as the step-2 comment
+        asked — would a new rule author following it alone write the
+        check? — the answer today is no. That is the gap step 6
+        closes, and it is not a defect in this branch's code.
+
+    Neither is treated as a failure here and neither is routed as an
+    edit request. `README.md:237` is deferred to step 8 by PM
+    routing and was not re-raised.
+
+    Boundary sweep, beyond the named criteria, looking for any way
+    the contract could be violated outside the tested paths. An
+    empty rules file, an empty document, a duplicate path, and
+    findings from two subsystems on one document all behave per the
+    contract. A directory given as a path is a runtime error, exits
+    `1`, and aborts. `--help` exits `0` on both entry points. No
+    invocation anywhere in the sweep produced an exit status outside
+    {0, 1, 2}, wrote a finding to stderr, or wrote a runtime error
+    to stdout.
+
+    Observations for triage, outside the ten criteria and not acted
+    on:
+
+      - Criterion 7 says "every file in `.context/issues/`". Read
+        recursively that would include `.context/issues/completed/`,
+        whose 20 archived files do not validate: they are v1-format
+        issues with `Out of Scope` and `Completion Report` sections,
+        no `Comments` section, and no `workflow`/`tags`/`knowledge`
+        fields. I checked before reporting it: not one of those
+        failures is assignee-related, the required fields that
+        trigger them were already required on `main`, and the
+        schema's own documented Usage line and the gate-2-approved
+        `test_every_issue_file_validates_clean` both use the
+        non-recursive `*.md` glob. So the archive is outside the
+        criterion's scope on the approved reading, and its state is
+        untouched by and unrelated to this branch. Recorded only so
+        the reading is explicit on the record rather than implicit,
+        and because whoever finishes `context-process-migration`
+        will meet it.
+      - A rule block with a null body (`line_length:` and nothing
+        under it) still reports `Invalid configuration for rule
+        line_length: None` from the engine, naming the rule but not
+        the missing key. Exit `1` on stderr, so the contract holds;
+        this is the pre-existing behaviour step 4 already recorded,
+        confirmed unchanged from the outside.
