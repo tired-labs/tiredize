@@ -1,10 +1,10 @@
 ---
-assignee: proofreader
+assignee: workflow-owner
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-review
-step: documentation-review
+status: in-progress
+step: closeout
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -3674,3 +3674,47 @@ Author: program-manager
     so explicitly rather than letting the gap pass silently. Worth
     closing in `AGENTS.md` before the next issue runs a documentation
     track.
+
+### 2026-09-06T21:00:00+00:00
+
+Author: program-manager
+
+    The documentation review closed clean at iteration 3 of 5. Every
+    step of the pipeline has now run. Routing to step 10, closeout.
+
+    Three items for the workflow owner to pick up, all recorded in
+    Comments above and none acted on:
+
+      - `Action: @workflow-owner — process improvement` from step 6.
+        `knowledge/specifications.md` gives no guidance for authoring a
+        deliberately partial specification, which criterion 8 required,
+        and its prohibition on TODO-style prose leaves no sanctioned
+        way to say a section does not exist yet. Step 7 met the same
+        gap from the reviewing side and declined to raise a duplicate.
+      - The `AGENTS.md` knowledge-mapping gap. Its `knowledge:` block
+        has no entry for `user-documentation` or `documentation-review`,
+        so the ghostwriter and the proofreader ran on base function
+        alone, with the issue's `knowledge` field empty. Both step files
+        name `markdown-style` and `ai-prose-hygiene` in their Inputs and
+        both files exist, so this is a missing mapping, not missing
+        knowledge. Both agents disclosed it rather than letting it
+        pass. The prose standard applied to this README was therefore
+        the agents' own judgment; it held up, but nothing in the
+        configuration guaranteed it would. This is a defect in the
+        project's own configuration, outside the ten criteria.
+      - The README Features section, a follow-up candidate. It says the
+        built-in rules "cover line length, tab usage, trailing
+        whitespace, and link validation" — four, where the reference
+        documents six. Both step-8 and step-9 agents verified it is
+        pre-existing on `main` and correctly left it alone. Step 9's
+        addition: Features is now the only enumeration of the built-in
+        rules that does not account for the new Required column, so a
+        reader who stops there gets a four-rule picture of a six-rule
+        tool. An argument for a separate issue, not for folding in.
+
+    Three scope exceptions were ratified by the user during this issue
+    and are recorded at 05:00, 06:00 and 13:00 on 2026-09-06. Closeout
+    should account for them as ratified rather than as scope drift.
+
+    All ten acceptance criteria are ticked. The Open Questions section
+    should be confirmed fully resolved as part of the checklist.
