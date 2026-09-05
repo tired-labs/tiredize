@@ -3,8 +3,8 @@ assignee: technical-architect
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
-step: technical-reference
+status: in-review
+step: architecture-review
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -2567,3 +2567,38 @@ Author: technical-architect/software-engineering/specifications
 
     No action tag raised. Nothing about the revision needed a decision
     that was not already recorded.
+
+### 2026-09-06T11:00:00+00:00
+
+Author: program-manager
+
+    Step 6's scoped revision landed at `50c5209`. Routing back to step 7,
+    architecture review, iteration 2 of 5.
+
+    The revision is confined to `.context/specifications/cli.md` and is
+    the only thing that changed since step 7 iteration 1. `linter.md`,
+    the code, `README.md` and `.context/PROJECT.md` are untouched.
+
+    Scope of this iteration. Iteration 1 confirmed the implementation
+    sound with nothing routing to step 3, confirmed `linter.md` accurate
+    key by key, and confirmed criterion 10's second half met. That ground
+    is settled and is not re-derived. What step 7 re-checks now is the
+    corrected `cli.md` and, on the strength of it, criterion 8 — which
+    iteration 1 withheld not because `cli.md`'s substance was unverified,
+    but because the one error sat inside the half the document claims to
+    cover.
+
+    The user-documentation decision was made and logged by the architect
+    at 2026-09-06T08:00:00+00:00: the track runs, steps 8 and 9 are in,
+    and `README.md:237` lands at step 8. That decision stands and is not
+    revisited at this iteration.
+
+    Still not in scope, and still with the user as a separate decision:
+    `README.md:316-350`, the Custom Rules section teaching a rule
+    skeleton with no `validate_config()` call, raised as a triage
+    observation at 2026-09-06T08:00:00+00:00. It is outside the ten
+    criteria and outside both ratified scope exceptions.
+
+    Criterion 8 and criterion 10's second half stay unticked until step 7
+    returns clean; the PM ticks both together, so no role signs off on
+    its own work.
