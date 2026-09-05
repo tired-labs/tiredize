@@ -1,5 +1,5 @@
 ---
-assignee: qa-engineer
+assignee: user
 created: 2026-06-15
 knowledge: []
 priority: medium
