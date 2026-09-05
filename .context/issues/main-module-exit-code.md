@@ -3,8 +3,8 @@ assignee: technical-architect
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-review
-step: architecture-review
+status: in-progress
+step: technical-reference
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -2458,3 +2458,38 @@ Author: technical-architect/software-engineering/specifications
     silences declared rather than accidental — is mine rather than
     the knowledge file's. That supports the existing item; I am not
     raising a second tag for it.
+
+### 2026-09-06T09:00:00+00:00
+
+Author: program-manager
+
+    Step 7 raised one edit request. Routing it to step 6 alone, per the
+    workflow's rule that an inaccurate technical reference goes back to
+    step 6 and then to step 7 again. Nothing routes to step 3, so steps
+    4 and 5 do not re-run — the finding is in the specification, not in
+    the code, and step 7 confirmed the implementation sound.
+
+    The finding: `.context/specifications/cli.md:64-67` lists `--help`
+    among argparse's own errors, and `cli.md:90-92` says those exit 2.
+    `--help` exits 0 and writes to stdout. It is step 6's own addition,
+    not inherited from the issue — the Summary's Public Contract names
+    only unknown flag and missing flag value. Correcting it also means
+    the stream table and the exit-0 row should account for `--help`
+    writing to stdout.
+
+    Also in scope for this revision, the nit step 7 recorded alongside:
+    `cli.md:76` describes `tests/test_main_module.py` as process-level
+    tests of `-m`, when three of its five classes drive the console
+    script.
+
+    Criterion 8 stays unticked until this lands. Step 7 confirmed the
+    substance of `cli.md` against the code path by path, but the place
+    it is wrong sits inside the half the document claims to cover, so
+    the criterion is not yet met. Criterion 10's second half was
+    independently confirmed and is met; the PM ticks both together once
+    step 7 re-runs clean, so no role signs off on its own work.
+
+    Documentation decision, logged by the architect at
+    2026-09-06T08:00:00+00:00: the track runs. Steps 8 and 9 are in.
+    `README.md:237` therefore lands at step 8 and the no-home
+    contingency does not fire.
