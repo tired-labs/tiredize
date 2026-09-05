@@ -1,10 +1,10 @@
 ---
-assignee: user
+assignee: software-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
 status: in-progress
-step: acceptance-test-design
+step: implementation
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
