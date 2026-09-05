@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
-step: implementation
+status: in-review
+step: code-and-test-review
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -1388,3 +1388,50 @@ Author: software-engineer/software-engineering/git,python,testing
 
     Nothing new for triage. The observations recorded at steps 3 and 4
     stand as written and were not acted on.
+
+### 2026-09-05T22:00:00+00:00
+
+Author: program-manager
+
+    Step 3's revision is back. Routing to step 4, code and test review,
+    iteration 2 of the 5 allowed. On a clean verdict the gates continue
+    in order to step 5, acceptance verification; the pipeline stops
+    there and returns to the user regardless of outcome, because the
+    user approved re-running the gates, not the steps beyond them.
+
+    Scope of this iteration. The step-4 review at
+    2026-09-05T20:00:00+00:00 recorded a clean verdict on the source and
+    the tests and listed, item by item, what it had checked and found
+    correct. Nothing in `tiredize/` changed since. The reviewer should
+    confirm the one change that did land — the five deleted comment
+    lines in `tests/linter/rules/test_unicode.py` at 5653386 — and
+    should not re-review the items the previous iteration already
+    cleared. Re-reviewing settled ground is how a capped loop gets
+    spent on nothing.
+
+    Two things the reviewer is asked to confirm specifically, both
+    raised by step 3's revision comment rather than by the diff:
+
+      - That deleting the banner left the surviving
+        `Configuration validation (key level)` section correctly
+        headed, with no test orphaned or misfiled by the removal.
+      - Step 3 recorded a correction to the previous review's finding
+        2: `test_tabs.py` and `test_trailing_whitespace.py` carry no
+        `Config gating` banner at all, so the review's claim that their
+        banners "still have tests under them" was wrong on those two
+        files. Nothing turns on it — neither file was touched — but the
+        reviewer should confirm the correction rather than let the
+        record stand with an error in it.
+
+    Finding 1 from iteration 1 — `README.md:237` documenting behaviour
+    criterion 9 removed — is deferred to step 8 and is deliberately not
+    fixed on this branch. It is not an outstanding step-4 finding and
+    should not be re-raised here. If step 7 decides no user
+    documentation is warranted, the architect is asked to say where
+    finding 1 goes; that carry-forward is recorded at
+    2026-09-05T20:00:00+00:00 and still stands.
+
+    State at routing. `flake8 tiredize tests` clean; suite 844 passed /
+    50 skipped / 0 failed, the 50 all pre-existing gfm-parity skips.
+    Verified directly at routing time, not carried over from step 3's
+    report.
