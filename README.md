@@ -63,7 +63,23 @@ pip install pytest pytest-cov flake8
 ## Usage
 
 Tiredize runs from the command line. It accepts markdown files as
-positional arguments and configuration via flags.
+positional arguments and configuration via flags. There are two
+equivalent ways to invoke it:
+
+```bash
+tiredize [OPTIONS] [PATHS...]
+python3 -m tiredize [OPTIONS] [PATHS...]
+```
+
+The installed console script and module execution take the same
+arguments and produce the same output, on the same streams, with the
+same exit status. Module execution is the safer choice in a pre-commit
+hook or a CI job, where the console script may not be on `PATH`. Write
+`python -m tiredize` only where `python` is known to be the Python 3
+interpreter tiredize was installed into — many systems ship `python3`
+and no `python` at all.
+
+The examples below use the console script.
 
 ### Validate document structure against a schema
 
@@ -95,9 +111,49 @@ tiredize --markdown-schema schema.yaml --frontmatter-schema frontmatter.yaml --r
 tiredize --markdown-schema schema.yaml docs/*.md
 ```
 
-The command prints rule violations in `file:line:col: [rule_id] message`
-format and returns a nonzero exit code when validation fails, making it
-suitable for pre-commit hooks and CI/CD pipelines.
+The command prints rule violations to stdout in
+`file:line:col: [rule_id] message` format, followed by a
+`file: no issues found.` line for every file that came back clean.
+Runtime errors go to stderr as `error: <message>`.
+
+### Exit status
+
+Every invocation exits with one of exactly three statuses, which is what
+makes tiredize suitable for pre-commit hooks and CI/CD pipelines. Both
+invocation forms return the same status for the same arguments.
+
+| Status | Meaning |
+| --- | --- |
+| `0` | Every file was read and produced no findings. `--help` also exits `0`. |
+| `1` | At least one file produced findings, or a runtime error occurred. |
+| `2` | Usage error: no files were given, or none of `--rules`, `--markdown-schema`, and `--frontmatter-schema` was given. An unrecognized flag, or a flag missing its value, also exits `2`. |
+
+Status `1` covers two different things, which differ in what they do to
+the rest of the run.
+
+**Findings** are what a check reports about a document: a lint rule
+violation, a markdown schema mismatch, or a frontmatter schema
+violation. Findings do not stop the run — every file is processed,
+every finding is printed, and the status is `1` at the end.
+
+**Runtime errors** are what stop a check from running at all: a file
+that does not exist, a configuration file that is missing or
+unparseable, an unknown rule ID, an invalid rule configuration, or an
+ambiguous markdown schema. A runtime error does stop the run. The first
+one prints to stderr and tiredize exits `1` immediately, leaving every
+remaining file unprocessed.
+
+Errors abort and findings continue, whichever way you invoke the tool.
+In the run below, if `missing.md` cannot be read, tiredize reports that
+error and never looks at `guide.md`:
+
+```bash
+tiredize --rules rules.yaml intro.md missing.md guide.md
+```
+
+So the output of a run that exited `1` is a complete report only when
+the `1` came from findings. A `1` arriving with an `error:` line on
+stderr means the remaining files were never examined.
 
 ## Configuration
 
@@ -179,16 +235,37 @@ A YAML file where each top-level key is a rule ID and its value is the
 rule's configuration. Only rules with an entry in the config file are
 enabled.
 
+Every rule declares the configuration keys it accepts and which of them
+it requires, and its configuration is checked before the rule runs.
+Three things are errors, not warnings:
+
+- a key the rule does not accept — a typo, usually;
+- an accepted key holding a value of the wrong type;
+- a required key that was omitted.
+
+Each of the three prints a message to stderr naming the rule and the
+offending key, then aborts the run with exit status `1`:
+
+```
+error: Rule 'line_length': unknown configuration key 'max_length'. Accepted keys: exclude, maximum_length.
+```
+
+Omitting an *optional* key is fine — the rule falls back to its own
+default. The Required column in the tables below says which keys are
+which. Required means the key must be *present*, not that it must be
+enabled: `links: {validate: false}` is a legitimate way to turn link
+checking off.
+
 #### line_length
 
 Flags lines that exceed a maximum character count. Line endings and
 newline characters are excluded from the count. Length is measured in
 Unicode characters, not bytes.
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `maximum_length` | int | Maximum allowed line length in characters. |
-| `exclude` | list | Element types whose lines are skipped. See [Recognized markdown element names](#recognized-markdown-element-names). Any line that overlaps with a listed element is exempt. |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `maximum_length` | int | Yes | Maximum allowed line length in characters. |
+| `exclude` | list | No | Element types whose lines are skipped. See [Recognized markdown element names](#recognized-markdown-element-names). Any line that overlaps with a listed element is exempt. Defaults to no exemptions. |
 
 ```yaml
 line_length:
@@ -202,9 +279,9 @@ line_length:
 
 Flags tab characters anywhere in the document.
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `allowed` | bool | When `false`, any tab character is a violation. |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `allowed` | bool | No | When `false`, any tab character is a violation. Tabs are forbidden when the key is omitted. |
 
 ```yaml
 tabs:
@@ -216,9 +293,9 @@ tabs:
 Flags lines that end with one or more whitespace characters before the
 line ending.
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `allowed` | bool | When `false`, trailing whitespace on any line is a violation. |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `allowed` | bool | No | When `false`, trailing whitespace on any line is a violation. Trailing whitespace is forbidden when the key is omitted. |
 
 ```yaml
 trailing_whitespace:
@@ -232,10 +309,10 @@ Use `exclude` to carve out element types that are treated opposite to the
 `allowed` setting — for example, to forbid unicode everywhere *except* inside
 code blocks.
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `allowed` | bool | When `true`, unicode is permitted throughout the document. When `false`, unicode is forbidden. Omitting this option disables the rule. |
-| `exclude` | list | Element types that are treated opposite to `allowed`. See [Recognized markdown element names](#recognized-markdown-element-names). |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `allowed` | bool | Yes | When `true`, unicode is permitted throughout the document. When `false`, unicode is forbidden. The key selects the mode the rule runs in, so it must be given. |
+| `exclude` | list | No | Element types that are treated opposite to `allowed`. See [Recognized markdown element names](#recognized-markdown-element-names). Defaults to no exemptions. |
 
 ```yaml
 # Forbid unicode everywhere except in code blocks and inline code
@@ -261,13 +338,13 @@ angle-bracket links, bare URLs, and reference definitions. Anchors
 (`#slug`) are resolved against section headings in the document. Relative
 paths are checked for file existence on disk.
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `validate` | bool | Enable link validation. When `false`, no links are checked. |
-| `timeout` | int | Timeout in seconds for HTTP requests. |
-| `headers` | dict | HTTP headers to include in every request (e.g. `Authorization`). |
-| `valid_status_codes` | list | HTTP status codes treated as valid. Defaults to all 2xx and 3xx codes. Entries may be exact integers (`200`) or class wildcards (`2xx`, `3xx`). |
-| `exclude` | list | Domain patterns to skip. Supports `*` as a wildcard (e.g. `*.mycompany.com`). Relative paths and anchors are unaffected. |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `validate` | bool | Yes | Enable link validation. When `false`, no links are checked. |
+| `timeout` | int | No | Timeout in seconds for HTTP requests. |
+| `headers` | dict | No | HTTP headers to include in every request (e.g. `Authorization`). |
+| `valid_status_codes` | list | No | HTTP status codes treated as valid. Defaults to all 2xx and 3xx codes. Entries may be exact integers (`200`) or class wildcards (`2xx`, `3xx`). |
+| `exclude` | list | No | Domain patterns to skip. Supports `*` as a wildcard (e.g. `*.mycompany.com`). Relative paths and anchors are unaffected. |
 
 ```yaml
 links:
@@ -283,9 +360,9 @@ links:
 Prohibits specific markdown element types from appearing in the document.
 Each occurrence of a disallowed type is reported as a separate violation.
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `disallow` | list | Element types that must not appear. See [Recognized markdown element names](#recognized-markdown-element-names). |
+| Option | Type | Required | Description |
+| --- | --- | --- | --- |
+| `disallow` | list | Yes | Element types that must not appear. See [Recognized markdown element names](#recognized-markdown-element-names). The rule inspects nothing without it. |
 
 ```yaml
 elements:
@@ -318,17 +395,26 @@ The following names are valid in `exclude` and `disallow` lists:
 Tiredize discovers linter rules automatically from Python modules. To
 add a custom rule:
 
-1. Create a Python module (e.g., `my_rule.py`) with a `validate`
-   function:
+1. Create a Python module (e.g., `my_rule.py`) that declares the
+   configuration keys it accepts and exposes a `validate` function:
 
    ```python
    from tiredize.core_types import Position, RuleResult
+   from tiredize.linter.utils import validate_config
    from tiredize.markdown.types.document import Document
+
+   # Every key this rule accepts, mapped to its type, and the
+   # subset it requires.
+   _RULE_ID = "my_rule"
+   _ALLOWED_KEYS = {"maximum_count": "int"}
+   _REQUIRED_KEYS = ("maximum_count",)
 
    def validate(
        document: Document,
        config: dict,
    ) -> list[RuleResult]:
+       validate_config(config, _ALLOWED_KEYS, _REQUIRED_KEYS, _RULE_ID)
+
        results = []
        # Your validation logic here.
        # Return RuleResult instances with rule_id=None
@@ -336,11 +422,30 @@ add a custom rule:
        return results
    ```
 
+   The `validate_config()` call is not optional, and it belongs at
+   the top of `validate()`, before any key is read. It raises
+   `ValueError` for the three faults described under
+   [Linter Rules](#linter-rules): a key the rule does not accept, an
+   accepted key holding a wrong-typed value, and an omitted required
+   key. A rule that skips the call reads a mistyped key as an absent
+   one and then silently checks nothing, which is the failure the
+   call exists to prevent.
+
+   Declare a key as required when the rule does nothing without it,
+   and optional when the rule can fall back to a default and still do
+   its job. Each key's type is named with one of `bool`, `dict`,
+   `int`, `list`, or `str`. A rule that accepts no keys at all still
+   calls `validate_config()`, passing an empty `_ALLOWED_KEYS`; that
+   is what makes configuring such a rule an error rather than a
+   no-op.
+
 2. Place the module in the built-in rules package
    (`tiredize/linter/rules/`). This requires an editable install
    (`pip install -e .`) or a project fork. The module must be
    non-private (no leading underscore) and expose a `validate`
-   function.
+   function. Discovery checks nothing beyond that, so nothing stops a
+   rule that omits `validate_config()` from loading — the convention
+   is yours to keep.
 
 The rule ID is derived from the module filename (e.g., `my_rule.py`
 produces rule ID `my_rule`). Configuration values for your rule are

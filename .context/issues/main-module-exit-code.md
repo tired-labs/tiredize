@@ -2807,3 +2807,151 @@ Author: program-manager
     tell people to run a command that may not exist.
 
     Routing to step 8, user documentation, ghostwriter.
+
+### 2026-09-06T14:00:00+00:00
+
+Author: ghostwriter/software-engineering
+
+    Step 8, user documentation. Wrote the three README sites the PM
+    scoped at 2026-09-06T13:00:00+00:00. `README.md` is the only file
+    changed — no code, no tests, no specification, and nothing in this
+    issue outside the Comments section. No acceptance criterion was
+    ticked or unticked.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md`, and nothing blocked the step. No knowledge
+    files were loaded: `AGENTS.md` maps none to the
+    `user-documentation` step and the issue's frontmatter `knowledge`
+    field is empty, so I worked from my base function and took the
+    voice, wrapping (prose to 72 columns) and table conventions from
+    `README.md` itself rather than inventing a mapping. The
+    orchestrator is reporting that gap to the PM separately.
+
+    Site 1 — the Usage section. Two edits, and the exit-status
+    material is now its own `### Exit status` subsection rather than
+    the single sentence that used to close the section.
+
+      - The section intro now names both invocation forms, states
+        that they take the same arguments and produce the same output
+        on the same streams with the same status, and says module
+        execution is the safer choice in a pre-commit hook or CI job
+        where the console script may not be on `PATH`. The worked
+        examples still use the console script, and the text says so.
+      - The old closing sentence — "prints rule violations in
+        `file:line:col: [rule_id] message` format and returns a
+        nonzero exit code when validation fails" — is replaced by an
+        output paragraph naming both streams and the `no issues
+        found.` line, then a three-row status table (`0`, `1`, `2`)
+        with the `--help` and argparse cases folded into the rows
+        they actually take, then the findings-versus-runtime-errors
+        distinction, then errors-abort. The "suitable for pre-commit
+        hooks and CI/CD pipelines" pitch is kept, attached now to the
+        three statuses rather than to "nonzero".
+      - Errors-abort is written as a property of the tool, not of
+        `-m`: "Errors abort and findings continue, whichever way you
+        invoke the tool", with a console-script example
+        (`tiredize --rules rules.yaml intro.md missing.md guide.md`)
+        showing the run stopping at the missing file. The consequence
+        a reader would otherwise have to derive is stated: a run that
+        exited `1` is a complete report only when the `1` came from
+        findings.
+
+    Site 2 — the rule reference. The wrong line and the incomplete
+    section are treated together, as the architect and the PM
+    directed.
+
+      - `unicode.allowed` no longer says "Omitting this option
+        disables the rule." It is marked required, with the reason —
+        the key selects the mode the rule runs in.
+      - Every one of the six option tables gains a **Required**
+        column. The classification follows `linter.md`'s table and I
+        checked it against `_REQUIRED_KEYS` in all six rule modules
+        rather than taking it on the specification's word: `elements`
+        requires `disallow`; `line_length` requires `maximum_length`;
+        `links` requires `validate`; `unicode` requires `allowed`;
+        `tabs` and `trailing_whitespace` require nothing. Where a key
+        is optional and its default was not already stated, the
+        default is now stated — `exclude` defaults to no exemptions,
+        and `tabs`/`trailing_whitespace` still forbid their target
+        with `allowed` absent.
+      - The Linter Rules intro gains the key-validation rules: the
+        three faults, that each names the rule and the offending key
+        on stderr and aborts with status `1`, and that an omitted
+        optional key remains legal. The unknown-key message is quoted
+        verbatim from a real run. It also carries the
+        present-not-truthy point with `links: {validate: false}` as
+        the example, so a reader does not read "required" as "must be
+        enabled".
+
+    Site 3 — Custom Rules, the third ratified scope exception. The
+    skeleton now declares `_RULE_ID`, `_ALLOWED_KEYS` and
+    `_REQUIRED_KEYS` at module level, imports `validate_config` from
+    `tiredize.linter.utils`, and calls it as the first statement of
+    `validate()`. Following prose says the call is not optional and
+    why, how to classify a key as required or optional, the five type
+    names, and that a rule accepting no keys still calls it with an
+    empty `_ALLOWED_KEYS`. Step 2 no longer leaves "expose a
+    `validate` function" as the whole requirement: it now says
+    discovery checks nothing beyond that, so nothing stops a rule
+    that omits the call from loading — the boundary step 7 recorded
+    as enforced by prose alone is stated to the reader as such rather
+    than hidden.
+
+    The `python3` constraint. Reader-facing prose never instructs
+    `python -m tiredize`. The two-form code block gives `tiredize`
+    and `python3 -m tiredize`, and `python -m tiredize` appears once,
+    as a conditional: write it "only where `python` is known to be
+    the Python 3 interpreter tiredize was installed into — many
+    systems ship `python3` and no `python` at all". That keeps the
+    form available to readers whose `python` is correct (a venv, a
+    Windows install) without telling anyone to run a command that may
+    not exist. Confirmed on this machine: `python` is not found.
+
+    Verified by running, not taken from the issue or the
+    specifications. Every status and every error message that appears
+    in the new prose was produced first:
+
+      - Clean input `0`, findings `1`, no arguments `2` — through
+        `python3 -m tiredize` and through the console script, same
+        output and same status.
+      - `--help` exits `0` with zero bytes on stderr, on both entry
+        points. `--bogus x` and `--rules` with its value missing both
+        exit `2`.
+      - The three configuration faults, each exiting `1`:
+        `unknown configuration key 'max_length'. Accepted keys:
+        exclude, maximum_length.` (the line now quoted in the
+        README), `required configuration key 'allowed' is missing.`,
+        and `configuration key 'maximum_length' expects an integer,
+        got 'str': '80'.`
+      - Errors abort: `intro.md missing.md guide.md` with `missing.md`
+        absent reports the error, reports `intro.md`, never processes
+        `guide.md`, and exits `1` — on both entry points. A missing
+        rules file and an unknown rule id also exit `1`.
+      - The optional-key claims: `tabs: {}` still flags a tab, and
+        `links: {validate: false}` is accepted and exits `0`.
+      - The Custom Rules skeleton itself, executed in-process. The
+        import path resolves, the call passes a good config, and it
+        raises the three documented `ValueError`s — including the
+        empty-`_ALLOWED_KEYS` case, which produces "This rule accepts
+        no configuration keys."
+
+    Taken from the specifications rather than re-derived: nothing of
+    substance. `cli.md`'s stream table and `linter.md`'s type
+    vocabulary and required/optional table informed the wording, and
+    both were checked against the code — the key sets against the six
+    rule modules, the statuses and streams against runs.
+
+    Observation for triage, not acted on and not a fourth site this
+    change falsified. `README.md`'s Features section says built-in
+    rules "cover line length, tab usage, trailing whitespace, and
+    link validation", omitting `unicode` and `elements`, which both
+    have full reference subsections further down. That is
+    pre-existing on `main` — this branch neither introduced nor
+    worsened it — so it is outside step 8's scope and I left it
+    alone. Recording it so it is not lost. Beyond it I found no
+    README site this change falsified or made misleading: the only
+    other exit-status claim in the file was the "nonzero exit code"
+    sentence, which site 1 replaced, and no other section mentions
+    module invocation or rule-key handling.
+
+    No action tag raised.
