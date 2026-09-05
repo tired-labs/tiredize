@@ -215,6 +215,34 @@ told, and two agents write into this file at different steps: the
 qa-engineer creates it at step 2, the software-engineer adds to it at
 step 3 without editing what step 2 wrote.
 
+### Step 3 owns the assignee schema change
+
+Criterion 7 requires the schema edit but no step claimed it. The
+software-engineer at step 3 makes it, alongside the `__main__.py` fix,
+and removes the two vocabulary skip markers in the same commit. Without
+this, those skips survive to step 5 and a green suite hides an unmet
+criterion.
+
+### The assignee change is a sync, not a new decision
+
+The upstream master copy of this schema,
+`dotclaude/schemas/tiredize/issue-frontmatter.yaml`, **already lists
+`program-manager` and does not list `PM` at all**. tiredize's
+`.context/schemas/issue-frontmatter.yaml` is the stale copy. So criterion
+7 reconciles a divergence rather than inventing a value, and the
+replacement reading is correct: `PM` is removed, not kept as an alias.
+The step-2 test asserting `PM` is rejected matches upstream.
+
+Do **not** run `dotclaude distribute-schemas` to achieve this. That
+command writes to a consuming repo's root `schemas/tiredize/`
+(`bin/dotclaude:201-225`), not to `.context/schemas/`, so it would create
+a second copy at a different path instead of updating this one. Edit
+`.context/schemas/issue-frontmatter.yaml` by hand to match upstream's
+`assignee` list. The two copies also differ in header comments and in the
+usage path they document; leave those alone — reconciling the placement
+convention is dotclaude's open `schema-placement-convention` issue, not
+this one.
+
 ### Covering `tiredize/__main__.py`
 
 The module currently reports 0% coverage because nothing executes it.
