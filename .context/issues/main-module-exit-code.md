@@ -2111,3 +2111,350 @@ Author: program-manager
     The scoping seed's note about `python -m` versus `python3 -m` on
     machines that ship only `python3` carries forward to whoever writes
     the prose. Recorded here so it is not lost between steps.
+
+### 2026-09-06T08:00:00+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Architecture review. Verdict: one finding, and it is in the
+    reference rather than in the code. The change's system-design
+    impact is sound and nothing routes back to step 3.
+    `.context/specifications/linter.md` is accurate as written.
+    `.context/specifications/cli.md` is accurate except for one
+    statement about argparse which, read together with the sentence
+    it refers back to, tells a reader that `--help` exits `2` when it
+    exits `0`. That routes to step 6 alone. The user-documentation
+    decision is made below and does not depend on the finding.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md` — Summary, Acceptance Criteria, Design
+    Decisions, Open Questions, Comments — and nothing blocked the
+    step.
+
+    System-design impact, assessed against `git diff main..HEAD`
+    rather than against the issue's account of it.
+
+      - Contracts. Three changed, in two subsystems: the process exit
+        status of `python -m tiredize` (`__main__.py:19`); `main()`'s
+        abort semantics, where a missing input document now returns
+        `1` immediately (`cli.py:133-141`) and so changes the console
+        script too; and the rule-module convention, where
+        `validate_config()` is new public surface in
+        `tiredize/linter/utils.py:105` and four rules that returned
+        `[]` for an absent required key now raise. No contract was
+        broken unintentionally — each of the three is a criterion.
+      - Coupling. The new dependency runs rules → `utils`, the same
+        direction as the pre-existing `get_config_*` dependency, so
+        no new edge crosses a subsystem boundary. Nothing about a
+        rule's key set reaches the `Rule` dataclass or
+        `discover_rules()`; `tiredize/linter/rules/__init__.py` is
+        untouched on this branch. The new `ValueError` leaves
+        `run_linter()` through the exception channel the CLI already
+        caught at `cli.py:152-157`, which is why the CLI needed no
+        change to absorb a new error class. That is the reason the
+        blast radius stopped where it did, and it is worth stating:
+        the change reused an existing boundary instead of widening
+        one.
+      - Patterns. Uniform across all six rules. Each declares
+        `_RULE_ID`, `_ALLOWED_KEYS` and `_REQUIRED_KEYS` at module
+        level and calls `validate_config()` as the first statement
+        after its docstring — `elements.py:40`, `line_length.py:80`,
+        `links.py:70`, `tabs.py:38`, `trailing_whitespace.py:38`,
+        `unicode.py:82`. I checked all six rather than sampling.
+      - The one boundary enforced by prose alone. `discover_rules()`
+        requires only a `validate` function, so a custom rule from a
+        third-party package that skips `validate_config()`
+        reinstates the silent no-op, and no test can catch it —
+        `tests/linter/rules/test_loader.py` guards the built-ins
+        only. This follows directly from the deliberate decision to
+        declare key sets in the module rather than on `Rule`, and
+        `linter.md` states the requirement as non-optional, which is
+        the strongest instrument the chosen design leaves. Recorded
+        as a consequence, not as a finding.
+
+    Criterion 8, checked independently against the code rather than
+    taken on step 6's word. I read `cli.md` line by line against
+    `tiredize/cli.py`, `tiredize/__main__.py`,
+    `tiredize/markdown/types/document.py`, `pyproject.toml`, the
+    installed console script, and both entry points run by hand.
+
+      - Template conformance. Overview, Contracts and Interfaces,
+        File Layout, one domain section (Exit Status Contract),
+        Design Decisions — the template's sections in the template's
+        order, none invented, none missing, and the Overview carries
+        the ownership and boundary statement the template asks for.
+      - `main()`'s signature at `cli.md:57` matches `cli.py:95`
+        exactly, return type included. `raise SystemExit(main())` at
+        `cli.md:50` matches `__main__.py:19`. The console-script
+        claim checks out from both ends: `pyproject.toml:28-29`
+        declares `tiredize = "tiredize.cli:main"` and the generated
+        script on PATH ends in `sys.exit(main())`.
+      - The status table matches the code at every exit. `2` at
+        `cli.py:116-125` for both usage permutations; `1` from
+        findings at `cli.py:205-206`; `1` from runtime errors at
+        `cli.py:141`, `162`, `181` and `199`; `0` as the `exit_code`
+        initialized at `cli.py:127` and returned at `cli.py:209`.
+      - The runtime-error exception list — `FileNotFoundError`,
+        `ValueError`, `yaml.YAMLError`, `RuleNotFoundError`,
+        `AmbiguityError` — is exactly the set caught across
+        `cli.py:133-199`, no more and no fewer.
+      - Findings-continue and errors-abort, which the criterion names
+        explicitly, are both documented and both true of the code:
+        every error handler returns, findings set `exit_code` and
+        fall through the loop.
+      - Per-path order (load, then rules, markdown schema,
+        frontmatter schema) matches `cli.py:129-199`, and
+        accumulate-then-print matches `cli.py:143` with `201-208`.
+      - The stream table matches: usage to stderr at
+        `cli.py:119-124`, `error: {exc}` to stderr at `137`, `158`,
+        `177` and `196`, findings and the per-file line to stdout at
+        `204` and `208`. The `line_col()` claim — 1-based line,
+        0-based column, one column per character — matches
+        `document.py:35-50`.
+      - `prog="tiredize"` at `cli.py:26` is real and is load-bearing
+        as the specification says: with it, both entry points emit
+        the same usage text, which is what makes criterion 5 hold on
+        the usage-error path.
+
+      So criterion 8's substance holds: the document exists, follows
+      the template, and documents the exit-code contract with both
+      processing semantics. The single defect is the finding below,
+      and it sits inside the exit-code contract itself, which is what
+      the criterion names — so I would not have the checkbox ticked
+      until it is corrected. I do not tick it either way; that is the
+      PM's.
+
+    Criterion 10, second half, checked the same way against
+    `tiredize/linter/utils.py`, the six rule modules and
+    `tiredize/linter/engine.py`.
+
+      - Rule Module Convention gains requirement 4 at
+        `linter.md:63-66`, with the "not optional and not a
+        convenience" paragraph and a worked skeleton at
+        `linter.md:76-92` whose shape matches `line_length.py:19-24`
+        and `line_length.py:62-90`.
+      - `validate_config()`'s signature at `linter.md:105-110`
+        matches `utils.py:105-110` exactly. The two sentences the
+        implementation falsified are corrected in place: the
+        accessors do still return `None` for both a missing and a
+        wrong-typed key and still raise nothing (`utils.py:40-102`),
+        and the section now gives that as the reason they cannot
+        police configuration, plus what a `None` means inside a rule
+        once `validate_config()` has run.
+      - Fault states and their fixed order — unknown keys, then
+        omitted required keys, then wrong-typed values, raising
+        rather than accumulating — match `utils.py:152-180`
+        statement for statement.
+      - The type vocabulary table matches `_CONFIG_TYPE_CHECKS` at
+        `utils.py:19-28`, including the bool-excluded-from-int guard
+        at `utils.py:22-25` and the reason given for it.
+      - The required-versus-optional table was checked key by key
+        against all six modules' `_ALLOWED_KEYS` and
+        `_REQUIRED_KEYS`. It matches all six with no key missing and
+        none invented: `elements` requires `disallow`; `line_length`
+        requires `maximum_length` and takes `exclude`; `links`
+        requires `validate` and takes `exclude`, `headers`,
+        `timeout`, `valid_status_codes`; `tabs` and
+        `trailing_whitespace` require nothing and take `allowed`;
+        `unicode` requires `allowed` and takes `exclude`.
+      - The key-level-only boundary is true of the code: the
+        value-level `ValueError`s in `line_length`, `unicode`,
+        `elements` and `links` are unchanged and still run after the
+        helper.
+      - Applying step 5's test myself, and deliberately in that
+        order: I read Rule Module Convention and Rule Configuration
+        Validation first, without a rule module open, and then
+        checked what I would have written against a real rule. The
+        sections give the requirement, the shape and position of the
+        declaration, the principle for classifying each key, the
+        table for the existing ones, and the consequence of skipping
+        the call. A new rule author following the specification alone
+        writes the check. The answer is yes.
+
+      Criterion 10's second half is met, on my own reading rather
+      than on step 6's. Confirmed for the PM to tick.
+
+    Judgment of `cli.md`'s declared partial scope. Honestly drawn,
+    with one qualification.
+
+      - The declaration at `cli.md:20-26` names what it covers
+        (exit-status contract, stream and abort semantics) and names
+        what it does not (the flags, the finding output format beyond
+        the shape the parity contract needs, configuration
+        resolution), says in terms that the silence is an unwritten
+        section rather than an absence of behavior, and points the
+        reader at `tiredize/cli.py` for the rest. The silences are
+        declared, not accidental.
+      - It covers what it claims to cover. All three statuses are
+        specified, every kind of output the code writes appears in
+        the stream table, and the abort semantics are given with
+        their consequence — that a run ending in a runtime error is
+        not a complete report — which is the part a reader would
+        otherwise have to derive.
+      - It stays inside the boundary. The three flags appear only
+        where their absence is a usage error; the finding line's
+        shape appears only because the parity and stream contracts
+        depend on it. Nothing documents a flag's semantics, the
+        configuration search, or the renderer. `### Out of scope`'s
+        ban on expanding beyond the exit-code contract is respected,
+        and I looked for a breach rather than assuming one was
+        absent.
+      - The qualification: the one place the document is wrong is
+        inside the half it claims, not in the half it declined. A
+        partial specification is judged on whether its covered part
+        is right, and that is exactly where the finding lands.
+
+    Finding — `cli.md` misstates the exit status of `--help`. Routes
+    to step 6 alone, then step 7 again. It does not touch the
+    implementation and nothing goes back to step 3.
+
+      `cli.md:64-67` enumerates argparse's own errors as "an unknown
+      flag, a flag missing its value, `--help`". `cli.md:90-92` then
+      says "Argparse's own errors also exit `2`, by raising
+      `SystemExit(2)` from within `main()`". Taken together the
+      document states that `--help` exits `2`. It exits `0` —
+      verified by running it, against `python3 -m tiredize` (`2`) and
+      `python3 -m tiredize --bogus x` (`2`) as controls. `--help`
+      also writes to stdout, which the stream table at
+      `cli.md:132-137` does not cover, and the `0` row of the status
+      table ("Every path was loaded and produced no findings") does
+      not describe a `--help` invocation either, though the section
+      opens by claiming every invocation exits one of exactly three
+      statuses.
+
+      Why this is worth a round rather than a shrug: the document's
+      whole subject is which status a given invocation produces, its
+      intended reader is someone wiring a CI or pre-commit gate, and
+      the statement it gets wrong is a status code. That is the same
+      class of defect the issue was opened to fix.
+
+      It is not inherited from the issue. The Public Contract in
+      Summary lists argparse's errors as "unknown flag, missing flag
+      value" and does not include `--help`. The enumeration is step
+      6's own addition, which is what makes this the reference's
+      error rather than the implementation's.
+
+      The correction is one sentence and its shape is step 6's call;
+      the straightforward version separates `--help` from the error
+      paths and states that it prints to stdout and exits `0`.
+      Nothing else in either specification needs an edit.
+
+      Non-blocking nit, for step 6 to take or leave while it is in
+      the file: `cli.md:76` describes `tests/test_main_module.py` as
+      "Process-level tests of `-m`", but three of its five classes
+      drive the console script, and one of those,
+      `TestRuleConfigurationValidation`, exercises linter
+      configuration rather than the CLI. "Process-level tests of both
+      entry points" would be truer. This is not a finding and the
+      review does not turn on it.
+
+    Action: @program-manager — request for edit
+
+    User-documentation decision: yes. Steps 8 and 9 run. Logged here
+    with the reasoning, per the step's instruction, and it stands
+    independently of the finding above.
+
+      The seed said yes and the workflow biases toward running;
+      neither is a reason on its own, so here is the independent
+      case. Three user-visible changes land on this branch and none
+      of them is documented anywhere a user reads.
+
+        1. `python -m tiredize` now gates. The README's Usage section
+           (`README.md:63-100`) is pitched at precisely this use —
+           "suitable for pre-commit hooks and CI/CD pipelines" — yet
+           never mentions module invocation and describes exit
+           behavior as "returns a nonzero exit code when validation
+           fails", which does not separate `1` from `2`.
+        2. Errors now abort. `tiredize --rules r.yaml docs/*.md` with
+           one missing file used to report the survivors and now
+           stops at the first. That is a behavior change for existing
+           console-script users, not only for `-m`, and nothing
+           user-facing says so.
+        3. A rules file that used to run can now hard-fail. Criterion
+           9 turns an unknown key, a wrong-typed value and an omitted
+           required key into runtime errors that abort. Anyone whose
+           rules file carries `max_length` — the exact typo this
+           repository's own test suite shipped — meets it on upgrade.
+
+      Item 3 decides it on its own: this is a breaking configuration
+      change for existing users, and the document those users consult
+      is wrong about it in at least one place. Declining the
+      documentation track would ship a behavior change that only the
+      specifications record, and specifications are for contributors,
+      not users.
+
+      What step 8 must cover, since the scoping seed names only part
+      of it:
+
+        - The Usage section (`README.md:63-100`): the three exit
+          statuses and what each means, the module invocation, and
+          the errors-abort/findings-continue rule.
+        - The rule reference (`README.md:182-300`), which the seed
+          does not name. Finding 1 from step 4 iteration 1 lives here
+          — `README.md:237` tells the reader that omitting
+          `unicode.allowed` disables the rule, which criterion 9 made
+          a runtime error, so a reader following it writes a
+          configuration that hard-fails. Alongside it, the section
+          marks no key as required and does not say that an
+          unrecognized or wrong-typed key is now an error. The two
+          overlap: line 237 is where the section is wrong, the
+          missing required/optional marking is where it is
+          incomplete. Step 4 iteration 1 raised the first, step 3 the
+          second; they should be treated together.
+
+      So `README.md:237` lands at step 8, inside the documentation
+      track. The contingency recorded at 2026-09-05T20:00:00+00:00 —
+      that a "no documentation" decision would leave it unrouted —
+      does not fire.
+
+      Carried forward for whoever writes the prose, from the scoping
+      seed: this issue says `python -m tiredize` throughout, but many
+      machines ship only `python3` and the machine this was scoped on
+      is one of them. Reader-facing documentation should not tell
+      people to run a command that may not exist — write `python3 -m
+      tiredize`, or give both forms. Tests are unaffected; they
+      invoke `sys.executable`.
+
+    Observations for triage, outside the ten criteria and not acted
+    on.
+
+      - `README.md:316-350`, the Custom Rules section, teaches a rule
+        skeleton with no `validate_config()` call and tells the
+        reader the module need only "expose a `validate` function".
+        After this branch that is a user-facing instruction to write
+        a rule that swallows configuration typos in silence — the
+        failure mode criteria 9 and 10 exist to remove. It is a third
+        README site this change falsifies, beyond the Usage section
+        and the rule reference, and it falls outside the ten criteria
+        and outside both scope exceptions the user has ratified. I am
+        naming it rather than folding it into step 8's scope: if it
+        is to be fixed on this branch it needs the user's
+        ratification as a third exception, and otherwise it is a
+        separate issue. Either way it should not be lost.
+      - `linter.md`'s URL Validation section shows `check_url_valid`
+        without its `valid_status_codes` parameter, which
+        `utils.py:192-200` has. Stale on `main` before this branch,
+        untouched by step 6, and unrelated to this issue's changes.
+      - `.context/PROJECT.md` says the CLI "orchestrates three
+        subsystems" and then lists four. Also pre-existing on `main`;
+        the specification-pointer addition at `08b1cab` did not
+        introduce it and correctly did not act on it.
+      - `tests/linter/rules/test_loader.py:139` asserts that every
+        built-in rule declares at least one key ("a rule with no keys
+        cannot be configured"), while `linter.md:94-96` says a rule
+        accepting no keys still calls `validate_config()` with an
+        empty `_ALLOWED_KEYS`. Both are defensible — the
+        specification describes the convention including custom
+        rules, the guard pins the built-ins — but a future built-in
+        with no configuration keys would fail a guard the
+        specification does not mention. Noted so the tension is on
+        the record.
+
+    On the process-improvement item raised at
+    2026-09-06T04:00:00+00:00: I met the same gap from the other
+    side. `knowledge/specifications.md` gives no criterion for
+    *judging* a partial specification either, so the standard I
+    applied at step 7 — does it cover what it claims, and are its
+    silences declared rather than accidental — is mine rather than
+    the knowledge file's. That supports the existing item; I am not
+    raising a second tag for it.
