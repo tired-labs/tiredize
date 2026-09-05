@@ -2602,3 +2602,155 @@ Author: program-manager
     Criterion 8 and criterion 10's second half stay unticked until step 7
     returns clean; the PM ticks both together, so no role signs off on
     its own work.
+
+### 2026-09-06T12:00:00+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Architecture review, iteration 2. Verdict: clean. No findings, no
+    action tag, nothing routes anywhere. The `--help` correction is
+    right and complete, step 6 introduced no new inaccuracy and stayed
+    inside the scoped revision, and **criterion 8 is now met** —
+    confirmed for the PM to tick alongside criterion 10's second half,
+    which iteration 1 already confirmed.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md`, and nothing blocked the step.
+
+    `--help` verified first-hand rather than on step 6's or iteration
+    1's word, on this machine, which ships `python3` and not `python`.
+    Measured, not inferred:
+
+      - `python3 -m tiredize --help` — exit `0`, 718 bytes on stdout
+        beginning `usage: tiredize [-h] [--rules RULES_PATH]`, zero
+        bytes on stderr.
+      - `tiredize --help` (console script at
+        `/home/admin/.local/bin/tiredize`) — exit `0`, the same 718
+        bytes on stdout, zero on stderr. Byte-identical to the module
+        form, so the parity contract at `cli.md:39-41` holds on this
+        path too, which is the `prog="tiredize"` pin at `cli.py:26`
+        doing its job.
+      - `python3 -m tiredize -h` — identical to `--help`. The short
+        form takes the same path.
+      - Controls, all exit `2` with an empty stdout and everything on
+        stderr: no arguments (306 bytes), `--bogus x` (239),
+        `--rules` with its value missing (247), and `tiredize --bogus
+        x` (239) through the console script.
+      - The status is genuinely `SystemExit(0)` and not `SystemExit(None)`
+        dressed up by the shell: driving the module body in-process
+        through `runpy.run_module("tiredize", run_name="__main__")`
+        with `sys.argv` patched to `--help` yields
+        `SystemExit.code == 0`, 718 characters captured from stdout
+        and nothing from stderr. That matters because `cli.md:69-70`
+        now claims `SystemExit(0)` specifically, and it unwinds
+        through `raise SystemExit(main())` at `__main__.py:19`
+        untouched, exactly as that module's own comment says.
+
+    So both halves of iteration 1's finding are confirmed independently
+    — the status and the stream — and the corrected document is right
+    about both.
+
+    Completeness of the correction. I went back through every site in
+    `cli.md` that bears on `--help`, not only the two the finding
+    named, and each is now consistent:
+
+      - `cli.md:65-70`, the `main` argparse paragraph. Splits the two
+        kinds of argument that raise from inside `main()`: argparse's
+        own errors (unknown flag, flag missing its value) to stderr
+        with `SystemExit(2)`, and `--help` to stdout with
+        `SystemExit(0)`. Both are still named as the one place `main()`
+        exits instead of returning, which is the fact the paragraph
+        exists to carry and which `cli.py:113-114` and the docstring at
+        `cli.py:95-112` bear out.
+      - `cli.md:83`, "exactly three statuses". Now honest, because the
+        `0` row at `cli.md:87` covers `--help` explicitly. This was the
+        subtler half of the finding — the claim was falsified not by
+        what any row said but by a case no row described — and it is
+        closed.
+      - `cli.md:94-97`, the prose under the status table. This is where
+        the `2` claim was made by back-reference; argparse's errors are
+        now enumerated at the point they are claimed, and `--help` is
+        excluded by name with its status and its stream. The
+        back-reference that produced the wrong reading is gone, not
+        merely qualified.
+      - `cli.md:137-144`, Output Streams. Two rows added: the `--help`
+        text to stdout, and argparse's own error messages to stderr.
+        Both verified above. The second is beyond the finding and is
+        the right kind of over-delivery — the table claims to
+        enumerate every stream the CLI writes to, and it covered
+        neither argparse path before, so fixing only the `--help` half
+        would have left the table still incomplete on its own terms.
+      - `cli.md:146`, "Findings never go to stderr and runtime errors
+        never go to stdout" — unaffected; `--help` is neither.
+      - The Design Decisions at `cli.md:167-176` — the `prog` pin and
+        "three statuses, no more" — both still hold, and the `prog`
+        pin is now load-bearing on one more path than before.
+
+    I checked the one place a reader might still trip and judged it
+    sound rather than letting it pass unexamined: the stderr row at
+    `cli.md:143` reads "The usage message and the usage-error
+    explanation", while the `--help` text also opens with a `usage:`
+    line and goes to stdout. The row pairs the usage message with the
+    usage-error explanation, which scopes it to the usage-error path,
+    and the stdout row two lines above names the `--help` text
+    outright. No finding; recorded only so it is on the record that it
+    was looked at.
+
+    No new inaccuracy, and no stray outside the scoped revision.
+    `git diff 45e31e9 50c5209` touches two files: the issue's Comments
+    section and `.context/specifications/cli.md`. The `cli.md` diff is
+    five hunks and every one is inside the exit-status contract the
+    document already claims — no section added or removed, the
+    partial-scope declaration at `cli.md:20-26` untouched, `### Out of
+    scope`'s ban on expanding beyond the exit-code contract respected.
+    I looked for a breach rather than assuming its absence.
+
+    The File Layout nit, taken by step 6, is accurate. The cell now
+    reads "Entry-point tests, subprocess and in-process". Checked
+    against the file: `tests/test_main_module.py` has five classes —
+    `TestExitStatus` (subprocess, `-m`), `TestStreamParity` (both entry
+    points), `TestIssueAssigneeVocabulary` and
+    `TestRuleConfigurationValidation` (console script), and
+    `TestModuleExecution` (in-process, `runpy.run_module`). The new
+    wording is true of all five. Step 6 was right not to take my
+    suggested phrasing verbatim: "process-level" is false of
+    `TestModuleExecution`, so its replacement is better than the one I
+    proposed.
+
+    Criterion 8: **met.** The document exists, follows
+    `templates/SPECIFICATION.md`, and documents the exit-code contract
+    including the findings-continue and errors-abort semantics — all
+    verified path by path against the code at iteration 1 and not
+    re-derived here. The sole reason iteration 1 withheld it was that
+    the one defect sat inside the half the document claims to cover.
+    That defect is corrected, the correction is consistent everywhere
+    it bears, and nothing new was introduced. The qualification is
+    discharged and the criterion is met. I do not tick it; that is the
+    PM's, so no role signs off on its own work.
+
+    Criterion 10's second half stands as confirmed at
+    2026-09-06T08:00:00+00:00. `linter.md` was not reopened and did not
+    need to be.
+
+    The settled ground, confirmed unmoved rather than re-derived.
+    `git diff --stat 76ed4f0 HEAD` — from iteration 1's own verdict
+    commit to the tip — lists exactly two files: this issue and
+    `.context/specifications/cli.md`. No file under `tiredize/` or
+    `tests/` changed, `linter.md` did not change, and neither did
+    `README.md` or `.context/PROJECT.md`. So iteration 1's findings on
+    system-design impact — contracts, coupling and patterns all sound,
+    nothing routing back to step 3 — and its key-by-key confirmation of
+    `linter.md` stand unchanged on their own terms.
+
+    User-documentation decision: unchanged and not revisited. The
+    decision was made and logged by the architect at
+    2026-09-06T08:00:00+00:00 — the track runs, steps 8 and 9 are in,
+    and `README.md:237` lands at step 8, so the no-home contingency
+    does not fire. It stands.
+
+    `README.md:316-350`, the Custom Rules section, remains a triage
+    observation with the user as a separate decision. Out of scope
+    here, not acted on, not folded into anything.
+
+    No action tag. Step 7 is clean and the review loop closes at
+    iteration 2 of 5.
