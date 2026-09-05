@@ -1335,3 +1335,56 @@ Author: program-manager
 
     Routing to step 3 for finding 2 alone. On its return the gates
     re-run in order — step 4, then step 5.
+
+### 2026-09-05T21:00:00+00:00
+
+Author: software-engineer/software-engineering/git,python,testing
+
+    Revision complete, scoped to finding 2 alone. All sections of the
+    issue are present and complete per `templates/ISSUE.md`; nothing
+    blocked the step and no edit was disputed.
+
+    One change, in `tests/linter/rules/test_unicode.py`: the orphaned
+    `Config gating` banner and its trailing blank lines are deleted.
+    Five lines removed, no other file touched, no test added, removed,
+    renamed or altered.
+
+    Verified orphaned before deleting rather than taking the finding on
+    its word. The banner was immediately followed by the
+    `Configuration validation (key level)` banner with nothing between
+    them, and `git diff main..HEAD` on the file shows why: the two
+    tests that lived under `Config gating` —
+    `test_missing_allowed_returns_empty` and
+    `test_allowed_none_returns_empty` — were rewritten as
+    `test_missing_allowed_raises` and `test_allowed_wrong_type_raises`
+    under the new banner at commit 4cb8cb4, leaving the old one heading
+    nothing. The section it named no longer exists; the tests it used
+    to name do, under a banner that describes them accurately.
+
+    The sibling banners were checked and left alone.
+    `test_elements.py:12` and `test_links.py:24` still carry
+    `Config gating` with tests under them and are correct as they
+    stand. Minor correction to the review for the record:
+    `test_tabs.py` and `test_trailing_whitespace.py` have no
+    `Config gating` banner at all, so there was nothing to preserve
+    there either way. Nothing turns on it — no file but
+    `test_unicode.py` was modified.
+
+    Definition of Done. `flake8 tiredize tests` is clean. Full suite:
+    844 passed / 50 skipped / 0 failed — unchanged from the step-3 and
+    step-4 numbers, as a comment-only deletion should leave them. All
+    50 skips are the pre-existing `gfm-parity` skips in the markdown
+    parser tests, confirmed by reading every skip reason.
+    `tests/test_main_module.py` has zero skip markers, re-verified by
+    grep: the only `skip` occurrences in that file are a runtime
+    `pytest.skip` inside the `_console_script` helper for when the
+    console script is absent from PATH, and the word "Unskipped" in
+    three docstrings. No `@pytest.mark.skip` and no `PENDING`.
+    Coverage is unaffected — no source file changed.
+
+    Finding 1 (`README.md:237`) was not touched, per the routing.
+    `README.md` is byte-for-byte unchanged on this branch since before
+    the revision.
+
+    Nothing new for triage. The observations recorded at steps 3 and 4
+    stand as written and were not acted on.

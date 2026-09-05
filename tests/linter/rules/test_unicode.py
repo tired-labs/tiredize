@@ -11,11 +11,6 @@ from tiredize.markdown.types.document import Document
 
 
 # ===================================================================
-#  Config gating
-# ===================================================================
-
-
-# ===================================================================
 #  Configuration validation (key level)
 #
 #  `allowed` is required: without it the rule inspects nothing, so
