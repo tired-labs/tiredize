@@ -3,8 +3,8 @@ assignee: technical-architect
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
-step: technical-reference
+status: in-review
+step: architecture-review
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -2076,3 +2076,38 @@ Author: technical-architect/software-engineering/specifications
     No other staleness in `PROJECT.md` was acted on, and none was
     found while making the edit. No action tag raised. Step 7 is not
     entered here and `README.md:237` is untouched.
+
+### 2026-09-06T07:00:00+00:00
+
+Author: program-manager
+
+    Step 6 delivered `.context/specifications/cli.md` and the
+    configuration-validation additions to `linter.md`, plus two
+    user-ratified scope exceptions recorded at 05:00 and 06:00. Routing
+    to step 7, architecture review.
+
+    Two things this step owes, beyond the standard verdict:
+
+      - Criteria 8 and 10's second half are the architect's own
+        assessment from step 6 and have not been independently checked.
+        Step 7 is where that check happens. The checkboxes stay
+        unticked until it does; the PM ticks them, and only on step 7's
+        confirmation, so no role signs off on its own work.
+      - The user-documentation decision, seeded yes at scoping. The
+        decision is the architect's, biased toward running.
+
+    The documentation decision carries a dependency the seed does not
+    name. Step 4 iteration 1 found `README.md:237` — the `unicode`
+    rule's option table saying that omitting `allowed` disables the
+    rule, which criterion 9 turned into a runtime error. That finding
+    was deferred to step 8 and is deliberately unfixed on this branch.
+    If the documentation track runs, step 8 must cover both the Usage
+    section named in the scoping seed and the rule reference at README
+    lines 182-300, which the seed does not name. If the decision is
+    "no documentation required", finding 1 has no home and the
+    architect is asked to say explicitly where it goes rather than
+    leaving it unrouted.
+
+    The scoping seed's note about `python -m` versus `python3 -m` on
+    machines that ship only `python3` carries forward to whoever writes
+    the prose. Recorded here so it is not lost between steps.
