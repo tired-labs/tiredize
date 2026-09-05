@@ -371,3 +371,19 @@ Author: program-manager
     console-script behavior is no longer unchanged — change 1 alters it.
     Verified that no existing test pins the behavior being changed, so
     the reworded criterion is satisfiable.
+
+### 2026-09-05T13:00:00+00:00
+
+Author: program-manager
+
+    Approval gate 1 passed. The user approved the eight acceptance
+    criteria and the exit-code contract as written, including the
+    abort-on-runtime-error change to `main()` and its knock-on effect on
+    the console script.
+
+    Routing to step 2, acceptance test design. The qa-engineer writes
+    failing black-box tests against the Public Contract section before
+    any implementation exists. Note for that step: criterion 6 (a runtime
+    error aborts the run) asserts behavior that does not exist yet and
+    must be written to fail, not to characterize what the code does
+    today.
