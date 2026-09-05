@@ -1,10 +1,10 @@
 ---
-assignee: technical-architect
+assignee: ghostwriter
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-review
-step: architecture-review
+status: in-progress
+step: user-documentation
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -114,39 +114,39 @@ must produce the same stdout, the same stderr, and the same exit status.
 
 ## Acceptance Criteria
 
-- [ ] `python -m tiredize` exits with exactly the value returned by
+- [x] `python -m tiredize` exits with exactly the value returned by
       `tiredize.cli.main()`: `0` when all paths are clean, `1` on findings
       or runtime error, `2` on usage error
-- [ ] `tiredize/__main__.py` propagates the return value of `main()` as
+- [x] `tiredize/__main__.py` propagates the return value of `main()` as
       the process exit status (e.g. `raise SystemExit(main())`)
-- [ ] An automated test invokes `python -m tiredize` as a subprocess and
+- [x] An automated test invokes `python -m tiredize` as a subprocess and
       asserts the exit status for three cases: clean input (`0`), input
       with findings (`1`), and the usage error with no arguments (`2`)
-- [ ] Every test already in `tests/test_cli.py` passes unchanged, with one
+- [x] Every test already in `tests/test_cli.py` passes unchanged, with one
       exception: `test_valid_document_passes_rules` is repaired to
       configure `maximum_length`, because criterion 9 turns its current
       `max_length` into an error. New tests may be added to that file; no
       other existing test in it may be edited or deleted
-- [ ] `python -m tiredize` and `tiredize` produce identical stdout and
+- [x] `python -m tiredize` and `tiredize` produce identical stdout and
       stderr for the same arguments
-- [ ] A runtime error aborts the run: given several paths where an earlier
+- [x] A runtime error aborts the run: given several paths where an earlier
       one is a missing input document, no later path is processed and the
       process exits `1`. Verified for both `python -m tiredize` and the
       console script
-- [ ] `.context/schemas/issue-frontmatter.yaml` allows
+- [x] `.context/schemas/issue-frontmatter.yaml` allows
       `assignee: program-manager` in place of `PM`,
       `.context/issues/context-process-migration.md` is updated to match,
       and every file in `.context/issues/` validates clean
-- [ ] `.context/specifications/cli.md` exists, follows
+- [x] `.context/specifications/cli.md` exists, follows
       `templates/SPECIFICATION.md`, and documents the exit-code contract
       including the findings-continue and errors-abort semantics
-- [ ] An invalid rule configuration is a runtime error. All three states
+- [x] An invalid rule configuration is a runtime error. All three states
       are errors: a key the rule does not accept, a key the rule accepts
       holding a value of the wrong type, and a required key omitted. Each
       prints to stderr naming the rule id and the offending key, exits
       `1`, and aborts the run per the processing semantics above. An
       omitted optional key remains legal and is not an error
-- [ ] Every built-in rule validates its configuration this way, and
+- [x] Every built-in rule validates its configuration this way, and
       `.context/specifications/linter.md` documents the convention so a
       new rule author cannot omit it by accident
 
@@ -2754,3 +2754,56 @@ Author: technical-architect/software-engineering/specifications
 
     No action tag. Step 7 is clean and the review loop closes at
     iteration 2 of 5.
+
+### 2026-09-06T13:00:00+00:00
+
+Author: program-manager
+
+    Step 7 iteration 2 came back clean and the review loop closed. All
+    ten acceptance criteria are now ticked. Recording what each tick
+    rests on, because the PM ticks them and no role signs off on its own
+    work:
+
+      - Criteria 1-7, 9 and the code half of 10 rest on step 5's
+        independent acceptance verification, which drove 59 argument
+        lists through both entry points — 118 process invocations — and
+        checked criteria 9 and 10a against all six built-in rules
+        individually rather than by sample.
+      - Criterion 8 and the specification half of 10 rest on step 7,
+        which checked both specifications against the implementation
+        path by path rather than accepting step 6's account. Criterion
+        8 was withheld at iteration 1 over the `--help` error and
+        confirmed at iteration 2 after step 6 corrected it.
+
+    User-ratified scope exception, the third on this issue. Step 7
+    iteration 1 flagged that `README.md:316-350`, the Custom Rules
+    section, teaches a rule skeleton with no `validate_config()` call
+    and says a module need only expose a `validate` function. After
+    this branch that instructs a reader to write exactly the silent
+    config-typo swallowing criterion 9 exists to prevent. The user has
+    ratified folding it into step 8 rather than opening a separate
+    issue: step 8 is already rewriting two other README sections for
+    this same change, so it is one more section in the same pass by the
+    same writer, reviewed at step 9. The alternative ships a README
+    that contradicts itself.
+
+    Step 8's scope is therefore three README sites, not one:
+
+      - The Usage section at `README.md:63-100`, per the scoping seed —
+        the `-m` invocation and the `0`/`1`/`2` contract, where it
+        currently says only "nonzero exit code".
+      - The `unicode` rule's option table at `README.md:237`, step 4
+        finding 1 — `allowed` is required, not "omitting this option
+        disables the rule".
+      - The Custom Rules section at `README.md:316-350`, this
+        exception.
+
+    Two constraints for the prose author, both already on the record and
+    repeated so they are not lost at the hand-off. Errors-abort is a
+    behaviour change for existing console-script users, not only for
+    `-m`. And this issue says `python -m tiredize` throughout, but many
+    machines ship only `python3` — including the one this issue was
+    scoped on, where `python` returns 127. Reader-facing prose must not
+    tell people to run a command that may not exist.
+
+    Routing to step 8, user documentation, ghostwriter.
