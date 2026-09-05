@@ -449,7 +449,6 @@ class TestIssueAssigneeVocabulary:
     validate `.context/issues/`, and its exit status is already correct.
     """
 
-    @pytest.mark.skip(reason=PENDING)
     def test_program_manager_is_allowed(self, tmp_path):
         doc = tmp_path / "tea_break.md"
         doc.write_text(_issue_frontmatter("program-manager"))
@@ -460,7 +459,6 @@ class TestIssueAssigneeVocabulary:
         assert result.returncode == 0
         assert "no issues found" in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     def test_pm_is_no_longer_allowed(self, tmp_path):
         """`program-manager` replaces `PM` rather than joining it.
 
