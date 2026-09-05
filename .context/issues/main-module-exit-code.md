@@ -1858,3 +1858,177 @@ Author: program-manager
     Routing step 6 alone. The pipeline returns to the user before step
     7, because step 7 carries the documentation-track decision and that
     is worth surfacing rather than passing through.
+
+### 2026-09-06T04:00:00+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Technical reference. Verdict: contracts changed; two
+    specifications written. No open question raised, so the step
+    completed rather than stopping.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md` — Summary, Acceptance Criteria, Design
+    Decisions, Open Questions, Comments — and nothing blocked the
+    step.
+
+    Assessment of the diff, made against `git diff main..HEAD`
+    rather than against the issue's description of it. Three
+    contract changes, in two subsystems:
+
+      - The process exit status of `python -m tiredize`. A public
+        entry point's observable status changes for every path that
+        returns rather than raises.
+      - `main()`'s abort semantics. A missing input document now
+        returns `1` immediately (`cli.py:133-141`) instead of
+        setting the status and continuing, so the rule is uniform:
+        errors abort, findings continue. This lands on both entry
+        points, not just `-m`.
+      - The rule-module convention. `validate_config()` is new
+        public surface in `tiredize/linter/utils.py`, every one of
+        the six built-in rules calls it as the first statement of
+        `validate()`, and four rules that previously returned `[]`
+        for an absent required key now raise `ValueError`. What was
+        a silent no-op is now a runtime error that aborts the run.
+
+    The scoping seed directed a `cli.md`, and the assessment agrees
+    with it independently: the first two items alone would have
+    required one whether or not the criteria named it, and the third
+    would have required the `linter.md` update on its own.
+
+    What was written.
+
+    `.context/specifications/cli.md` — new, following
+    `templates/SPECIFICATION.md`. Overview states the CLI's ownership
+    and its boundary against the parser, the linter and the two
+    validators, and says in its own paragraph that the document is
+    partial: it covers the exit-status contract and the stream and
+    abort semantics only, and silence on flags, output format and
+    configuration resolution is an unwritten section rather than an
+    absence of behavior, with a pointer to `tiredize/cli.py` for
+    anything not covered. Contracts and Interfaces gives the two
+    entry points, the parity requirement between them, and `main()`'s
+    signature with the returns-rather-than-exits contract and the
+    argparse exception to it. File Layout covers four files. The
+    domain section, Exit Status Contract, holds the status table, the
+    findings-versus-runtime-errors split with the exception types the
+    subsystems raise, the errors-abort/findings-continue semantics
+    including the consequence that a run ending in a runtime error is
+    not a complete report, the per-path processing order, and the
+    stream table. Four Design Decisions.
+
+    Scope held to the seed. Nothing in `cli.md` documents the flags
+    beyond naming the three whose absence is a usage error, and
+    nothing documents output format beyond the finding line's shape,
+    which the parity and stream contracts depend on. `### Out of
+    scope` is respected.
+
+    `.context/specifications/linter.md` — updated in four places.
+    Rule Module Convention gains a fourth requirement — declare the
+    accepted and required keys, call `validate_config()` first — with
+    a worked module skeleton, so the step-2 test ("would a new rule
+    author following the spec alone write the check?") is answerable
+    from that section without reading a rule's source. Configuration
+    Helpers now carries `validate_config()`'s signature and corrects
+    the two sentences the implementation falsified: the accessors
+    still return `None` for both missing and wrong-typed keys and
+    still raise nothing, but that is now stated as the reason they
+    cannot police configuration themselves, and the section says what
+    `None` means inside a rule once `validate_config()` has run. A
+    new domain section, Rule Configuration Validation, covers the
+    three fault states, the fixed reporting order and why unknown
+    keys come first, the five-name type vocabulary and the bool/int
+    guard, the required-versus-optional principle with the per-rule
+    key table for all six rules, and the key-level-only boundary
+    against the value-level checks rules perform themselves. Design
+    Decisions replaces "None recorded yet." with five entries.
+
+    Design Decisions migrated from this issue, per the step's
+    instruction to carry across anything whose reversal would
+    materially change the subsystem:
+
+      - `### Errors abort the run` → `cli.md`, with the batch-
+        validator alternative recorded as the alternative rather than
+        as history.
+      - `### Validating rule configuration` → `linter.md`, split into
+        four: the shared helper over per-rule checks, key sets
+        declared in the module rather than on `Rule`, configuration
+        mistakes as errors rather than degraded rules, and "enabling
+        a rule must never be a no-op" as what settles required versus
+        optional.
+      - `### Fix idiom` is recorded as contract, not as decision:
+        `cli.md` states that `__main__.py` must raise the status and
+        that a caller discarding the return value discards the
+        failure signal. `raise SystemExit` versus `sys.exit` is
+        repository consistency and does not change behavior, so it is
+        not a Design Decision.
+
+    Not migrated, deliberately: the test-file naming and organization
+    decision, the `__main__.py` coverage approach, the step-ownership
+    decisions, and the assignee-vocabulary fix. The first three are
+    process and test-suite history; the fourth is project tooling and
+    belongs to no subsystem specification.
+
+    Two decisions recorded in `cli.md` that came from the code rather
+    than from the issue's Design Decisions: `main()` returning rather
+    than exiting, and `prog="tiredize"` being pinned in the parser.
+    The second is load-bearing for criterion 5 — without the pin,
+    argparse derives `prog` from `sys.argv[0]` and renders it as
+    `__main__.py` under module execution, and the stream-parity
+    contract fails on every usage message. Step 5 observed the parity;
+    the specification now records why it holds.
+
+    Criterion status, in my own assessment.
+
+      - Criterion 8. Met. `.context/specifications/cli.md` exists,
+        follows the template's section order, documents the exit-code
+        contract, and documents both the findings-continue and the
+        errors-abort semantics, which the criterion names explicitly.
+      - Criterion 10, second half. Met.
+        `.context/specifications/linter.md` documents the convention
+        as a numbered requirement of the rule-module convention, with
+        the declaration skeleton, the classification principle and the
+        per-rule key table. Applying step 5's test to the updated
+        text: a new rule author reading Rule Module Convention and
+        Rule Configuration Validation has the requirement, the shape
+        of the declaration, the rule for classifying each key, and the
+        consequence of skipping it. The answer is now yes.
+
+    I do not tick the checkboxes; they are the PM's.
+
+    One scope note, so it is on the record rather than silent.
+    `linter.md`'s File Layout listed four rule modules and omitted
+    `elements.py`, `unicode.py` and `_elements.py` — stale before this
+    branch, unrelated to it. I corrected it because the section I
+    added enumerates the accepted keys of all six rules, and leaving
+    the layout naming four would have put a contradiction inside the
+    document I was writing. `utils.py`'s entry gained
+    `validate_config`, which is this branch's change. Nothing else in
+    the file's pre-existing content was touched.
+
+    One observation for triage, not acted on. `.context/PROJECT.md`
+    lists the CLI under Architecture but carries no
+    `Spec: specifications/cli.md` pointer, where all four other
+    subsystems do. A reader following PROJECT.md will not find the new
+    document. It is one line, in a file outside this issue's criteria,
+    so I have left it for the PM to route.
+
+    `README.md:237` is deferred to step 8 and was not touched, per the
+    routing. The step-7 documentation-track decision is not made here.
+
+    Action: @workflow-owner — process improvement
+
+    `knowledge/specifications.md` has no guidance for authoring a
+    deliberately partial specification, which is what criterion 8
+    required. Its structure section assumes a specification describes
+    its subsystem whole, and "a specification is a reference, not a
+    history" gives no way to say "this section does not exist yet"
+    without it reading as a TODO — which the same file forbids. I
+    resolved it by stating the partiality in the Overview as a
+    scope boundary rather than as planned work, and by pointing the
+    reader at the source for what is not covered. That reading is
+    mine, not the knowledge file's. Since seeding a specification from
+    one issue and growing it across later ones is a pattern this
+    project will hit again, the knowledge file is worth a short
+    paragraph saying how a partial specification declares its own
+    boundary. Raising it for closeout, not blocking on it.
