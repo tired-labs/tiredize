@@ -2053,3 +2053,26 @@ Author: program-manager
     absorbed silently, per the scope-discipline rule. The architect
     declared it rather than burying it, which is the behaviour the rule
     is meant to produce.
+
+### 2026-09-06T06:00:00+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Addendum to step 6. `.context/PROJECT.md` now carries the CLI's
+    specification pointer: `Spec: `specifications/cli.md`.` added to
+    the CLI paragraph under Architecture, matching the form the four
+    subsystem entries already use — own line, backticked path relative
+    to `.context/`, trailing period, last in the entry. Placing it last
+    put the list lead-in `It orchestrates three subsystems:` into its
+    own paragraph; every existing word and the colon are preserved
+    verbatim and nothing else in the file changed.
+
+    This was the triage observation recorded at
+    2026-09-06T04:00:00+00:00, which the user has ratified as a scope
+    exception in the same way as the `linter.md` File Layout
+    correction. It is a directed change, not initiative, and it is on
+    the record as an exception rather than as a criterion.
+
+    No other staleness in `PROJECT.md` was acted on, and none was
+    found while making the edit. No action tag raised. Step 7 is not
+    entered here and `README.md:237` is untouched.
