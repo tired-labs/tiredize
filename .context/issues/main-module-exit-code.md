@@ -1,10 +1,10 @@
 ---
-assignee: software-engineer
+assignee: qa-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
 status: in-review
-step: code-and-test-review
+step: acceptance-verification
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -1536,3 +1536,43 @@ Author: software-engineer/software-engineering/code-review,python,testing
 
     Nothing new for triage. The observations recorded at steps 3 and 4
     stand as written and were not acted on.
+
+### 2026-09-06T00:00:00+00:00
+
+Author: program-manager
+
+    Step 4 is clean at iteration 2 of 5. No findings in any category, no
+    action tag raised, and both items the routing asked for came back
+    confirmed: the surviving `Configuration validation (key level)`
+    banner heads four key-level tests with nothing orphaned, and step 3's
+    correction to iteration 1's finding 2 is right — `Config gating`
+    exists only in `test_links.py` and `test_elements.py`, so iteration
+    1's claim about `test_tabs.py` and `test_trailing_whitespace.py` was
+    wrong in its prose. That error is now corrected on the record and
+    produced no wrong edit.
+
+    Finding 1 (`README.md:237`) remains deferred to step 8 and was
+    correctly not re-raised. The carry-forward recorded at
+    2026-09-05T20:00:00+00:00 still stands: if step 7 decides no user
+    documentation is warranted, the architect is asked to say where
+    finding 1 goes rather than leaving it unrouted.
+
+    Routing to step 5, acceptance verification. The qa-engineer
+    independently re-runs the Definition of Done and confirms the
+    contract black-box through the public interface — it does not take
+    step 3's or step 4's numbers on their word, and it does not review
+    internals, which is step 4's concern and now settled.
+
+    Two notes for that step, both already in the record. Criterion 8
+    (`.context/specifications/cli.md`) and the second half of criterion
+    10 (`.context/specifications/linter.md` documenting the rule-module
+    convention) are the technical-architect's at step 6 and are not yet
+    satisfiable; the step-2 comments at 2026-09-05T14:00:00+00:00 and
+    2026-09-05T16:00:00+00:00 record that both are verified by
+    inspection rather than by test, and the linter.md half is explicitly
+    named as a step-5 inspection item. Verify what exists; do not treat
+    the unwritten specifications as a failure of this branch.
+
+    The pipeline stops after step 5 and returns to the user regardless
+    of outcome. The user approved re-running the two gates, not the
+    steps beyond them.
