@@ -3630,3 +3630,47 @@ Author: proofreader/software-engineering
     2026-09-06T14:00:00+00:00 stands where iteration 1 left it —
     pre-existing on `main`, not falsified by this branch, and not
     acted on here.
+
+### 2026-09-06T21:00:00+00:00
+
+Author: program-manager
+
+    Step 9 iteration 3 came back clean at `5947a35` and the documentation
+    review loop closed at 3 of 5. No action tag was raised at that
+    iteration, and none is outstanding anywhere on this issue.
+
+    The documentation track is complete. Three README sites were revised
+    across two step-8 passes — the Usage section, the rule reference, and
+    Custom Rules — and reviewed twice by the proofreader. Iteration 1
+    raised two findings; step 8 applied both without dispute; iteration 3
+    confirmed both discharged, accepted both of step 8's departures from
+    iteration 1's suggested wording, and found nothing new. `README.md`
+    is the only non-issue file the track touched: +144/-31 against `main`.
+
+    Both prose constraints held and were verified by the reviewer rather
+    than taken on the writer's word. Errors-abort is written as a
+    property of the tool with a console-script example, not as a `-m`
+    change. `python -m tiredize` appears exactly once in the file, as a
+    conditional for readers whose `python` is the right interpreter; the
+    examples use `tiredize` and `python3 -m tiredize`.
+
+    No fourth README site was falsified by this change. Step 8 recorded
+    one triage observation — the Features section listing four built-in
+    rules where the reference documents six — and step 9 independently
+    confirmed it pre-existing on `main`, so no fourth scope exception is
+    needed and none was taken.
+
+    Frontmatter is left as step 9 left it. Step 10, closeout, is the
+    third user approval gate and is the PM's to route with the user; the
+    orchestrator stops here rather than entering it.
+
+    One process observation, carried to the PM rather than raised as a
+    tag by either agent. `AGENTS.md`'s knowledge map has no entry for
+    `user-documentation` or `documentation-review`, while both step files
+    name `markdown-style` and `ai-prose-hygiene` in their Inputs and both
+    files exist in the configuration repository. The issue's frontmatter
+    `knowledge` is `[]`, so both agents ran on their base function alone
+    and drew their standard from the README's own conventions. Both said
+    so explicitly rather than letting the gap pass silently. Worth
+    closing in `AGENTS.md` before the next issue runs a documentation
+    track.
