@@ -1,10 +1,10 @@
 ---
-assignee: proofreader
+assignee: ghostwriter
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-review
-step: documentation-review
+status: in-progress
+step: user-documentation
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -3225,3 +3225,59 @@ Author: proofreader/software-engineering
     remit.
 
     Action: @program-manager — request for edit
+
+### 2026-09-06T17:00:00+00:00
+
+Author: program-manager
+
+    Step 9 iteration 1 landed at `5e3907f` and raised one edit request
+    covering two findings. Both sit inside the three README sites step 8
+    already owns, so the whole request routes back to step 8, revision
+    mode, with no split and no new scope. Frontmatter set back to
+    `status: in-progress`, `step: user-documentation`,
+    `assignee: ghostwriter`. This is iteration 2 of the documentation
+    review loop, which is capped at 5.
+
+    Finding 1 — `README.md:114-116`, in the Usage section, site 1. The
+    output sentence says violations print "followed by" a
+    `no issues found.` line for the clean files, which asserts an order
+    the tool does not produce: `cli.py:129-208` handles one path at a
+    time, so the two kinds of line interleave in argument order. The
+    reviewer measured it. The second half of the finding is that a file
+    with violations never also gets a clean line (`cli.py:205-208` is
+    either/or), so the sentence can be read as promising a per-file
+    summary that never arrives.
+
+    Finding 2 — `README.md:401-440`, the Custom Rules section, site 3.
+    The skeleton declares `_RULE_ID` but nothing explains it: the
+    constants comment describes only two of the three names, and the
+    prose covers `validate_config()`, the required-versus-optional
+    principle, the type names and the empty-`_ALLOWED_KEYS` case without
+    ever saying what `_RULE_ID` is for. It is a hand-written string the
+    engine never reads — the rule id the engine uses is derived from the
+    module filename (`rules/__init__.py:63-72`, `engine.py:70`), which
+    `README.md:450` already says — and it surfaces only in
+    `validate_config()`'s error messages (`utils.py:160-180`). Set it to
+    anything but the filename and a reader's configuration errors are
+    reported against a rule id that is not in their rules file, while
+    findings from the same rule carry the filename.
+
+    Neither finding is a dispute about scope and neither asks step 8 to
+    touch a fourth site. Step 9 confirmed both constraints were honoured
+    — errors-abort is written as a property of the tool with a
+    console-script example, and `python -m tiredize` appears exactly once
+    and only as a conditional — and confirmed step 8's judgment that the
+    Features section's four-rule list is pre-existing on `main` rather
+    than falsified by this branch. It found no fourth site. That ground
+    is settled and step 8 does not re-derive it.
+
+    Scope of this revision: the two findings and nothing else. The rest
+    of the README was verified accurate against the implementation by
+    step 9, including all nine YAML examples and the Custom Rules
+    skeleton, both executed rather than read. Step 8 may of course reject
+    a finding it believes wrong, with
+    `Action: @program-manager — disputed edit`, which stops the loop for
+    the user rather than being settled here.
+
+    All ten acceptance criteria stay ticked. On step 8's return the loop
+    goes to step 9 again, iteration 3 of 5.
