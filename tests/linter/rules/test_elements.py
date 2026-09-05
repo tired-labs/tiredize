@@ -21,20 +21,63 @@ def test_empty_disallow_returns_empty():
     assert results == []
 
 
-def test_missing_disallow_returns_empty():
-    """No disallow key in config produces no violations."""
-    doc = Document()
-    doc.load(text="# H\n[click](https://example.com)\n")
-    results = validate(doc, {})
-    assert results == []
-
-
 def test_unknown_element_name_raises():
     """An unknown element name in disallow raises ValueError."""
     doc = Document()
     doc.load(text="# H\n")
     with pytest.raises(ValueError, match="bad_element"):
         validate(doc, {"disallow": ["bad_element"]})
+
+
+# ===================================================================
+#  Configuration validation (key level)
+#
+#  `disallow` is required: without it the rule inspects nothing, so
+#  enabling `elements` would be a no-op. See "Validating rule
+#  configuration" in .context/issues/main-module-exit-code.md.
+# ===================================================================
+
+
+def test_missing_disallow_raises():
+    """Enabling the rule without `disallow` would check nothing."""
+    doc = Document()
+    doc.load(text="# H\n[click](https://example.com)\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {})
+    message = str(excinfo.value)
+    assert "elements" in message
+    assert "disallow" in message
+
+
+def test_unknown_key_raises():
+    """A key the rule does not accept is an error."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"disallow": [], "snooze_button": True})
+    message = str(excinfo.value)
+    assert "elements" in message
+    assert "snooze_button" in message
+
+
+def test_disallow_wrong_type_raises():
+    """`disallow` wants a list, not a bare string."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="disallow"):
+        validate(doc, {"disallow": "table"})
+
+
+def test_unknown_key_reported_before_bad_element_name():
+    """Key-level validation runs before the value-level check."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(
+            doc,
+            {"disallow": ["bad_element"], "snooze_button": True},
+        )
+    assert "snooze_button" in str(excinfo.value)
 
 
 # ===================================================================
@@ -184,3 +227,11 @@ def test_does_not_mutate_config():
     config_copy = copy.deepcopy(config)
     validate(doc, config)
     assert config == config_copy
+
+
+def test_non_string_disallow_entry_still_raises_value_level_error():
+    """Key-level validation does not swallow the value-level check."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="entries must be strings"):
+        validate(doc, {"disallow": [42]})

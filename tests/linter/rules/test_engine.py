@@ -55,7 +55,13 @@ def test_run_linter_no_violations():
     assert len(results) == 0
 
 
-def test_run_linter_undefined_rule():
+def test_run_linter_undefined_rule_key_raises():
+    """A key the rule does not accept propagates as a ValueError.
+
+    Formerly this asserted that an unrecognized key was silently
+    ignored, which is the silent no-op criteria 9 and 10 of
+    .context/issues/main-module-exit-code.md exist to remove.
+    """
     markdown = """# Nothing matters."""
     doc = Document()
     doc.load(text=markdown)
@@ -66,11 +72,14 @@ def test_run_linter_undefined_rule():
         }
     }
 
-    results = run_linter(
-        document=doc,
-        rule_configs=rule_configs
-    )
-    assert len(results) == 0
+    with pytest.raises(ValueError) as excinfo:
+        run_linter(
+            document=doc,
+            rule_configs=rule_configs
+        )
+    message = str(excinfo.value)
+    assert "line_length" in message
+    assert "undefined_rule_for_testing" in message
 
 
 def test_run_linter_one_violation():

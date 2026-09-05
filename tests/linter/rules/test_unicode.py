@@ -15,18 +15,59 @@ from tiredize.markdown.types.document import Document
 # ===================================================================
 
 
-def test_missing_allowed_returns_empty():
-    """When 'allowed' is absent the rule is a no-op."""
-    doc = Document()
-    doc.load(text="# Héllo\n\ncafé\n")
-    assert validate(doc, {}) == []
+# ===================================================================
+#  Configuration validation (key level)
+#
+#  `allowed` is required: without it the rule inspects nothing, so
+#  enabling `unicode` would be a no-op. See "Validating rule
+#  configuration" in .context/issues/main-module-exit-code.md.
+# ===================================================================
 
 
-def test_allowed_none_returns_empty():
-    """When 'allowed' is None (non-bool value) the rule is a no-op."""
+def test_missing_allowed_raises():
+    """Enabling the rule without `allowed` would check nothing."""
     doc = Document()
     doc.load(text="# Héllo\n\ncafé\n")
-    assert validate(doc, {"allowed": "yes"}) == []
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {})
+    message = str(excinfo.value)
+    assert "unicode" in message
+    assert "allowed" in message
+
+
+def test_allowed_wrong_type_raises():
+    """A non-bool 'allowed' is a configuration error, not a no-op."""
+    doc = Document()
+    doc.load(text="# Héllo\n\ncafé\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": "yes"})
+    message = str(excinfo.value)
+    assert "unicode" in message
+    assert "allowed" in message
+
+
+def test_unknown_key_raises():
+    """A key the rule does not accept is an error."""
+    doc = Document()
+    doc.load(text="# Héllo\n\ncafé\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": True, "snooze_button": True})
+    message = str(excinfo.value)
+    assert "unicode" in message
+    assert "snooze_button" in message
+
+
+def test_unknown_key_reported_before_bad_element_name():
+    """Key-level validation runs before the value-level check."""
+    doc = Document()
+    doc.load(text="# Héllo\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {
+            "allowed": False,
+            "exclude": ["bogus_element"],
+            "snooze_button": True,
+        })
+    assert "snooze_button" in str(excinfo.value)
 
 
 # ===================================================================

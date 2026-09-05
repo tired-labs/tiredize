@@ -66,13 +66,6 @@ WRONG_TYPED_RULE_CONFIGS = {
     "unicode": ("allowed", "  allowed: sure thing\n"),
 }
 
-# Tests below assert the contract, not today's behaviour. They fail
-# until the fix lands; see the tracking issue named in this reason.
-PENDING = (
-    "Pending the fix in .context/issues/main-module-exit-code.md; "
-    "remove this skip when the fix lands."
-)
-
 
 def _console_script() -> str:
     """Absolute path to the installed `tiredize` console script."""
@@ -500,7 +493,6 @@ class TestRuleConfigurationValidation:
     # --- required key (`maximum_length`) and an unambiguous optional
     # --- one (`exclude`).
 
-    @pytest.mark.skip(reason=PENDING)
     def test_unknown_key_is_an_error(self, tmp_path):
         """`max_length` is not a key `line_length` accepts.
 
@@ -520,7 +512,6 @@ class TestRuleConfigurationValidation:
         assert "max_length" in result.stderr
         assert "no issues found" not in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     def test_required_key_with_wrong_type_is_an_error(self, tmp_path):
         """`maximum_length` wants an integer, not a string."""
         doc = _write_clean_document(tmp_path)
@@ -534,7 +525,6 @@ class TestRuleConfigurationValidation:
         assert "line_length" in result.stderr
         assert "maximum_length" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_optional_key_with_wrong_type_is_an_error(self, tmp_path):
         """`exclude` wants a list, not a bare string.
 
@@ -554,7 +544,6 @@ class TestRuleConfigurationValidation:
         assert "line_length" in result.stderr
         assert "exclude" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_required_key_omitted_is_an_error(self, tmp_path):
         """`line_length` cannot run without `maximum_length`.
 
@@ -572,7 +561,6 @@ class TestRuleConfigurationValidation:
         assert "line_length" in result.stderr
         assert "maximum_length" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_unicode_required_key_omitted_is_an_error(self, tmp_path):
         """A second rule with an unambiguously required key.
 
@@ -612,7 +600,6 @@ class TestRuleConfigurationValidation:
 
     # --- An invalid configuration aborts the run ---
 
-    @pytest.mark.skip(reason=PENDING)
     def test_invalid_configuration_aborts_the_run(self, tmp_path):
         """A later path goes unprocessed and is never reported."""
         first = _write_clean_document(tmp_path)
@@ -636,7 +623,6 @@ class TestRuleConfigurationValidation:
 
     # --- Every built-in rule validates its configuration ---
 
-    @pytest.mark.skip(reason=PENDING)
     @pytest.mark.parametrize(
         "rule_id", sorted(BASELINE_RULE_CONFIGS)
     )
@@ -662,7 +648,6 @@ class TestRuleConfigurationValidation:
         assert "snooze_button" in result.stderr
         assert "no issues found" not in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     @pytest.mark.parametrize(
         "rule_id", sorted(WRONG_TYPED_RULE_CONFIGS)
     )

@@ -63,7 +63,7 @@ def test_valid_document_passes_rules(capsys, tmp_path):
     rules = tmp_path / "lenient_rules.yaml"
     rules.write_text(
         "line_length:\n"
-        "  max_length: 80\n"
+        "  maximum_length: 80\n"
     )
     result = main([
         "--rules", str(rules),
