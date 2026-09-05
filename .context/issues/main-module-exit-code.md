@@ -1,9 +1,9 @@
 ---
-assignee: user
+assignee: qa-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: blocked
+status: in-progress
 step: acceptance-test-design
 tags: [cli, exit-code, validation]
 type: bug
@@ -82,8 +82,9 @@ missing, sections out of order, wrong heading level), or a frontmatter
 schema violation (missing required field, wrong type, disallowed value).
 
 *Runtime errors* — an input document that does not exist, a
-configuration file that is missing or unparseable, an unknown rule id, or
-an ambiguous schema.
+configuration file that is missing or unparseable, an unknown rule id, an
+invalid rule configuration (an unknown key, a known key holding a
+wrong-typed value, or a required key omitted), or an ambiguous schema.
 
 **Processing semantics.** Findings do not stop the run: every path is
 processed, every finding is reported, and the process exits `1` at the
@@ -121,9 +122,11 @@ must produce the same stdout, the same stderr, and the same exit status.
 - [ ] An automated test invokes `python -m tiredize` as a subprocess and
       asserts the exit status for three cases: clean input (`0`), input
       with findings (`1`), and the usage error with no arguments (`2`)
-- [ ] Every test already in `tests/test_cli.py` passes unchanged. New
-      tests may be added to that file; existing ones may not be edited or
-      deleted
+- [ ] Every test already in `tests/test_cli.py` passes unchanged, with one
+      exception: `test_valid_document_passes_rules` is repaired to
+      configure `maximum_length`, because criterion 9 turns its current
+      `max_length` into an error. New tests may be added to that file; no
+      other existing test in it may be edited or deleted
 - [ ] `python -m tiredize` and `tiredize` produce identical stdout and
       stderr for the same arguments
 - [ ] A runtime error aborts the run: given several paths where an earlier
@@ -137,6 +140,15 @@ must produce the same stdout, the same stderr, and the same exit status.
 - [ ] `.context/specifications/cli.md` exists, follows
       `templates/SPECIFICATION.md`, and documents the exit-code contract
       including the findings-continue and errors-abort semantics
+- [ ] An invalid rule configuration is a runtime error. All three states
+      are errors: a key the rule does not accept, a key the rule accepts
+      holding a value of the wrong type, and a required key omitted. Each
+      prints to stderr naming the rule id and the offending key, exits
+      `1`, and aborts the run per the processing semantics above. An
+      omitted optional key remains legal and is not an error
+- [ ] Every built-in rule validates its configuration this way, and
+      `.context/specifications/linter.md` documents the convention so a
+      new rule author cannot omit it by accident
 
 ## Design Decisions
 
@@ -294,6 +306,41 @@ across two files, it affects no other workflow, and it unblocks correct
 assignee values on the very next step of this issue. The scope-discipline
 objection was raised and overruled by the user.
 
+### Validating rule configuration
+
+Criteria 9 and 10 were folded in at the gate-2 open question, against the
+PM's recommendation to split them out. The user weighed the argument and
+chose to fold. This roughly doubles the issue: it changes the linter
+engine, not just the CLI exit-code plumbing.
+
+**Where the key set lives.** A rule already receives its whole config
+dict, so nothing forces its accepted keys onto the `Rule` dataclass and
+the discovery mechanism does not change. Each rule declares its own
+accepted and required keys inline and validates them as the first thing
+`validate()` does. To keep the check uniform, add one shared helper
+beside the existing accessors in `tiredize/linter/utils.py` — something
+of the shape `validate_config(config, allowed, required, rule_id)` — and
+have every rule call it. Writing the check seven times by hand was
+rejected: the messages would drift between rules and a new rule author
+who forgets it reintroduces the silent failure with nothing to catch it.
+
+**Why the accessors are not enough.** `get_config_int` and its siblings
+return `None` for a key that is missing *and* for one holding the wrong
+type (`utils.py:20-22`), so they cannot tell the two apart. The three
+error states must be distinguished before the accessors are reached,
+which is why the check belongs at the top of `validate()` rather than
+inside the accessors.
+
+**Deriving required versus optional.** Do not invent a policy per rule.
+A key the rule currently treats as fatal — reading it and returning `[]`
+when it is `None`, as `line_length.py:62-64` does with `maximum_length` —
+is required. A key with a fallback default — `get_config_list(...) or []`,
+as with `exclude` — is optional. Preserve each rule's existing intent.
+
+**Spec consequence.** This changes the rule-module convention, so step 6
+now updates `.context/specifications/linter.md` as well as authoring
+`cli.md`. That is criterion 10's second half.
+
 ### Out of scope
 
 - Adding the self-validation invocation to `.githooks/pre-commit`. That
@@ -345,12 +392,16 @@ instance: it configures `max_length` where `line_length.py:62` reads
 `maximum_length`, so the rule never runs and the test asserts a clean
 document against a check that did not execute.
 
-Awaiting a user decision on whether this becomes a ninth acceptance
-criterion here or a separate issue, and on the intended behavior: which
-key states are errors, whether a misspelled key is distinguished from a
-correctly spelled key holding a wrong-typed value, and what the message
-says. Blocking, because a ninth criterion would require re-entering step
-2 to author its acceptance tests.
+**Resolved.** The user folded it into this issue as criteria 9 and 10
+rather than splitting it out, and ruled that all three key states are
+errors — unknown key, wrong-typed value, and omitted required key. The
+design is recorded under "Validating rule configuration" in Design
+Decisions. Criterion 4 was amended to permit repairing
+`test_valid_document_passes_rules`, which criterion 9 would otherwise
+break while criterion 4 forbade touching it.
+
+Step 2 is re-entered to author acceptance tests for criteria 9 and 10
+before implementation begins.
 
 ## Comments
 
