@@ -1435,3 +1435,104 @@ Author: program-manager
     50 skipped / 0 failed, the 50 all pre-existing gfm-parity skips.
     Verified directly at routing time, not carried over from step 3's
     report.
+
+### 2026-09-05T23:00:00+00:00
+
+Author: software-engineer/software-engineering/code-review,python,testing
+
+    Code and test review, iteration 2 of 5. Verdict: clean. No
+    findings in any category. No action tag raised.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md` — Summary, Acceptance Criteria, Design
+    Decisions, Open Questions, Comments — and nothing blocked the
+    step.
+
+    Scope honoured. Per the routing at 2026-09-05T22:00:00+00:00 the
+    items the 2026-09-05T20:00:00+00:00 iteration listed as checked
+    and found correct were treated as settled and not re-derived.
+    Finding 1 (`README.md:237`) is deferred to step 8 and is not
+    re-raised here; `README.md` is byte-for-byte unchanged since that
+    review, confirmed by `git diff 84f32be HEAD -- README.md` being
+    empty.
+
+    The change under review, confirmed. `git diff --stat 84f32be HEAD
+    -- . ':!.context/issues'` shows exactly one file changed:
+    `tests/linter/rules/test_unicode.py`, 5 deletions, 0 insertions.
+    `git diff --stat 84f32be HEAD -- tiredize/` is empty, so the
+    source is untouched since the clean verdict. The deleted lines are
+    the `Config gating` banner and its two trailing blank lines —
+    comment text only, no code, no test.
+
+    Confirmation 1 — the surviving section is correctly headed. In the
+    file as it now stands, `Configuration validation (key level)` sits
+    at lines 13-19, directly after the imports, and heads four tests:
+    `test_missing_allowed_raises`, `test_allowed_wrong_type_raises`,
+    `test_unknown_key_raises` and
+    `test_unknown_key_reported_before_bad_element_name`. All four are
+    key-level configuration checks, which is what the banner names, so
+    none is orphaned or misfiled by the removal. The banner's body
+    text explaining why `allowed` is required survived the deletion
+    intact. No test was added, removed, renamed or reordered — the
+    diff is deletions only, and the suite count is unchanged. The
+    later `Config validation` banner at line 240 still heads the two
+    value-level checks (`test_unknown_exclude_element_raises`,
+    `test_non_string_exclude_entry_raises`); it is pre-existing, not
+    in the diff, and describes its tests accurately.
+
+    Confirmation 2 — step 3's correction is right, and iteration 1 was
+    wrong. `grep -rn "Config gating" tests/` returns exactly two hits
+    across the whole test tree: `test_links.py:24` and
+    `test_elements.py:12`. `tests/linter/rules/test_tabs.py` and
+    `tests/linter/rules/test_trailing_whitespace.py` carry no
+    `Config gating` banner at all, so the previous iteration's
+    sentence "the equivalent banners in `test_elements.py`,
+    `test_links.py`, `test_tabs.py` and `test_trailing_whitespace.py`
+    still have tests under them" was incorrect on the last two named
+    files — there is no such banner in either to have tests under.
+    The error was in the review's prose only; it produced no wrong
+    edit, since step 3 touched neither file. The correction is
+    confirmed and stands.
+
+    The two banners that do exist were re-checked and are not
+    orphaned: `test_elements.py:12` heads
+    `test_empty_disallow_returns_empty` and
+    `test_unknown_element_name_raises`; `test_links.py:24` heads
+    `test_validate_false_returns_empty`. Both sections have content,
+    and neither file was modified.
+
+    Findings by category:
+
+      - Unused parameters or dead code -- none found. The banner that
+        was the previous iteration's only entry in this category is
+        gone, and its removal introduced no new dead comment or
+        unreferenced helper.
+      - Duplicate or redundant logic -- none found.
+      - Missing input validation -- none found.
+      - Inconsistencies between parallel code paths -- none found.
+      - Silent acceptance of invalid input -- none found.
+      - Reachable bugs or error-handling gaps -- none found.
+      - Contract violations -- none found.
+      - Spec fidelity gaps -- none found on this branch's code and
+        tests. (`README.md:237` is deferred to step 8 by PM routing
+        and is deliberately not counted here.)
+      - File organization violations -- none found.
+        `tiredize/linter/rules/unicode.py` still has exactly one test
+        file, `tests/linter/rules/test_unicode.py`, and the deletion
+        moved nothing between files.
+
+    Definition of Done, observed directly rather than carried over.
+    `flake8 tiredize tests` is clean. Full suite: 844 passed / 50
+    skipped / 0 failed — identical to the step-3 and iteration-1
+    numbers, as a comment-only deletion should leave them. All 50
+    skips are the pre-existing gfm-parity skips in the markdown parser
+    tests, confirmed by counting skip reasons with `pytest -rs`: 50 of
+    50 lines carry `gfm-parity:`. `tests/test_main_module.py` still
+    has zero skip markers — the only `skip` occurrences are the
+    runtime `pytest.skip` in the `_console_script` helper at line 74
+    and the word "Unskipped" in three docstrings. Working tree clean.
+    Coverage was not re-measured: no source file changed since the
+    iteration-1 measurement, so the figures recorded there still hold.
+
+    Nothing new for triage. The observations recorded at steps 3 and 4
+    stand as written and were not acted on.
