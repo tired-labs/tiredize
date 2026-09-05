@@ -935,3 +935,25 @@ Author: qa-engineer/software-engineering/testing
         this suite breaks — the fixtures were built to be neutral —
         but it is worth a deliberate call at step 3 rather than an
         accidental one.
+
+### 2026-09-05T18:00:00+00:00
+
+Author: program-manager
+
+    Approval gate 2 passed. The user approved the 33 acceptance tests as
+    capturing intent, including the four items the qa-engineer raised:
+    the console-script entry point for `TestRuleConfigurationValidation`,
+    wrong-typed optional keys being errors, substring-only stderr
+    assertions, and the required-versus-optional classification now
+    settled under "Validating rule configuration".
+
+    Routing to step 3, implementation. Two of the three approval gates
+    are now behind us; the next scheduled stop is gate 3 at closeout.
+    Steps 3 through 10 run without user involvement unless an agent
+    raises an open question, a disputed edit, or a review loop hits its
+    iteration cap.
+
+    Reminder for step 3, all of it already recorded above: clear every
+    one of the 26 skip markers, repair `test_valid_document_passes_rules`
+    (criterion 4 carves out that one test by name), and treat
+    `elements.disallow` and `links.validate` as required keys.
