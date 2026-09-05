@@ -190,13 +190,50 @@ subprocess with `sys.executable -m tiredize`. Running with `cwd` set to
 the repository root is sufficient for the package to be importable, which
 matches how CI and the local pre-commit hook invoke it.
 
-### Test file naming
+### Test file naming and organization
 
 `.context/PYTHON.md` says a test for `<package>/foo/bar.py` belongs at
 `tests/foo/test_bar.py`. Applied literally that yields
-`tests/test___main__.py`, which is unreadable. A clearer equivalent such
-as `tests/test_main_module.py` is acceptable; whichever name is chosen,
-record it in the issue comments so review does not relitigate it.
+`tests/test___main__.py`, which is unreadable. Use
+`tests/test_main_module.py` instead and do not relitigate the name at
+review.
+
+**One file, not two.** The mirror rule is one test file per source
+module, and `tiredize/__main__.py` is one module. Both tiers of test live
+in `tests/test_main_module.py`, separated by test classes — the idiom
+already used in `tests/validators/test_frontmatter_schema.py`, which
+groups ten concerns into one file. Suggested split:
+
+- `TestExitStatus` — the step-2 acceptance tests. Black-box, subprocess,
+  asserting process exit status against the contract.
+- `TestModuleExecution` — the step-3 white-box tests. In-process, for
+  branch coverage of the module body.
+
+Name the classes so the tier each belongs to is obvious from the outside.
+The step-5 verifier has to identify the acceptance tests without being
+told, and two agents write into this file at different steps: the
+qa-engineer creates it at step 2, the software-engineer adds to it at
+step 3 without editing what step 2 wrote.
+
+### Covering `tiredize/__main__.py`
+
+The module currently reports 0% coverage because nothing executes it.
+Importing it runs `main()` at import time, and the subprocess tests
+required by the acceptance criteria run in a different process, which the
+parent's coverage does not measure.
+
+Step 3 should add an in-process test that executes the module body via
+`runpy.run_module("tiredize", run_name="__main__")` with `sys.argv`
+patched, asserting on the resulting `SystemExit.code`. This is a
+code-level test, not an acceptance test, which is why it belongs to the
+software-engineer at step 3 rather than the qa-engineer at step 2.
+
+Rejected alternatives: configuring coverage to measure subprocesses
+(`parallel = true` plus `COVERAGE_PROCESS_START`) adds machinery and a
+known flakiness source for no extra behavioral proof; omitting the file
+from coverage would hide a gap that is straightforward to close. The
+project sets no coverage threshold, so this is about not leaving a
+visible hole rather than satisfying a gate.
 
 ### Seed the CLI specification here
 
