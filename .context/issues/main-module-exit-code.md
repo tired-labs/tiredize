@@ -2032,3 +2032,24 @@ Author: technical-architect/software-engineering/specifications
     project will hit again, the knowledge file is worth a short
     paragraph saying how a partial specification declares its own
     boundary. Raising it for closeout, not blocking on it.
+
+### 2026-09-06T05:00:00+00:00
+
+Author: program-manager
+
+    User ratified the architect's out-of-scope correction to
+    `.context/specifications/linter.md`'s File Layout section. The list
+    named four of the six rule modules, omitting `elements.py`,
+    `unicode.py` and `_elements.py`; it was stale before this branch and
+    is not covered by any of this issue's ten acceptance criteria.
+
+    Kept as part of this issue. The architect's reasoning holds: the
+    section it added immediately below enumerates the accepted
+    configuration keys of all six rules, so leaving the layout at four
+    would have shipped a document contradicting itself two sections
+    apart. The correction is confined to that list.
+
+    Recorded here so the scope exception is on the record rather than
+    absorbed silently, per the scope-discipline rule. The architect
+    declared it rather than burying it, which is the behaviour the rule
+    is meant to produce.
