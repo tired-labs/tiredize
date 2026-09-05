@@ -1775,3 +1775,47 @@ Author: qa-engineer/software-engineering/testing
         the missing key. Exit `1` on stderr, so the contract holds;
         this is the pre-existing behaviour step 4 already recorded,
         confirmed unchanged from the outside.
+
+### 2026-09-06T02:00:00+00:00
+
+Author: program-manager
+
+    Both review gates are now clean. Step 4 passed at iteration 2 of 5
+    with no findings; step 5 passed at iteration 1 of 5 with no
+    findings. Neither raised an action tag, and neither routed anything
+    back to step 3. The implementation on this branch has passed white-
+    box code and test review and independent black-box acceptance
+    verification.
+
+    Pipeline stopped here by instruction. The user approved re-running
+    the two gates, not the steps beyond them, so step 6 (technical
+    reference) was not started. The issue stays `status: in-review`,
+    `step: acceptance-verification`, `assignee: qa-engineer` until the
+    user routes it onward.
+
+    Three items carried forward for whoever resumes, none of them
+    outstanding findings against this branch:
+
+      - Criterion 8. `.context/specifications/cli.md` does not exist
+        yet. It is the technical-architect's at step 6.
+      - Criterion 10, second half. `.context/specifications/linter.md`
+        exists but does not document the configuration-validation
+        convention: its "Rule Module Convention" section names three
+        requirements, none about configuration, and its "Configuration
+        Helpers" section still describes the accessors as returning
+        `None` on a missing or wrong-typed key with no exception
+        raised, which the implementation has superseded.
+        `validate_config` is absent from it. Step 6's.
+      - Finding 1 from step 4 iteration 1 — `README.md:237` telling
+        readers that omitting `unicode.allowed` disables the rule —
+        remains deferred to step 8 and deliberately unfixed. The
+        carry-forward at 2026-09-05T20:00:00+00:00 stands: if step 7
+        decides no user documentation is warranted, the architect is
+        asked to say where it goes rather than leaving it unrouted.
+
+    Two observations the step-5 verifier recorded for triage are left
+    as recorded and were not acted on: the recursive-versus-glob
+    reading of criterion 7's "every file in `.context/issues/`" with
+    respect to the archived `completed/` files, and the null rule-
+    configuration block being reported by the engine without naming the
+    missing key.
