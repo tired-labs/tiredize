@@ -623,3 +623,48 @@ Author: qa-engineer/software-engineering/testing
     Step 2 is an approval gate. Stopping here for the user to confirm
     the suite captures their intent, in particular the criterion 7
     reading above, before any implementation begins.
+
+### 2026-09-05T15:00:00+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Two follow-ups from the user, recorded here so neither is lost.
+
+    Criterion 7 reading confirmed. The user confirms that
+    `program-manager` replaces `PM` rather than joining it, and that
+    `PM` is to be rejected. `test_pm_is_no_longer_allowed` already
+    asserts exactly that and needs no change. The clarification flagged
+    in the previous comment is resolved; no other test is affected.
+
+    Unknown rule configuration keys should be a runtime error. The user
+    wants an unrecognized setting inside a rule's configuration block to
+    raise an error and exit `1`, rather than being silently ignored.
+    This came out of the `max_length` versus `maximum_length`
+    observation above, and it is broader than that one rule: every
+    accessor in `tiredize/linter/utils.py` (`get_config_int`,
+    `get_config_str`, `get_config_bool`, `get_config_dict`,
+    `get_config_list`) returns `None` when a key is absent or the wrong
+    type, and every rule treats `None` as "not configured" and no-ops.
+    So today a typo in any rule's configuration silently disables that
+    rule everywhere, not only in `line_length`. A misspelled key and a
+    correctly-spelled key with the wrong value type are two distinct
+    cases and probably want distinguishing.
+
+    This is new behavior, not covered by any of the eight acceptance
+    criteria, and it changes the linter engine rather than the exit-code
+    plumbing this issue is about. The qa-engineer does not write tests
+    for criteria that do not exist yet and does not edit the Acceptance
+    Criteria section, so no test has been added for it. It needs a
+    scoping decision first: whether it is a ninth criterion on this
+    issue or a separate issue. It fits the existing exit-code contract
+    cleanly either way — it is a configuration error, which the contract
+    already classifies as a runtime error, so it would exit `1` and,
+    after this issue lands, abort the run.
+
+    Action: @program-manager — open question: scope the unknown-rule-
+    configuration-key error. Decide whether it becomes a ninth
+    acceptance criterion here or a separate issue, and specify the
+    intended behavior (which key states are errors, whether a wrong-type
+    value is distinguished from an unknown key, and what the message
+    says). Once scoped, step 2 can be re-entered to add the acceptance
+    tests for it. Stopping rather than assuming.
