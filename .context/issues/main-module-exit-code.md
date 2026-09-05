@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-review
-step: code-and-test-review
+status: in-progress
+step: implementation
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -1145,3 +1145,193 @@ Author: software-engineer/software-engineering/git,python,testing
         its own entries at value level, so nothing is unguarded, but
         a future rule author could declare `list` and forget the
         inner check.
+
+### 2026-09-05T20:00:00+00:00
+
+Author: software-engineer/software-engineering/code-review,python,testing
+
+    Code and test review complete. Verdict: two findings, both
+    documentation-level. The implementation and the tests are
+    otherwise sound; nothing in the source needs correcting.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md`, and nothing blocked the step.
+
+    Independent verification, not taken on the implementation's word.
+    `flake8 tiredize tests` is clean. Full suite: 844 passed / 50
+    skipped / 0 failed. Coverage of the changed files matches the
+    step-3 report and every uncovered line is a pre-existing gap in
+    code this issue did not touch; no new uncovered line was
+    introduced. The exit-status, parity and abort behaviour was also
+    exercised by hand against both entry points.
+
+    Findings by category:
+
+      - Unused parameters or dead code -- one, finding 2 below.
+      - Duplicate or redundant logic -- none found.
+      - Missing input validation -- none found.
+      - Inconsistencies between parallel code paths -- none found.
+      - Silent acceptance of invalid input -- none found.
+      - Reachable bugs or error-handling gaps -- none found.
+      - Contract violations -- none found.
+      - Spec fidelity gaps -- one, finding 1 below.
+
+    Finding 1 -- spec fidelity. `README.md:237`, in the `unicode`
+    rule's option table, says of `allowed`: "Omitting this option
+    disables the rule." Criterion 9 makes that omission a runtime
+    error: `error: Rule 'unicode': required configuration key
+    'allowed' is missing.`, exit 1, run aborted. The README therefore
+    documents behaviour the code no longer has, and a reader
+    following it writes a configuration that now hard-fails.
+    Correction: replace that sentence with one saying `allowed` is
+    required. The step-3 comment flagged the README as *incomplete*
+    on this subject; this sentence is the one place it is *wrong*. If
+    the PM would rather it land with the rest of the README prose at
+    step 8, that is a legitimate routing call -- but it should not be
+    left to chance, because the step-7 seed points step 8 at the
+    Usage section, not at the rule reference at lines 182-300.
+
+    Finding 2 -- dead code, minor.
+    `tests/linter/rules/test_unicode.py:13-15` still carries the
+    `Config gating` banner, but the two tests that lived under it
+    were replaced by the `Configuration validation (key level)`
+    section immediately below, so the banner now heads an empty
+    section. Correction: delete lines 13-15. The equivalent banners
+    in `test_elements.py`, `test_links.py`, `test_tabs.py` and
+    `test_trailing_whitespace.py` still have tests under them and are
+    correct as they stand.
+
+    Action: @program-manager -- request for edit
+
+    Checked and found correct, recorded so the next pass does not
+    re-review them:
+
+      - Criterion 4. `git diff main..HEAD -- tests/test_cli.py` shows
+        exactly two hunks: `max_length` to `maximum_length` in
+        `test_valid_document_passes_rules`, and one added test. No
+        other existing test in that file was edited or deleted.
+      - The seven changed tests outside `tests/test_cli.py`. Each was
+        genuinely forced by the new contract, and each asserts
+        strictly more than the test it replaced -- the raise, the
+        rule id and the offending key, where the old test asserted
+        only `== []`. None was weakened to pass. The two tests that
+        pin the *optional* reading, `test_config_missing_allowed_key`
+        in `test_tabs.py` and `test_trailing_whitespace.py`, were
+        correctly left untouched, so the classification is still
+        pinned from both directions.
+      - The `PENDING` removal. `git diff 3cbaeb7..HEAD --
+        tests/test_main_module.py` shows only the constant block, the
+        26 `@pytest.mark.skip(reason=PENDING)` decorators, one added
+        import (`runpy`), and the appended white-box section. No
+        step-2 test body, name, order or assertion changed. This is
+        scaffolding removal, not an alteration of the acceptance
+        tier.
+      - `tabs.allowed` and `trailing_whitespace.allowed` classified
+        optional. Correct under the settled principle. With the key
+        absent `get_config_bool` returns `None`, both rules take the
+        `not allowed` branch, and both still flag what they exist to
+        flag -- enabling either is never a no-op. `unicode.allowed`
+        is correctly required by the same test: absent, `allowed ==
+        in_excluded` is never true and the rule inspects nothing. A
+        typo such as `alowed` is still caught, as an unknown key.
+      - Message uniformity. All three key-level messages are
+        constructed in `validate_config` alone, so no rule can drift
+        from another. Each names the rule id and the offending key,
+        and each reaches stderr through `cli.py`'s `error: {exc}`.
+        Verified by running all three states through the CLI.
+      - Coexistence with the value-level checks. `validate_config` is
+        the first statement of every `validate()`, and the existing
+        `ValueError` texts for element names in `exclude` and
+        `disallow` and for `valid_status_codes` entries are unchanged
+        and still reachable. Four ordering tests and four
+        reach-through tests pin both halves.
+      - Abort semantics. Every runtime-error path in `main()` now
+        returns immediately; findings still accumulate `exit_code`
+        and continue to the next path; argparse still raises
+        `SystemExit(2)` from inside `main()` and is pinned by
+        `test_unknown_flag_exits_two` and
+        `test_module_body_propagates_argparse_exit`.
+      - `raise SystemExit(main())` in `tiredize/__main__.py`,
+        matching the idiom at the bottom of `cli.py`.
+      - Criterion 7, re-verified by hand: every file in
+        `.context/issues/` validates clean against the project's own
+        schemas.
+      - Input boundary audit on `validate_config`. `None` values,
+        bool-versus-int confusion in both directions, empty
+        collections, empty strings, non-ASCII keys and values,
+        no-mutation and idempotency are all covered in
+        `tests/linter/test_utils.py`. Non-string YAML keys are
+        handled correctly (reported as unknown keys) though not
+        directly tested.
+
+    Observations for triage, outside the ten criteria and not acted
+    on:
+
+      - A rule whose entire configuration block is null --
+        `line_length:` with nothing under it -- is reported by the
+        engine as `Invalid configuration for rule line_length: None`
+        rather than by the new helper, so the message names the rule
+        but not the required key. This is pre-existing behaviour that
+        the diff does not change, the run still aborts with exit 1 on
+        stderr, and step 3 recorded a deliberate decision to leave
+        the non-mapping case with the engine. Noted only because it
+        is the likeliest real-world shape of "a required key omitted"
+        for a single-key rule.
+      - `validate_config`'s type vocabulary declares `str`, which no
+        built-in rule uses, and its "This rule accepts no
+        configuration keys" branch cannot fire for a built-in because
+        `test_loader.py` asserts every rule declares at least one
+        key. Both belong to the helper's contract for future and
+        custom rules and are directly covered in
+        `tests/linter/test_utils.py`, so neither is dead in the sense
+        this review looks for.
+
+    Criterion 8 and the second half of criterion 10 are the
+    technical-architect's at step 6 and were not reviewed.
+
+### 2026-09-05T20:00:00+00:00
+
+Author: program-manager
+
+    Step 4 raised one edit request covering two findings. They route to
+    two different steps, so the request is split rather than sent whole
+    to step 3.
+
+    Finding 2 — the orphaned `Config gating` banner at
+    `tests/linter/rules/test_unicode.py:13-15` — routes back to step 3,
+    implementation, revision mode. It is test scaffolding left behind by
+    step 3's own edit and is the software-engineer's to remove.
+
+    Finding 1 — `README.md:237` telling readers that omitting
+    `unicode.allowed` disables the rule, which criterion 9 turns into a
+    runtime error — is deferred to step 8, user documentation. Three
+    reasons. The README is user-facing prose, which the workflow assigns
+    to the ghostwriter, not the software-engineer; the reviewer named
+    step 8 as a legitimate destination rather than disputing it; and the
+    change that made the sentence wrong is a configuration change, which
+    step 8's remit explicitly covers. Deferring it costs nothing because
+    the documentation track has not run yet.
+
+    Two consequences to carry forward, recorded here so neither is lost:
+
+      - The step-7 documentation seed points step 8 at the README's
+        Usage section only. Finding 1 lives in the rule reference at
+        lines 182-300, which that seed does not name. Step 8 must cover
+        both. Step 3's own step-3 comment flagged the same section as
+        incomplete on this subject; finding 1 is the one place it is
+        actively wrong, so the two overlap and step 8 should treat them
+        together.
+      - The documentation track is conditional on the technical-
+        architect's decision at step 7. If that decision comes back
+        "no documentation required", finding 1 does not disappear — it
+        becomes an open item with no home, and the architect is asked to
+        say where it goes rather than leaving it unrouted.
+
+    Neither finding touches `tiredize/`. The reviewer's verdict on the
+    source and the tests was clean, including the three items the
+    routing asked it to check specifically: the seven changed tests
+    outside `tests/test_cli.py`, the `PENDING` removal, and the
+    `tabs`/`trailing_whitespace` optional classification.
+
+    Routing to step 3 for finding 2 alone. On its return the gates
+    re-run in order — step 4, then step 5.
