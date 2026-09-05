@@ -1,6 +1,7 @@
 # Standard library
 from __future__ import annotations
 from pathlib import Path
+import runpy
 import shutil
 import subprocess
 import sys
@@ -219,7 +220,6 @@ class TestExitStatus:
 
     # --- Findings (exit 1) ---
 
-    @pytest.mark.skip(reason=PENDING)
     def test_markdown_schema_finding_exits_one(self, tmp_path):
         doc = _write_dirty_document(tmp_path)
         schema = _write_markdown_schema(tmp_path)
@@ -230,7 +230,6 @@ class TestExitStatus:
         assert result.returncode == 1
         assert "schema.markdown." in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     def test_linter_rule_finding_exits_one(self, tmp_path):
         doc = tmp_path / "rambling_monologue.md"
         doc.write_text(
@@ -244,7 +243,6 @@ class TestExitStatus:
         assert result.returncode == 1
         assert "[line_length]" in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     def test_frontmatter_schema_finding_exits_one(self, tmp_path):
         doc = _write_clean_document(tmp_path)
         schema = _write_frontmatter_schema(tmp_path)
@@ -255,7 +253,6 @@ class TestExitStatus:
         assert result.returncode == 1
         assert "schema.frontmatter." in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     def test_findings_do_not_stop_the_run(self, tmp_path):
         """Every path is processed even after a finding."""
         dirty = _write_dirty_document(tmp_path)
@@ -271,7 +268,6 @@ class TestExitStatus:
 
     # --- Runtime errors (exit 1) ---
 
-    @pytest.mark.skip(reason=PENDING)
     def test_missing_configuration_file_exits_one(self, tmp_path):
         doc = _write_clean_document(tmp_path)
         result = _run_module([
@@ -281,7 +277,6 @@ class TestExitStatus:
         assert result.returncode == 1
         assert "error:" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_unknown_rule_id_exits_one(self, tmp_path):
         doc = _write_clean_document(tmp_path)
         rules = tmp_path / "fantasy_rules.yaml"
@@ -296,7 +291,6 @@ class TestExitStatus:
         assert result.returncode == 1
         assert "the_rule_of_cool" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_missing_document_exits_one(self, tmp_path):
         schema = _write_markdown_schema(tmp_path)
         result = _run_module([
@@ -308,20 +302,17 @@ class TestExitStatus:
 
     # --- Usage errors (exit 2) ---
 
-    @pytest.mark.skip(reason=PENDING)
     def test_no_arguments_exits_two(self):
         result = _run_module([])
         assert result.returncode == 2
         assert "error:" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_paths_without_configuration_exit_two(self, tmp_path):
         doc = _write_clean_document(tmp_path)
         result = _run_module([str(doc)])
         assert result.returncode == 2
         assert "error:" in result.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_configuration_without_paths_exits_two(self, tmp_path):
         schema = _write_markdown_schema(tmp_path)
         result = _run_module(["--markdown-schema", str(schema)])
@@ -340,7 +331,6 @@ class TestExitStatus:
 
     # --- Runtime errors abort the run ---
 
-    @pytest.mark.skip(reason=PENDING)
     def test_module_aborts_after_missing_document(self, tmp_path):
         """A missing earlier path leaves later paths unprocessed."""
         missing = tmp_path / "phantom_thread.md"
@@ -355,7 +345,6 @@ class TestExitStatus:
         assert str(later) not in result.stdout
         assert "no issues found" not in result.stdout
 
-    @pytest.mark.skip(reason=PENDING)
     def test_console_script_aborts_after_missing_document(
         self, tmp_path
     ):
@@ -390,7 +379,6 @@ class TestStreamParity:
         assert module.stdout == console.stdout
         assert module.stderr == console.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_parity_for_findings(self, tmp_path):
         doc = _write_dirty_document(tmp_path)
         schema = _write_markdown_schema(tmp_path)
@@ -401,7 +389,6 @@ class TestStreamParity:
         assert module.stdout == console.stdout
         assert module.stderr == console.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_parity_for_runtime_error(self, tmp_path):
         doc = _write_clean_document(tmp_path)
         args = [
@@ -414,7 +401,6 @@ class TestStreamParity:
         assert module.stdout == console.stdout
         assert module.stderr == console.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_parity_for_usage_error(self):
         module = _run_module([])
         console = _run_console([])
@@ -422,7 +408,6 @@ class TestStreamParity:
         assert module.stdout == console.stdout
         assert module.stderr == console.stderr
 
-    @pytest.mark.skip(reason=PENDING)
     def test_parity_for_non_ascii_findings(self, tmp_path):
         """Emoji and accents must not disturb either stream."""
         doc = tmp_path / "cafe_au_lait.md"
@@ -706,3 +691,122 @@ class TestRuleConfigurationValidation:
         assert modules, "expected rule modules in the rules package"
         assert modules == set(BASELINE_RULE_CONFIGS)
         assert modules == set(WRONG_TYPED_RULE_CONFIGS)
+
+
+# ===================================================================
+#  White-box tests (step 3, software-engineer)
+#
+#  Everything above this banner is the step-2 acceptance tier and is
+#  black-box by construction. The class below is the step-3 tier: it
+#  executes the body of `tiredize/__main__.py` in this process so the
+#  module is measured by coverage, which the subprocess tests above
+#  cannot do. See "Covering `tiredize/__main__.py`" in the tracking
+#  issue.
+# ===================================================================
+
+
+def _run_module_in_process(argv: list[str], monkeypatch) -> int:
+    """Execute `tiredize/__main__.py` here and return its exit code.
+
+    `runpy.run_module` compiles and executes the module body under the
+    name `__main__`, exactly as `python -m tiredize` does, but inside
+    the test process. `main()` reads `sys.argv[1:]` when no argument
+    list is passed, so patching `sys.argv` is what supplies the
+    arguments.
+    """
+    monkeypatch.setattr(sys, "argv", ["tiredize", *argv])
+    with pytest.raises(SystemExit) as excinfo:
+        runpy.run_module("tiredize", run_name="__main__")
+    code = excinfo.value.code
+    assert isinstance(code, int), (
+        f"expected an integer exit code, got {code!r}"
+    )
+    return code
+
+
+class TestModuleExecution:
+    """The module body propagates `main()`'s return value.
+
+    In-process counterparts to `TestExitStatus`. They assert the same
+    contract from the inside, and they are what gives
+    `tiredize/__main__.py` any coverage at all — the subprocess tests
+    run in a process the parent's coverage does not measure.
+    """
+
+    def test_module_body_exits_zero_for_clean_document(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        doc = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        code = _run_module_in_process(
+            ["--markdown-schema", str(schema), str(doc)], monkeypatch
+        )
+        assert code == 0
+        assert "no issues found" in capsys.readouterr().out
+
+    def test_module_body_exits_one_for_findings(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        doc = _write_dirty_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        code = _run_module_in_process(
+            ["--markdown-schema", str(schema), str(doc)], monkeypatch
+        )
+        assert code == 1
+        assert "schema.markdown." in capsys.readouterr().out
+
+    def test_module_body_exits_one_for_runtime_error(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        doc = _write_clean_document(tmp_path)
+        code = _run_module_in_process(
+            [
+                "--markdown-schema",
+                str(tmp_path / "abducted_schema.yaml"),
+                str(doc),
+            ],
+            monkeypatch,
+        )
+        assert code == 1
+        assert "error:" in capsys.readouterr().err
+
+    def test_module_body_exits_two_for_usage_error(
+        self, monkeypatch, capsys
+    ):
+        code = _run_module_in_process([], monkeypatch)
+        assert code == 2
+        assert "error:" in capsys.readouterr().err
+
+    def test_module_body_propagates_argparse_exit(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        """Argparse raises SystemExit(2) from inside `main()`.
+
+        That exception unwinds through the module body rather than
+        reaching the `SystemExit(main())` construction, so it is a
+        distinct path from the returned codes above.
+        """
+        doc = _write_clean_document(tmp_path)
+        code = _run_module_in_process(
+            ["--bogus", str(doc)], monkeypatch
+        )
+        assert code == 2
+        assert "usage:" in capsys.readouterr().err
+
+    def test_module_body_is_re_executable(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        """Running the module body twice behaves identically.
+
+        Guards against the body caching state in `sys.modules` in a
+        way that would make a second `-m` invocation in the same
+        interpreter behave differently from the first.
+        """
+        doc = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        args = ["--markdown-schema", str(schema), str(doc)]
+        first = _run_module_in_process(args, monkeypatch)
+        capsys.readouterr()
+        second = _run_module_in_process(args, monkeypatch)
+        assert first == second == 0
+        assert "no issues found" in capsys.readouterr().out
