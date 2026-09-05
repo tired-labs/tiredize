@@ -3468,3 +3468,165 @@ Author: program-manager
     site this change falsified beyond the three in scope, it records it
     as a triage observation and does not request a fix. All ten
     acceptance criteria stay ticked.
+
+### 2026-09-06T20:00:00+00:00
+
+Author: proofreader/software-engineering
+
+    Documentation review, iteration 3. Verdict: clean. Both of
+    iteration 1's findings are discharged, both of step 8's wording
+    departures are accepted, the revision introduced nothing new, and
+    I found no fourth site. No action tag raised and nothing routes
+    anywhere.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md`. No acceptance criterion was ticked or
+    unticked; all ten stay as the PM left them. This comment is the
+    only change to the issue and `README.md` is untouched.
+
+    The standard I applied, stated rather than left implicit. No
+    knowledge files were loaded: `AGENTS.md` maps none to the
+    `documentation-review` step and the issue's frontmatter
+    `knowledge` field is empty, so I worked from my base function.
+    Accuracy I judged against the code and the running program. Prose
+    quality I judged against the README's own established voice,
+    vocabulary, wrapping (prose to 72 columns) and table conventions
+    — the standard there is mine, not a knowledge file's. The
+    orchestrator is reporting the mapping gap to the PM separately.
+
+    Finding 1 discharged — `README.md:114-117`. The paragraph now
+    reads "For each file, in the order the paths were given, the
+    command prints that file's findings to stdout as
+    `file:line:col: [rule_id] message`, or a single
+    `file: no issues found.` line if the file produced none." Both
+    halves of the old error are gone: the false "followed by"
+    ordering, and the implied per-file summary. Measured, not read.
+    With `intro.md` and `guide.md` clean and `bad.md` over an
+    80-character limit:
+
+        $ tiredize --rules rules.yaml intro.md bad.md guide.md
+        intro.md: no issues found.
+        bad.md:3:80: [line_length] Line exceeds maximum length of 80 (120 found).
+        guide.md: no issues found.
+
+    Reordering the arguments to `bad.md intro.md guide.md` reorders
+    the output identically, which is what makes it argument order
+    rather than coincidence, and `bad.md` gets no clean line in
+    either run. All three lines are on stdout; stderr is empty.
+    Identical through `python3 -m tiredize`. The stderr sentence at
+    `README.md:117` is unchanged and still correct.
+
+    Finding 2 discharged — `README.md:406-407` and `434-440`. The
+    constants comment now covers all three names rather than two, and
+    the new paragraph says what `_RULE_ID` is for, that the engine
+    never reads it, that it must equal the module filename, and what
+    diverging costs. Every clause checked against the code:
+    `grep -rn "_RULE_ID" tiredize/` shows the constant is passed to
+    `validate_config()` and read nowhere else, in all six built-in
+    rules; `rules/__init__.py:63-73` derives the id from the module
+    name and `engine.py:70` stamps it onto every result with
+    `replace(res, rule_id=rule_id)`. All six built-ins keep
+    `_RULE_ID` equal to their filename, so "Keep the two equal"
+    documents the convention the codebase actually follows rather
+    than inventing one.
+
+    The edited skeleton still runs — extracted from `README.md`
+    programmatically and executed, not read. `discover_rules()` finds
+    it as `my_rule` after appending its directory to
+    `tiredize.linter.rules.__path__`, `validate()` returns `[]` for a
+    good config, and all three `ValueError`s name `my_rule`: unknown
+    key, missing required key, wrong-typed value. The widened comment
+    disturbed nothing. I also reproduced the failure the new
+    paragraph describes rather than reasoning about it: with
+    `_RULE_ID = "wrong_name"` in a module still named `my_rule.py`,
+    the configuration error reads `Rule 'wrong_name': unknown
+    configuration key 'max_count'.` while a finding from the same
+    rule comes back with `rule_id='my_rule'` — the engine's `replace`
+    overwrites even a rule_id the rule set itself. One rule, two IDs,
+    and only the filename is the key in the rules file. The paragraph
+    is accurate in both directions.
+
+    Departure 1 accepted — "findings" rather than "rule violations".
+    Step 8's reasoning is correct and I verified it rather than
+    taking it. A markdown-schema mismatch prints
+    `intro.md:1:0: [schema.markdown.unexpected_section] Unexpected
+    section 'Intro'` and a frontmatter violation prints
+    `fmbad.md:1:0: [schema.frontmatter.value_not_allowed] Field
+    'status' value 'bogus' is not allowed. ...` — both the same
+    `file:line:col: [rule_id] message` shape, both counted in
+    `all_results`, and a file with either gets no `no issues found.`
+    line. Written as "rule violations" the sentence would promise a
+    clean line for a file whose only finding came from a schema,
+    which is a fresh inaccuracy in place of the corrected one. My
+    suggested wording was the narrower and worse one; step 8 was
+    right to depart.
+
+    On whether "findings" is used before it is defined: it is, by
+    nineteen lines, and I am not raising it. The word is already used
+    twice in the status table at `README.md:127-128` ahead of the
+    bold definition at `134`, so the new use follows a pattern the
+    section had already established and iteration 1 passed. The
+    README's vocabulary is coherent, which is the substantive point:
+    "findings" is the umbrella term everywhere output and status are
+    described (`115`, `127`, `128`, `137`, `146`, `155`), and
+    "violation" is used only rule-locally (`284`, `298`, `361`). The
+    reader also meets `no issues found.` in the same sentence, and
+    the definition arrives in the very next subsection.
+
+    Departure 2 accepted — the `_RULE_ID` paragraph in step 8's own
+    words. It carries the whole substance of my suggested sentence
+    and adds the consequence. The register argument holds: the
+    section addresses the reader as "you" throughout, and the
+    `validate_config()` paragraph directly above it ends on the
+    failure the convention prevents, so the new paragraph matches its
+    neighbour's shape. Placement after that paragraph rather than at
+    the end of the section is right too — `_RULE_ID` is an argument
+    to that call and matters only for its messages.
+
+    Two things I considered and am not raising, recorded so the next
+    reviewer can see they were examined rather than missed.
+
+      - `README.md:434-435`, "it is the only place the rule's ID is
+        written by hand". A reader also writes the ID by hand as the
+        top-level key of their rules file, which the same paragraph
+        acknowledges four lines later. Read as scoped to the rule
+        module — which the colon's justification, entirely about the
+        engine and the module filename, makes the natural reading —
+        it is true, and the paragraph supplies its own correction
+        before a reader could act on the looser one. Imprecision, not
+        a defect, and not worth an iteration.
+      - `README.md:114`, "For each file". A run that hits a runtime
+        error does not reach every file. But the sentence is
+        distributive about what a processed file yields rather than a
+        promise that every file is reached, and `README.md:139-156`
+        states the abort and its consequence explicitly twenty-five
+        lines below in the adjacent subsection. The old sentence made
+        the same implication.
+
+    No contradiction with preexisting wording. `README.md:458`, "The
+    rule ID is derived from the module filename (e.g., `my_rule.py`
+    produces rule ID `my_rule`)", is what the new paragraph points
+    at, not something it contradicts — same fact, and `458` adds the
+    example and the `config` dict. The new prose wraps to 72 columns
+    like its neighbours (longest new line, 69) and the constants
+    comment stays inside the code block's own width.
+
+    Iteration 1's settled ground confirmed unmoved rather than
+    re-derived. `git diff 5e3907f HEAD -- README.md` is the two hunks
+    and nothing else, +13/-5, so the nine YAML examples, the
+    element-name table, the `Required` columns, the status table, the
+    runtime-error list and the type names all stand as verified at
+    iteration 1. I spot-checked the two constraints anyway because
+    they are cheap: `grep -n "python -m" README.md` still returns
+    exactly one line, `78`, the conditional; `python3 -m` appears at
+    `71`; errors-abort at `README.md:146` is still written as a
+    property of the tool with the console-script example at `151`,
+    and the run still prints the error, reports the earlier file,
+    never touches `guide.md` and exits `1`. Statuses `0`, `2` and
+    `--help`'s `0` re-confirmed on the console script.
+
+    No fourth site. Nothing else in the README describes stdout
+    ordering or `_RULE_ID`. The Features-section observation from
+    2026-09-06T14:00:00+00:00 stands where iteration 1 left it —
+    pre-existing on `main`, not falsified by this branch, and not
+    acted on here.
