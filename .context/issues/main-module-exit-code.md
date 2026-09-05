@@ -69,24 +69,47 @@ to `tiredize.cli:main`.
 with exactly the integer `tiredize.cli.main()` returns:
 
 - `0` — every path was loaded and produced no findings.
-- `1` — at least one path produced findings, or a runtime error occurred
-  (input file missing, configuration file missing or unparseable, unknown
-  rule id, ambiguous schema).
+- `1` — at least one path produced findings, or a runtime error occurred.
 - `2` — usage error: no positional paths were given, or none of the three
   configuration flags was given.
+
+Exit `1` covers two distinct categories, which differ in how they affect
+the rest of the run:
+
+*Findings* — a linter rule violation (line length, unreachable URL,
+disallowed unicode), a markdown schema mismatch (a required section
+missing, sections out of order, wrong heading level), or a frontmatter
+schema violation (missing required field, wrong type, disallowed value).
+
+*Runtime errors* — an input document that does not exist, a
+configuration file that is missing or unparseable, an unknown rule id, or
+an ambiguous schema.
+
+**Processing semantics.** Findings do not stop the run: every path is
+processed, every finding is reported, and the process exits `1` at the
+end. Runtime errors do stop the run: the first one prints to stderr and
+the process exits `1` immediately, leaving any remaining paths
+unprocessed.
+
+This changes current behavior. Today a missing input document sets the
+exit code and *continues* to the next path (cli.py:114–122), while
+configuration errors abort. After this change all runtime errors abort,
+so the rule is uniform: errors abort, findings continue. The change
+applies to `main()` and therefore to both entry points.
 
 Argparse's own errors (unknown flag, missing flag value) continue to exit
 `2` by raising `SystemExit` from within `main()`; that path is already
 correct and must stay correct.
 
-**Output streams.** Unchanged. Findings print to stdout as
+**Output streams.** Findings print to stdout as
 `path:line:col: [rule_id] message`; the per-file `path: no issues found.`
 line prints to stdout; runtime errors and the usage message print to
 stderr. For any given argument list, `python -m tiredize` and `tiredize`
-must produce the same stdout, the same stderr, and now the same exit
-status.
+must produce the same stdout, the same stderr, and the same exit status.
 
-**Console script.** Unchanged in every respect.
+**Console script.** Its wiring is unchanged and it keeps exiting with
+`main()`'s return value. Its observable behavior changes only where
+`main()`'s abort semantics change, above.
 
 ## Acceptance Criteria
 
@@ -98,20 +121,58 @@ status.
 - [ ] An automated test invokes `python -m tiredize` as a subprocess and
       asserts the exit status for three cases: clean input (`0`), input
       with findings (`1`), and the usage error with no arguments (`2`)
-- [ ] Console-script behavior is unchanged: the existing `tests/test_cli.py`
-      suite passes without modification
+- [ ] Every test already in `tests/test_cli.py` passes unchanged. New
+      tests may be added to that file; existing ones may not be edited or
+      deleted
 - [ ] `python -m tiredize` and `tiredize` produce identical stdout and
       stderr for the same arguments
+- [ ] A runtime error aborts the run: given several paths where an earlier
+      one is a missing input document, no later path is processed and the
+      process exits `1`. Verified for both `python -m tiredize` and the
+      console script
+- [ ] `.context/schemas/issue-frontmatter.yaml` allows
+      `assignee: program-manager` in place of `PM`,
+      `.context/issues/context-process-migration.md` is updated to match,
+      and every file in `.context/issues/` validates clean
+- [ ] `.context/specifications/cli.md` exists, follows
+      `templates/SPECIFICATION.md`, and documents the exit-code contract
+      including the findings-continue and errors-abort semantics
 
 ## Design Decisions
 
 ### Scope of the fix
 
-The defect is confined to `tiredize/__main__.py`. `tiredize.cli.main()`
-already returns the correct codes and is not to be changed — every
-existing exit-code test in `tests/test_cli.py` must keep passing
-untouched. `pyproject.toml` and the `[project.scripts]` entry point are
-not touched either.
+The *propagation* defect is confined to `tiredize/__main__.py`.
+`tiredize.cli.main()` already returns the correct codes, so no change to
+its return values is needed. Its abort semantics do change, separately —
+see "Errors abort the run" below. `pyproject.toml` and the
+`[project.scripts]` entry point are not touched.
+
+### Errors abort the run
+
+Today `main()` treats a missing input document as a per-document problem:
+it prints the error, sets `exit_code = 1`, and continues to the next path
+(cli.py:114–122). Configuration errors abort instead. This issue makes
+all runtime errors abort, so the rule becomes uniform — errors abort,
+findings continue.
+
+Two principles were weighed. The current code follows "per-document
+problems continue, global problems abort," which lets a batch run over
+many files report on the survivors. The chosen rule is "errors abort,
+findings continue," which is one rule rather than two axes and makes the
+exit-code contract predictable without knowing which category an error
+falls into. The user chose the latter, having heard the batch-validator
+argument for keeping the current behavior.
+
+Consequences to respect downstream: this changes `main()`, so the
+console script's observable behavior changes too, not just the `-m`
+invocation. It is not a pure propagation fix any more.
+
+No existing test pins the behavior being changed.
+`tests/test_nonexistent_document_path` (test_cli.py:247) passes a single
+path and asserts only `result == 1`, which still holds under abort; no
+test combines a missing document with other paths. That is why the
+"passes without modification" criterion survives the change.
 
 ### Fix idiom
 
@@ -137,17 +198,43 @@ matches how CI and the local pre-commit hook invoke it.
 as `tests/test_main_module.py` is acceptable; whichever name is chosen,
 record it in the issue comments so review does not relitigate it.
 
+### Seed the CLI specification here
+
+`.context/specifications/` covers the parser, linter, and both validators
+but has no document for the CLI. Rather than leave the exit-code contract
+with nowhere to live, this issue creates `.context/specifications/cli.md`
+and populates it with the exit-code contract only. It is a foundation to
+build on, not a complete CLI specification — flags, output format, and
+configuration resolution are documented as later issues touch them. The
+Overview should say plainly that the document is partial, so a reader
+does not mistake silence for absence of behavior.
+
+This directs an outcome the workflow would normally leave to the
+technical-architect at step 6. The architect no longer decides *whether*
+a specification is warranted; the acceptance criteria require one. The
+architect still owns its content, structure, and how it conforms to
+`templates/SPECIFICATION.md`.
+
+### Folding in the assignee vocabulary fix
+
+`.context/schemas/issue-frontmatter.yaml` allows `assignee: PM` while the
+workflow files, function filenames, and the `AGENTS.md` knowledge map all
+use `program-manager`. Every other allowed value already matches a
+function filename, so `PM` is the lone exception, and an agent setting
+`assignee: program-manager` would fail the project's own validation.
+
+This is unrelated to the exit-code defect and would normally be a
+separate task. It was folded in deliberately: the change is two lines
+across two files, it affects no other workflow, and it unblocks correct
+assignee values on the very next step of this issue. The scope-discipline
+objection was raised and overruled by the user.
+
 ### Out of scope
 
-- Changing the exit-code semantics of `main()` itself.
 - Adding the self-validation invocation to `.githooks/pre-commit`. That
   is the motivation for this fix, not part of it, and belongs in a
   separate issue once `-m` gates correctly.
-- Authoring a CLI entry-point specification. `.context/specifications/`
-  covers the parser, linter, and both validators but has no document for
-  the CLI or its exit-code contract. That is a pre-existing gap, noted
-  here for triage; the step-6 architect decides whether this issue is the
-  right place to close it.
+- Expanding `cli.md` beyond the exit-code contract.
 
 ### Scoping seeds
 
@@ -155,13 +242,13 @@ These seed the technical-architect's later judgment. They are seeds, not
 commitments — the architect makes the final calls at steps 6 and 7.
 
 **Step 6 — does this change a subsystem's behavior or public contract?
-Seed: yes.** The observable process exit status of a public entry point
-changes for three of its four failure modes. The nuance the architect
-must weigh: the fix restores the contract `main()` was always written to
-express rather than designing a new one, and no existing specification
-documents the CLI at all, so "update the spec" has nothing to update. The
-architect chooses between authoring a CLI entry-point spec and recording
-that no specification change is warranted for a one-line restoration.
+Directed: yes, author the specification.** The observable exit status of
+a public entry point changes for three of its four failure modes, and
+`main()`'s abort semantics change on top of that. Because no
+specification documents the CLI at all, the acceptance criteria require
+authoring `.context/specifications/cli.md` rather than leaving the
+judgment open — see "Seed the CLI specification here" above. This is the
+one place where the user has pre-empted the architect's step-6 call.
 
 **Step 7 — does this need user-facing documentation? Seed: yes.** The
 README's Usage section documents only the console script and describes
@@ -171,6 +258,13 @@ fails." It never distinguishes `1` from `2`, and never mentions
 and pre-commit gate, which is precisely the use the README's Usage
 section is pitched at, so the exit-code contract is worth stating
 explicitly there.
+
+Note for whoever writes that prose: this issue refers to the invocation
+as `python -m tiredize` throughout, but many systems ship only `python3`,
+and the development machine this issue was scoped on is one of them —
+`python -m tiredize` returns 127 there. Reader-facing documentation
+should not tell people to run a command that may not exist. Tests are
+unaffected because they invoke `sys.executable`.
 
 ## Open Questions
 
@@ -209,3 +303,34 @@ Author: program-manager/software-engineering
 
     Awaiting user approval of the scope and contract before acceptance
     test design begins.
+
+### 2026-09-05T12:00:00+00:00
+
+Author: program-manager
+
+    Scope amended at the step-1 approval gate on the user's direction.
+    Four changes, all user-decided:
+
+    1. Errors now abort the run. A missing input document aborts like a
+       configuration error, making the rule uniform (errors abort,
+       findings continue). This changes `main()` and therefore the
+       console script too, so this is no longer a pure propagation fix.
+       The batch-validator argument for keeping the current
+       continue-on-missing-document behavior was presented and declined.
+    2. The exit-code contract now names the concrete finding categories
+       (linter violations, markdown schema mismatches, frontmatter schema
+       violations) instead of hiding them behind the word "findings," and
+       states the processing semantics explicitly.
+    3. `.context/specifications/cli.md` is now in scope, seeded with the
+       exit-code contract only. This pre-empts the architect's step-6
+       judgment; the architect still owns the document's content.
+    4. The `assignee: PM` to `program-manager` schema fix is folded into
+       this issue rather than split out, over the scope-discipline
+       objection.
+
+    Acceptance criteria grew from five to eight. The former criterion
+    "console-script behavior is unchanged" was reworded to "the existing
+    `tests/test_cli.py` suite passes without modification," because
+    console-script behavior is no longer unchanged — change 1 alters it.
+    Verified that no existing test pins the behavior being changed, so
+    the reworded criterion is satisfiable.
