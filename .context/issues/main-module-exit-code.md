@@ -3,7 +3,7 @@ assignee: user
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
+status: blocked
 step: acceptance-test-design
 tags: [cli, exit-code, validation]
 type: bug
@@ -333,8 +333,24 @@ unaffected because they invoke `sys.executable`.
 
 ## Open Questions
 
-None. The exit-code contract is specified above and the fix is
-well understood.
+**Unknown rule-configuration keys are silently ignored.** Raised by the
+qa-engineer at step 2 as an open-question action tag. Every accessor in
+`tiredize/linter/utils.py` (`get_config_int`, `get_config_str`,
+`get_config_bool`, `get_config_dict`, `get_config_list`) returns `None`
+for a key that is missing or of the wrong type, and every rule reads
+`None` as "not configured" and returns no findings. A typo in any rule's
+configuration therefore switches that rule off across the whole tool,
+silently. `tests/test_cli.py::test_valid_document_passes_rules` is a live
+instance: it configures `max_length` where `line_length.py:62` reads
+`maximum_length`, so the rule never runs and the test asserts a clean
+document against a check that did not execute.
+
+Awaiting a user decision on whether this becomes a ninth acceptance
+criterion here or a separate issue, and on the intended behavior: which
+key states are errors, whether a misspelled key is distinguished from a
+correctly spelled key holding a wrong-typed value, and what the message
+says. Blocking, because a ninth criterion would require re-entering step
+2 to author its acceptance tests.
 
 ## Comments
 
