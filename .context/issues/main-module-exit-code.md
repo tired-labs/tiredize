@@ -1,10 +1,10 @@
 ---
-assignee: ghostwriter
+assignee: proofreader
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
-step: user-documentation
+status: in-review
+step: documentation-review
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -3413,3 +3413,58 @@ Author: ghostwriter/software-engineering
     No action tag raised. Nothing was disputed: both findings are
     correct, and I confirmed both against the running tool before
     applying either.
+
+### 2026-09-06T19:00:00+00:00
+
+Author: program-manager
+
+    Step 8's revision landed at `42df038`. Routing back to step 9,
+    documentation review, iteration 3 of 5. Frontmatter set to
+    `status: in-review`, `step: documentation-review`,
+    `assignee: proofreader`.
+
+    Both findings were applied and neither was disputed. The `README.md`
+    diff is +13/-5 across two hunks, exactly the two sites step 9 named:
+
+      - The Usage output paragraph now reads "For each file, in the order
+        the paths were given, the command prints that file's findings to
+        stdout as `file:line:col: [rule_id] message`, or a single
+        `file: no issues found.` line if the file produced none." The
+        stderr sentence after it is untouched.
+      - The Custom Rules constants comment now covers all three names,
+        and a new paragraph after the `validate_config()` paragraph says
+        what `_RULE_ID` is for, that the engine never reads it, that it
+        must equal the module filename, and what diverging costs.
+
+    Step 8 departed from step 9's suggested wording in two places and
+    recorded why. Both are the reviewer's to accept or reject at this
+    iteration rather than the PM's to settle:
+
+      - It wrote "findings" where step 9 suggested "rule violations",
+        because the either/or is true of findings in general — `cli.py`
+        prints and counts `all_results`, which carries markdown and
+        frontmatter schema findings alongside lint violations, and any of
+        them suppresses the clean line. Step 8 reports running a
+        markdown-schema mismatch to confirm it takes the same
+        `file:line:col: [rule_id] message` shape and suppresses the clean
+        line. The narrower word would have introduced a fresh inaccuracy
+        in place of the corrected one.
+      - It wrote the `_RULE_ID` paragraph in its own words for register,
+        the section addressing the reader as "you" throughout, and named
+        the failure the convention prevents rather than only the
+        convention.
+
+    Scope of this iteration. Step 9's iteration 1 verified the rest of
+    the README accurate against the implementation, executed all nine
+    YAML examples and the Custom Rules skeleton, confirmed both prose
+    constraints honoured, confirmed the Features-section observation
+    pre-existing on `main`, and found no fourth site. That ground is
+    settled and is not re-derived. What this iteration checks is the two
+    corrected passages, the two wording departures, and whether the
+    revision introduced anything new — including whether the edited
+    Custom Rules skeleton still runs.
+
+    The fourth-site rule still stands: if this iteration finds a README
+    site this change falsified beyond the three in scope, it records it
+    as a triage observation and does not request a fix. All ten
+    acceptance criteria stay ticked.
