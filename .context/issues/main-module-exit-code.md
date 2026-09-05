@@ -1,10 +1,10 @@
 ---
-assignee: user
+assignee: qa-engineer
 created: 2026-06-15
 knowledge: []
 priority: medium
 status: in-progress
-step: scoping
+step: acceptance-test-design
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -387,3 +387,211 @@ Author: program-manager
     error aborts the run) asserts behavior that does not exist yet and
     must be written to fail, not to characterize what the code does
     today.
+
+### 2026-09-05T14:00:00+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Acceptance test design complete. All sections of the issue are
+    present and the Public Contract is specified well enough to test
+    against; no blocking gap was found.
+
+    Delivered `tests/test_main_module.py` — 23 black-box tests derived
+    from the Public Contract, in three classes. Every test spawns a
+    subprocess (`sys.executable -m tiredize`, or the console script
+    located with `shutil.which`) with `cwd` at the repository root, so
+    nothing in the suite depends on how `tiredize/__main__.py` is
+    written. `TestModuleExecution` is deliberately not used; that name
+    is reserved for the step-3 white-box tests in the same file.
+
+    Classes:
+
+      - `TestExitStatus` — process exit status and processing
+        semantics (criteria 1, 2, 3, 6).
+      - `TestStreamParity` — stdout/stderr/exit-status parity between
+        the two entry points (criterion 5).
+      - `TestIssueAssigneeVocabulary` — the assignee vocabulary, driven
+        through the console script against the project's own schemas
+        (criterion 7).
+
+    Three classes rather than the two the routing suggested: the
+    vocabulary tests validate configuration files, not the `-m` entry
+    point, and folding them into `TestExitStatus` would misdescribe
+    them. Test methods are ordered narratively under banner comments,
+    matching `tests/validators/test_frontmatter_schema.py`, rather than
+    alphabetized — alphabetizing would break the reading order.
+
+    Coverage by acceptance criterion:
+
+    1. `-m` exits with exactly what `main()` returns.
+       `test_clean_document_exits_zero`,
+       `test_several_clean_documents_exit_zero` (0);
+       `test_markdown_schema_finding_exits_one`,
+       `test_linter_rule_finding_exits_one`,
+       `test_frontmatter_schema_finding_exits_one`,
+       `test_findings_do_not_stop_the_run`,
+       `test_missing_configuration_file_exits_one`,
+       `test_unknown_rule_id_exits_one`,
+       `test_missing_document_exits_one` (1);
+       `test_no_arguments_exits_two`,
+       `test_paths_without_configuration_exit_two`,
+       `test_configuration_without_paths_exits_two`,
+       `test_unknown_flag_exits_two` (2). All three finding categories
+       named in the contract get their own case, as do four runtime
+       error kinds and all three usage-error permutations.
+       `test_unknown_flag_exits_two` pins the argparse path that is
+       already correct and must stay correct.
+
+    2. `__main__.py` propagates `main()`'s return value. No black-box
+       test asserts the source idiom — that is an internal detail and
+       out of bounds for this tier. Its entire observable consequence
+       is criterion 1, which is fully covered above. The
+       `raise SystemExit(main())` preference is a code-review check at
+       step 4.
+
+    3. A subprocess test asserts 0, 1 and 2. Satisfied by
+       `test_clean_document_exits_zero`,
+       `test_markdown_schema_finding_exits_one` and
+       `test_no_arguments_exits_two` respectively.
+
+    4. `tests/test_cli.py` passes unchanged. No new test can assert
+       this; it is verified by running the suite and by `git diff`
+       showing that file untouched. Both confirmed: the full suite is
+       729 passed / 68 skipped, and `tests/test_cli.py` was not
+       modified. No test was added to it — everything fits in
+       `tests/test_main_module.py`.
+
+    5. Identical stdout and stderr for the same arguments.
+       `test_parity_for_clean_document`, `test_parity_for_findings`,
+       `test_parity_for_runtime_error`, `test_parity_for_usage_error`,
+       `test_parity_for_non_ascii_findings`. Each runs both entry
+       points with one argument list and compares all three observable
+       outputs. The non-ASCII case (emoji heading, accented text) is
+       there because the finding message carries computed line and
+       column offsets into user text.
+
+    6. A runtime error aborts the run.
+       `test_module_aborts_after_missing_document` and
+       `test_console_script_aborts_after_missing_document`. Both pass a
+       missing document followed by a clean one and assert the later
+       path is absent from stdout. Written against the contract, not
+       against today's behavior, per the routing note.
+
+    7. Assignee vocabulary. `test_program_manager_is_allowed`,
+       `test_pm_is_no_longer_allowed`,
+       `test_every_issue_file_validates_clean`. These run the console
+       script because that is what CI and the pre-commit hook use and
+       because its exit status is already correct today, so the
+       assertions are meaningful before the `-m` fix lands.
+
+    8. `.context/specifications/cli.md`. No automated test. Existence
+       and content are checkable but conformance to
+       `templates/SPECIFICATION.md` is a structural-judgment call with
+       no machine-readable schema in this repository, so a test would
+       assert only the cheap half and give false assurance. Also, the
+       document is authored by the technical-architect at step 6, so a
+       test for it would have to stay skipped through steps 3 to 5,
+       against the convention that step 3 clears every skip. Verified
+       instead by inspection at step 5 acceptance verification and at
+       step 6 against the template.
+
+    Criterion needing clarification — criterion 7. "Allows
+    `assignee: program-manager` in place of `PM`" is read as
+    replacement, not addition, so `test_pm_is_no_longer_allowed`
+    asserts `PM` is rejected. The Design Decisions rationale supports
+    that reading: `PM` is called "the lone exception" among values that
+    match function filenames, and removing it is what makes the
+    vocabulary uniform. Flagging it rather than assuming: if the user
+    intends `PM` to remain valid as a legacy alias, that one test
+    should be dropped at the approval gate.
+
+    Pre-skip failure evidence. The suite was first run with no skip
+    markers: 5 passed, 18 failed, and every failure was an assertion
+    failure with observed-versus-expected values — no import error, no
+    missing fixture, no wrong cwd, no `FileNotFoundError` on the
+    console script.
+
+      - The eleven `-m` exit-status tests and both abort tests failed
+        as `assert 0 == 1` or `assert 0 == 2`: the module printed the
+        right findings or the right error to the right stream and then
+        exited 0 anyway. Example: the unknown-rule case produced
+        `error: Unknown rule id: the_rule_of_cool` on stderr with
+        returncode 0.
+      - `test_console_script_aborts_after_missing_document` failed
+        differently, and this is the evidence for criterion 6 being a
+        genuine behavior change rather than a propagation artifact. The
+        console script already exits 1, so it failed on the abort
+        assertion instead: `assert '.../nap_time.md' not in '...'`,
+        because `nap_time.md: no issues found.` was still printed after
+        `error: Path does not exist: .../phantom_thread.md`.
+      - The four failing parity tests failed on the exit status pair —
+        e.g. `assert 0 == 1` where 0 is the module and 1 the console
+        script. stdout and stderr already matched in every case, so
+        parity fails today only on exit status.
+      - `test_program_manager_is_allowed` failed `assert 1 == 0`, with
+        `[schema.frontmatter.value_not_allowed] Field 'assignee' value
+        'program-manager' is not allowed`.
+        `test_pm_is_no_longer_allowed` failed `assert 0 == 1` — `PM`
+        still validates clean.
+
+    Five tests passed unskipped and stay unskipped:
+    `test_clean_document_exits_zero`,
+    `test_several_clean_documents_exit_zero`,
+    `test_unknown_flag_exits_two`, `test_parity_for_clean_document`,
+    `test_every_issue_file_validates_clean`. The last one passes today
+    and is a deliberate guard: swapping the schema's allowed value
+    without updating `context-process-migration.md` will break it.
+
+    Skip markers step 3 must remove. All 18 carry
+    `@pytest.mark.skip(reason=PENDING)`, where `PENDING` names this
+    issue file and says the skip is removed when the fix lands. This is
+    the mechanism the testing knowledge prescribes for a test that
+    asserts the contract against code that does not meet it yet; no
+    test was weakened and the pre-commit hook was not bypassed.
+
+      - `TestExitStatus`: `test_markdown_schema_finding_exits_one`,
+        `test_linter_rule_finding_exits_one`,
+        `test_frontmatter_schema_finding_exits_one`,
+        `test_findings_do_not_stop_the_run`,
+        `test_missing_configuration_file_exits_one`,
+        `test_unknown_rule_id_exits_one`,
+        `test_missing_document_exits_one`,
+        `test_no_arguments_exits_two`,
+        `test_paths_without_configuration_exit_two`,
+        `test_configuration_without_paths_exits_two`,
+        `test_module_aborts_after_missing_document`,
+        `test_console_script_aborts_after_missing_document`.
+      - `TestStreamParity`: `test_parity_for_findings`,
+        `test_parity_for_runtime_error`,
+        `test_parity_for_usage_error`,
+        `test_parity_for_non_ascii_findings`.
+      - `TestIssueAssigneeVocabulary`:
+        `test_program_manager_is_allowed`,
+        `test_pm_is_no_longer_allowed`.
+
+    Note for step 3: the last two come off only once the schema fix in
+    criterion 7 is made. If that fix is not part of step 3's work, the
+    step should say so rather than leave the skips unexplained — no
+    later step is currently assigned to it.
+
+    Observations for triage, outside the eight criteria and not acted
+    on:
+
+      - `tests/test_cli.py` configures the `line_length` rule with
+        `max_length`, but the rule reads `maximum_length` and returns
+        no results when the key is absent. `test_valid_document_passes
+        _rules` therefore asserts "no issues found" against a rule that
+        never ran. The test is not wrong, but it does not test what its
+        name suggests. Out of scope here, and criterion 4 forbids
+        editing it.
+      - The installed console script is an editable install pointing at
+        this working tree, which is what makes the parity and vocabulary
+        tests meaningful. On a machine where `tiredize` resolves to a
+        different copy, those tests would compare two different
+        versions. `_console_script` skips when the script is absent but
+        cannot detect a stale one. Worth a note in contributor
+        documentation eventually.
+
+    Step 2 is an approval gate. Stopping here for the user to confirm
+    the suite captures their intent, in particular the criterion 7
+    reading above, before any implementation begins.

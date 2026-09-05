@@ -1,0 +1,443 @@
+# Standard library
+from __future__ import annotations
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+# Third party
+import pytest
+
+
+# Acceptance tests for the `python -m tiredize` exit-status contract.
+#
+# These are black-box tests. They derive entirely from the Public
+# Contract section of `.context/issues/main-module-exit-code.md` and
+# exercise the two public entry points as subprocesses. They know
+# nothing about how `tiredize/__main__.py` is written.
+#
+# The exit status of `python -m tiredize` is only observable from
+# another process — importing `tiredize.__main__` runs `main()` at
+# import time and yields no process status to assert on — so every
+# test here spawns a subprocess with `cwd` at the repository root.
+#
+# `sys.executable` is used rather than a literal "python": many systems
+# ship only `python3`, and the machine this suite was authored on is one
+# of them.
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+FRONTMATTER_SCHEMA = (
+    REPO_ROOT / ".context" / "schemas" / "issue-frontmatter.yaml"
+)
+MARKDOWN_SCHEMA = (
+    REPO_ROOT / ".context" / "schemas" / "issue-markdown.yaml"
+)
+
+# Tests below assert the contract, not today's behaviour. They fail
+# until the fix lands; see the tracking issue named in this reason.
+PENDING = (
+    "Pending the fix in .context/issues/main-module-exit-code.md; "
+    "remove this skip when the fix lands."
+)
+
+
+def _console_script() -> str:
+    """Absolute path to the installed `tiredize` console script."""
+    path = shutil.which("tiredize")
+    if path is None:
+        pytest.skip("the tiredize console script is not on PATH")
+    return path
+
+
+def _issue_frontmatter(assignee: str) -> str:
+    """A minimal issue frontmatter block naming `assignee`."""
+    return (
+        "---\n"
+        f"assignee: {assignee}\n"
+        "created: 2026-09-05\n"
+        "knowledge: []\n"
+        "priority: low\n"
+        "status: draft\n"
+        "tags: [tea, biscuits]\n"
+        "type: spike\n"
+        "workflow: software-engineering\n"
+        "---\n"
+        "\n"
+        "# Tea Break Protocol\n"
+    )
+
+
+def _run_console(args: list[str]) -> subprocess.CompletedProcess:
+    """Run the `tiredize` console script from the repository root."""
+    return subprocess.run(
+        [_console_script(), *args],
+        capture_output=True,
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+
+def _run_module(args: list[str]) -> subprocess.CompletedProcess:
+    """Run `python -m tiredize` from the repository root."""
+    return subprocess.run(
+        [sys.executable, "-m", "tiredize", *args],
+        capture_output=True,
+        cwd=REPO_ROOT,
+        text=True,
+    )
+
+
+def _write_clean_document(directory: Path) -> Path:
+    """A document that satisfies the markdown schema below."""
+    doc = directory / "nap_time.md"
+    doc.write_text("# Nap Time\n\nZzz.\n")
+    return doc
+
+
+def _write_dirty_document(directory: Path) -> Path:
+    """A document with one unexpected section — a schema finding."""
+    doc = directory / "caffeine_crash.md"
+    doc.write_text(
+        "# Nap Time\n\n# Espresso Shot\n\nWide awake.\n"
+    )
+    return doc
+
+
+def _write_frontmatter_schema(directory: Path) -> Path:
+    schema = directory / "paperwork.yaml"
+    schema.write_text(
+        "fields:\n"
+        "  title:\n"
+        "    type: string\n"
+    )
+    return schema
+
+
+def _write_markdown_schema(directory: Path) -> Path:
+    schema = directory / "sleepy_schema.yaml"
+    schema.write_text(
+        "sections:\n"
+        "  - name: Nap Time\n"
+    )
+    return schema
+
+
+def _write_rules_config(directory: Path) -> Path:
+    rules = directory / "no_rambling.yaml"
+    rules.write_text(
+        "line_length:\n"
+        "  maximum_length: 10\n"
+    )
+    return rules
+
+
+class TestExitStatus:
+    """`python -m tiredize` exits with what `main()` returns.
+
+    Contract: `0` when every path loaded and produced no findings, `1`
+    on findings or a runtime error, `2` on a usage error. Findings do
+    not stop the run; runtime errors do.
+    """
+
+    # --- Clean input (exit 0) ---
+
+    def test_clean_document_exits_zero(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(schema),
+            str(doc),
+        ])
+        assert result.returncode == 0
+        assert "no issues found" in result.stdout
+
+    def test_several_clean_documents_exit_zero(self, tmp_path):
+        first = _write_clean_document(tmp_path)
+        second = tmp_path / "second_nap.md"
+        second.write_text("# Nap Time\n\nMore Zzz.\n")
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(schema),
+            str(first), str(second),
+        ])
+        assert result.returncode == 0
+        assert result.stdout.count("no issues found") == 2
+
+    # --- Findings (exit 1) ---
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_markdown_schema_finding_exits_one(self, tmp_path):
+        doc = _write_dirty_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(schema),
+            str(doc),
+        ])
+        assert result.returncode == 1
+        assert "schema.markdown." in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_linter_rule_finding_exits_one(self, tmp_path):
+        doc = tmp_path / "rambling_monologue.md"
+        doc.write_text(
+            "# Nap Time\n\nThis line goes on rather a lot longer.\n"
+        )
+        rules = _write_rules_config(tmp_path)
+        result = _run_module([
+            "--rules", str(rules),
+            str(doc),
+        ])
+        assert result.returncode == 1
+        assert "[line_length]" in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_frontmatter_schema_finding_exits_one(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        schema = _write_frontmatter_schema(tmp_path)
+        result = _run_module([
+            "--frontmatter-schema", str(schema),
+            str(doc),
+        ])
+        assert result.returncode == 1
+        assert "schema.frontmatter." in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_findings_do_not_stop_the_run(self, tmp_path):
+        """Every path is processed even after a finding."""
+        dirty = _write_dirty_document(tmp_path)
+        clean = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(schema),
+            str(dirty), str(clean),
+        ])
+        assert result.returncode == 1
+        assert str(dirty) in result.stdout
+        assert f"{clean}: no issues found." in result.stdout
+
+    # --- Runtime errors (exit 1) ---
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_missing_configuration_file_exits_one(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(tmp_path / "abducted_schema.yaml"),
+            str(doc),
+        ])
+        assert result.returncode == 1
+        assert "error:" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_unknown_rule_id_exits_one(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        rules = tmp_path / "fantasy_rules.yaml"
+        rules.write_text(
+            "the_rule_of_cool:\n"
+            "  enabled: true\n"
+        )
+        result = _run_module([
+            "--rules", str(rules),
+            str(doc),
+        ])
+        assert result.returncode == 1
+        assert "the_rule_of_cool" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_missing_document_exits_one(self, tmp_path):
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(schema),
+            str(tmp_path / "phantom_thread.md"),
+        ])
+        assert result.returncode == 1
+        assert "error:" in result.stderr
+
+    # --- Usage errors (exit 2) ---
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_no_arguments_exits_two(self):
+        result = _run_module([])
+        assert result.returncode == 2
+        assert "error:" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_paths_without_configuration_exit_two(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        result = _run_module([str(doc)])
+        assert result.returncode == 2
+        assert "error:" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_configuration_without_paths_exits_two(self, tmp_path):
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module(["--markdown-schema", str(schema)])
+        assert result.returncode == 2
+        assert "error:" in result.stderr
+
+    def test_unknown_flag_exits_two(self, tmp_path):
+        """Argparse raises SystemExit(2) from inside main().
+
+        This path is already correct today and must stay correct.
+        """
+        doc = _write_clean_document(tmp_path)
+        result = _run_module(["--bogus", str(doc)])
+        assert result.returncode == 2
+        assert "usage:" in result.stderr
+
+    # --- Runtime errors abort the run ---
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_module_aborts_after_missing_document(self, tmp_path):
+        """A missing earlier path leaves later paths unprocessed."""
+        missing = tmp_path / "phantom_thread.md"
+        later = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_module([
+            "--markdown-schema", str(schema),
+            str(missing), str(later),
+        ])
+        assert result.returncode == 1
+        assert "error:" in result.stderr
+        assert str(later) not in result.stdout
+        assert "no issues found" not in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_console_script_aborts_after_missing_document(
+        self, tmp_path
+    ):
+        """The abort rule applies to the console script too."""
+        missing = tmp_path / "phantom_thread.md"
+        later = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        result = _run_console([
+            "--markdown-schema", str(schema),
+            str(missing), str(later),
+        ])
+        assert result.returncode == 1
+        assert "error:" in result.stderr
+        assert str(later) not in result.stdout
+        assert "no issues found" not in result.stdout
+
+
+class TestStreamParity:
+    """The two entry points are indistinguishable from the outside.
+
+    For any argument list, `python -m tiredize` and `tiredize` must
+    produce the same stdout, the same stderr, and the same exit status.
+    """
+
+    def test_parity_for_clean_document(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        args = ["--markdown-schema", str(schema), str(doc)]
+        module = _run_module(args)
+        console = _run_console(args)
+        assert module.returncode == console.returncode
+        assert module.stdout == console.stdout
+        assert module.stderr == console.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_parity_for_findings(self, tmp_path):
+        doc = _write_dirty_document(tmp_path)
+        schema = _write_markdown_schema(tmp_path)
+        args = ["--markdown-schema", str(schema), str(doc)]
+        module = _run_module(args)
+        console = _run_console(args)
+        assert module.returncode == console.returncode
+        assert module.stdout == console.stdout
+        assert module.stderr == console.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_parity_for_runtime_error(self, tmp_path):
+        doc = _write_clean_document(tmp_path)
+        args = [
+            "--markdown-schema", str(tmp_path / "abducted_schema.yaml"),
+            str(doc),
+        ]
+        module = _run_module(args)
+        console = _run_console(args)
+        assert module.returncode == console.returncode
+        assert module.stdout == console.stdout
+        assert module.stderr == console.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_parity_for_usage_error(self):
+        module = _run_module([])
+        console = _run_console([])
+        assert module.returncode == console.returncode
+        assert module.stdout == console.stdout
+        assert module.stderr == console.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_parity_for_non_ascii_findings(self, tmp_path):
+        """Emoji and accents must not disturb either stream."""
+        doc = tmp_path / "cafe_au_lait.md"
+        doc.write_text(
+            "# Nap Time \U0001f634\n\nCafé au lait ☕, sipped slowly.\n",
+            encoding="utf-8",
+        )
+        rules = _write_rules_config(tmp_path)
+        args = ["--rules", str(rules), str(doc)]
+        module = _run_module(args)
+        console = _run_console(args)
+        assert module.returncode == console.returncode
+        assert module.stdout == console.stdout
+        assert module.stderr == console.stderr
+        assert "[line_length]" in module.stdout
+
+
+class TestIssueAssigneeVocabulary:
+    """The project's own issue frontmatter schema names functions.
+
+    Every allowed `assignee` value matches a function filename;
+    `program-manager` replaces the lone exception, `PM`. These run the
+    console script because it is what CI and the pre-commit hook use to
+    validate `.context/issues/`, and its exit status is already correct.
+    """
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_program_manager_is_allowed(self, tmp_path):
+        doc = tmp_path / "tea_break.md"
+        doc.write_text(_issue_frontmatter("program-manager"))
+        result = _run_console([
+            "--frontmatter-schema", str(FRONTMATTER_SCHEMA),
+            str(doc),
+        ])
+        assert result.returncode == 0
+        assert "no issues found" in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_pm_is_no_longer_allowed(self, tmp_path):
+        """`program-manager` replaces `PM` rather than joining it.
+
+        Reading of "in place of `PM`" in acceptance criterion 7; see
+        the qa-engineer comment on the tracking issue.
+        """
+        doc = tmp_path / "old_habits.md"
+        doc.write_text(_issue_frontmatter("PM"))
+        result = _run_console([
+            "--frontmatter-schema", str(FRONTMATTER_SCHEMA),
+            str(doc),
+        ])
+        assert result.returncode == 1
+        assert "schema.frontmatter.value_not_allowed" in result.stdout
+
+    def test_every_issue_file_validates_clean(self):
+        """The repository's own issues must stay valid.
+
+        Unskipped: this passes today and guards the schema change —
+        swapping the allowed value without updating
+        `context-process-migration.md` breaks it.
+        """
+        issues = sorted(
+            (REPO_ROOT / ".context" / "issues").glob("*.md")
+        )
+        assert issues, "expected issue files under .context/issues/"
+        result = _run_console([
+            "--markdown-schema", str(MARKDOWN_SCHEMA),
+            "--frontmatter-schema", str(FRONTMATTER_SCHEMA),
+            *[str(path) for path in issues],
+        ])
+        assert result.returncode == 0, result.stdout + result.stderr
