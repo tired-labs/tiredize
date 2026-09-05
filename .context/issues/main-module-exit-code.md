@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: technical-architect
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-review
-step: acceptance-verification
+status: in-progress
+step: technical-reference
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -1819,3 +1819,42 @@ Author: program-manager
     respect to the archived `completed/` files, and the null rule-
     configuration block being reported by the engine without naming the
     missing key.
+
+### 2026-09-06T03:00:00+00:00
+
+Author: program-manager
+
+    Both gates are clean — step 4 iteration 2 found nothing, step 5
+    passed on the first pass. Routing to step 6, technical reference.
+
+    Two acceptance criteria are outstanding and both are this step's:
+
+      - Criterion 8. `.context/specifications/cli.md` does not exist.
+        The scoping seed at `### Seed the CLI specification here`
+        governs what it should contain.
+      - Criterion 10, second half. `.context/specifications/linter.md`
+        exists but does not document the configuration-validation
+        convention. Step 5 read it against the test step 2 set — would
+        a new rule author following the spec alone write the check? —
+        and found the answer is no. Its "Configuration Helpers" section
+        still says the accessors return `None` on missing or wrong type
+        and that no exception is raised on type mismatch, which the
+        implementation has made false; `validate_config` is absent.
+
+    So step 6 is not a no-op on this issue: contracts changed, and the
+    architect is expected to produce a specification rather than record
+    that none is needed. The judgment of scope within that remains the
+    architect's.
+
+    One item to carry, not to act on. Finding 1 from step 4 iteration 1
+    — `README.md:237` telling readers that omitting `unicode.allowed`
+    disables the rule, which criterion 9 turned into a runtime error —
+    is deferred to step 8 and is deliberately unfixed on this branch.
+    The architect decides at step 7 whether the documentation track
+    runs. If that decision is "no documentation required", finding 1
+    has no home, and the architect is asked to say where it goes rather
+    than leaving it unrouted.
+
+    Routing step 6 alone. The pipeline returns to the user before step
+    7, because step 7 carries the documentation-track decision and that
+    is worth surfacing rather than passing through.
