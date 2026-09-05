@@ -62,9 +62,12 @@ Validates every requested path and returns the process exit status.
 contract; `main()` does not call `sys.exit()` itself, and a caller that
 discards the return value discards the entire failure signal.
 
-Argparse's own errors — an unknown flag, a flag missing its value,
-`--help` — are the one exception: argparse raises `SystemExit` from
-inside `main()` rather than letting it return.
+Argparse is the one exception: it raises `SystemExit` from inside
+`main()` rather than letting it return. That happens on two kinds of
+argument, which exit differently. Argparse's own errors — an unknown
+flag, a flag missing its value — print to stderr and raise
+`SystemExit(2)`. `--help` is not an error: it prints the help text to
+stdout and raises `SystemExit(0)`.
 
 ## File Layout
 
@@ -73,7 +76,7 @@ inside `main()` rather than letting it return.
 | `tiredize/cli.py`           | Argument parsing, orchestration, `main` |
 | `tiredize/__main__.py`      | `python -m tiredize` entry point    |
 | `tests/test_cli.py`         | In-process tests of `main`          |
-| `tests/test_main_module.py` | Process-level tests of `-m`         |
+| `tests/test_main_module.py` | Entry-point tests, subprocess and in-process |
 
 ## Exit Status Contract
 
@@ -81,15 +84,17 @@ Every invocation exits with one of exactly three statuses.
 
 | Status | Meaning                                                |
 |--------|--------------------------------------------------------|
-| `0`    | Every path was loaded and produced no findings         |
+| `0`    | Every path was loaded and produced no findings, or `--help` |
 | `1`    | At least one path produced findings, or a runtime error occurred |
 | `2`    | Usage error                                            |
 
 A usage error is either no positional paths, or none of the three
 configuration flags (`--rules`, `--markdown-schema`,
 `--frontmatter-schema`). It prints the usage message and an
-explanatory line to stderr. Argparse's own errors also exit `2`, by
-raising `SystemExit(2)` from within `main()`.
+explanatory line to stderr. Argparse's own errors — an unknown flag, a
+flag missing its value — also exit `2`, by raising `SystemExit(2)` from
+within `main()`. `--help` is not a usage error: it exits `0`, and its
+text goes to stdout rather than stderr.
 
 ### Findings and Runtime Errors
 
@@ -133,8 +138,10 @@ printed, so a single path's findings are printed together.
 |--------|----------------------------------------------------------|
 | stdout | Findings, as `path:line:col: [rule_id] message`           |
 | stdout | The per-file `path: no issues found.` line               |
+| stdout | The `--help` text                                        |
 | stderr | Runtime errors, as `error: <message>`                    |
 | stderr | The usage message and the usage-error explanation        |
+| stderr | Argparse's own error messages                            |
 
 Findings never go to stderr and runtime errors never go to stdout.
 Line and column come from `Document.line_col()`, which resolves a

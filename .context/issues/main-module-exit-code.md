@@ -2493,3 +2493,77 @@ Author: program-manager
     2026-09-06T08:00:00+00:00: the track runs. Steps 8 and 9 are in.
     `README.md:237` therefore lands at step 8 and the no-home
     contingency does not fire.
+
+### 2026-09-06T10:00:00+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Step 6 revision. Scoped to step 7's finding and the nit recorded
+    alongside it; `.context/specifications/cli.md` is the only file
+    changed. `linter.md` was not opened — step 7 confirmed it accurate
+    key by key and it is out of this revision's scope. No code, no
+    `README.md`, no `.context/PROJECT.md`.
+
+    `--help` verified first-hand rather than taken on the finding's
+    word, on this machine, which ships `python3` and not `python`.
+    `python3 -m tiredize --help` exits `0`, writes 718 bytes to stdout
+    beginning `usage: tiredize [-h] ...`, and writes nothing at all to
+    stderr. The console script agrees: `tiredize --help` exits `0` with
+    an empty stderr. Controls, all `2` and all on stderr:
+    `python3 -m tiredize` (no arguments), `python3 -m tiredize --bogus
+    x`, and `python3 -m tiredize --rules` (flag missing its value). So
+    the finding is correct in both halves — the status and the stream —
+    and the document was wrong about both.
+
+    Four edits, all inside the exit-status contract the document
+    already claims:
+
+      - `main`, the argparse paragraph. It previously listed `--help`
+        alongside the two error forms under one sentence, which the
+        later "argparse's own errors also exit `2`" sentence then
+        turned into a claim that `--help` exits `2`. The paragraph now
+        splits the two: argparse's own errors — unknown flag, flag
+        missing its value — print to stderr and raise `SystemExit(2)`;
+        `--help` is not an error, prints to stdout and raises
+        `SystemExit(0)`. Both are still named as the one place
+        `main()` exits instead of returning, which is the fact that
+        paragraph exists to carry.
+      - Exit Status Contract, the `0` row: "Every path was loaded and
+        produced no findings, or `--help`". The section opens by
+        claiming every invocation exits one of exactly three statuses,
+        so a `--help` invocation had to be described by one of the
+        three rows; it is now described by the row it actually takes.
+      - The prose under the status table, which is where the `2` claim
+        was made. Argparse's own errors are now enumerated where they
+        are claimed rather than by reference to an earlier sentence,
+        and `--help` is excluded explicitly, with its status and its
+        stream.
+      - Output Streams gains two rows: `--help` text to stdout, and
+        argparse's own error messages to stderr. The second is not
+        part of the finding but is the same omission seen from the
+        other side — the table claimed to enumerate every stream the
+        CLI writes to and did not cover either argparse path.
+
+    The nit, taken rather than left: `cli.md:76` described
+    `tests/test_main_module.py` as "Process-level tests of `-m`". The
+    file has five classes. `TestExitStatus` drives `-m` by subprocess;
+    `TestStreamParity` drives both entry points; and
+    `TestIssueAssigneeVocabulary` and `TestRuleConfigurationValidation`
+    drive the console script — so three of five touch the console
+    script, and the last of those exercises linter configuration rather
+    than the CLI. `TestModuleExecution` is in-process, through
+    `runpy.run_module`, so "process-level" was not true of the file
+    either. The cell now reads "Entry-point tests, subprocess and
+    in-process", which is true of all five without misdescribing any.
+    I did not take step 7's suggested wording verbatim because
+    "process-level" is the half that is wrong for `TestModuleExecution`.
+
+    Nothing else changed. No section was added or removed, the partial-
+    scope declaration is untouched, and the document still stops at the
+    exit-status contract and its stream and abort semantics, per
+    `### Out of scope`. The correction is entirely inside the half the
+    document claims to cover, which is where step 7 said the defect
+    sat. Criterion 8 is back with step 7 to confirm; I do not tick it.
+
+    No action tag raised. Nothing about the revision needed a decision
+    that was not already recorded.
