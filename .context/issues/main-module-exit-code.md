@@ -957,3 +957,191 @@ Author: program-manager
     one of the 26 skip markers, repair `test_valid_document_passes_rules`
     (criterion 4 carves out that one test by name), and treat
     `elements.disallow` and `links.validate` as required keys.
+
+### 2026-09-05T19:00:00+00:00
+
+Author: software-engineer/software-engineering/git,python,testing
+
+    Implementation complete. All sections of the issue are present and
+    complete per `templates/ISSUE.md`; nothing blocked the step and no
+    open question was raised.
+
+    Pre-implementation check. The 33 acceptance tests were run with
+    their skip markers stripped: 36 failed / 7 passed, matching the
+    qa-engineer's recorded evidence exactly (18 failed / 5 passed for
+    the first batch, 18 failed / 2 passed for the second). Every
+    failure was an assertion failure with observed-versus-expected
+    values — no import error, no setup error. Two signatures were
+    spot-checked against the record and matched:
+    `test_console_script_aborts_after_missing_document` failing on the
+    abort assertion rather than the exit status, and
+    `test_program_manager_is_allowed` failing `assert 1 == 0` with
+    `value_not_allowed`.
+
+    Three commits, one per group of criteria.
+
+    Criterion 7 — assignee vocabulary. `.context/schemas/issue-
+    frontmatter.yaml` was edited by hand to match upstream's
+    `assignee` list: `program-manager` replaces `PM`, which is removed
+    rather than kept as an alias, and the order matches upstream too.
+    `dotclaude distribute-schemas` was not run. Header comments and
+    the documented usage path were left alone.
+    `.context/issues/context-process-migration.md` carried the only
+    `assignee: PM` in the repository and moved with it. Its prose
+    mention of "PM-led maintenance" at line 78 is not frontmatter and
+    was left alone.
+
+    Criteria 1, 2, 3, 5, 6 — exit-code propagation and abort
+    semantics. `tiredize/__main__.py` now raises `SystemExit(main())`,
+    the preferred idiom; no deviation was needed. `main()`'s
+    `FileNotFoundError` handler returns 1 instead of continuing, so
+    all runtime errors abort. `main()` gained a docstring stating the
+    three return values and the findings-continue/errors-abort rule.
+
+    Criteria 9, 10 — rule configuration validation.
+    `validate_config(config, allowed, required, rule_id)` sits beside
+    the accessors in `tiredize/linter/utils.py`. `allowed` maps each
+    key to a type name from a five-entry vocabulary (`bool`, `dict`,
+    `int`, `list`, `str`) whose predicates mirror the matching
+    `get_config_*` accessor — so a value the helper accepts is one the
+    accessor will return rather than treat as absent, including
+    rejecting `bool` where `int` is declared. Faults are reported in a
+    fixed order: unknown keys, then omitted required keys, then
+    wrong-typed values. Unknown keys come first because a typo is both
+    the likeliest fault and the one that makes the others misleading —
+    a misspelled required key reads as an omission until its real name
+    is pointed out. Every message names the rule id and the offending
+    key, and the unknown-key message also lists the accepted keys.
+
+    Each rule declares `_RULE_ID`, `_ALLOWED_KEYS` and
+    `_REQUIRED_KEYS` inline and calls the helper as the first
+    statement in `validate()`. The `Rule` dataclass and rule discovery
+    are untouched.
+
+    Required-versus-optional, applying the settled principle that a
+    key is required when its absence leaves the rule inert:
+
+      - Required: `line_length.maximum_length`, `elements.disallow`,
+        `links.validate`, `unicode.allowed`. Each rule returns `[]`
+        outright when its key is absent.
+      - Optional: `tabs.allowed` and `trailing_whitespace.allowed`.
+        The qa-engineer flagged these as unsettled by the earlier
+        code-shape heuristic; the principle settles them. With the key
+        absent both rules still forbid what they exist to forbid, so
+        enabling them is never a no-op. This was a deliberate call,
+        not an accidental one, per the note at the end of the step-2
+        comment.
+      - Also optional: `line_length.exclude`, `unicode.exclude`,
+        `links.exclude`, `links.headers`, `links.timeout`,
+        `links.valid_status_codes`.
+
+    Required means present, not truthy: `links: {validate: false}` is
+    legal.
+
+    Coexistence with the existing value-level checks. Key-level
+    validation runs first and none of the existing `ValueError`
+    messages were changed or duplicated — `line_length.exclude` and
+    `unicode.exclude` element names, `elements.disallow` element
+    names, and `links.valid_status_codes` entries are all still
+    reported by the rules' own wording. Four tests pin the ordering
+    (an unknown key alongside a bad element name reports the unknown
+    key) and four more pin that a list holding a non-string still
+    reaches the value-level message.
+
+    Now-unreachable guards removed: the `if maximum_length is None`,
+    `if allowed is None` and `get_config_list(...) or []` fallbacks in
+    `line_length`, `unicode` and `elements` that the helper makes
+    impossible to hit. `elements`' empty-list early return stays —
+    `disallow: []` is present, legal and means "allow everything".
+
+    White-box tests added, from the coverage and input-boundary
+    audits:
+
+      - `tests/test_main_module.py::TestModuleExecution` — six
+        in-process tests driving the module body through
+        `runpy.run_module("tiredize", run_name="__main__")` with
+        `sys.argv` patched, asserting on `SystemExit.code`. Covers
+        the three returned codes, the argparse `SystemExit` that
+        unwinds through the statement rather than being constructed
+        by it, and re-execution in one interpreter.
+      - `tests/linter/test_utils.py` — 24 tests for
+        `validate_config`: the three error states, ordering when
+        faults coexist, one wrong type per declared type, bool/int
+        confusion in both directions, `None` values, empty
+        collections and empty strings, non-ASCII keys and values,
+        no-mutation of any of its three inputs, and idempotency.
+      - `tests/linter/rules/test_loader.py` — four parametrized
+        guards over every discovered built-in rule: the declaration
+        exists and `_RULE_ID` matches the id the loader derives from
+        the module name, the minimal config is accepted, an unknown
+        key is rejected, and dropping any required key is rejected.
+        This is the code half of "a new rule author cannot omit it by
+        accident": a rule module added without the declaration fails
+        collection or the first guard.
+      - Per-rule configuration sections in all six rule test files.
+      - `tests/test_cli.py::test_missing_document_aborts_remaining_
+        paths` — the abort, in-process.
+
+    Existing tests changed. Seven asserted the silent-no-op behaviour
+    criteria 9 and 10 remove, and now assert the error instead:
+    `test_engine.py::test_run_linter_undefined_rule` (renamed
+    `..._undefined_rule_key_raises`),
+    `test_elements.py::test_missing_disallow_returns_empty`,
+    `test_links.py::test_validate_missing_returns_empty`,
+    `test_unicode.py::test_missing_allowed_returns_empty` and
+    `test_allowed_none_returns_empty`, and the
+    `test_config_allowed_wrong_type` cases in `test_tabs.py` and
+    `test_trailing_whitespace.py`. These are not acceptance tests and
+    are not in `tests/test_cli.py`, so no criterion protected them;
+    leaving them would have meant the suite asserting both the old and
+    the new contract at once. `tests/test_cli.py::test_valid_document
+    _passes_rules` was repaired to `maximum_length` per criterion 4;
+    no other test in that file was edited or deleted.
+
+    The `PENDING` constant in `tests/test_main_module.py` was removed
+    along with the last skip marker that referenced it. It was
+    scaffolding for the skips only, and its comment ("They fail until
+    the fix lands") would have been actively wrong left behind. No
+    test was touched.
+
+    Definition of Done. `flake8 tiredize tests` is clean. Full suite:
+    844 passed / 50 skipped / 0 failed. All 50 remaining skips are the
+    pre-existing `gfm-parity` skips in the markdown parser tests;
+    `tests/test_main_module.py` has zero skip markers, verified by
+    grep. Coverage for changed source files: `tiredize/__main__.py`
+    100% (was 0%), `tiredize/linter/utils.py` 100%,
+    `tiredize/linter/rules/{tabs,trailing_whitespace,links}.py` 100%,
+    `unicode.py` 98%, `elements.py` 97%, `line_length.py` 95%,
+    `cli.py` 98%. Every uncovered line is a pre-existing gap in code
+    this issue did not touch: the range-merge branches in
+    `line_length.py` and `unicode.py`, the zero-length-element
+    `continue` in `elements.py`, the empty-YAML `return {}` and the
+    `if __name__ == "__main__"` guard in `cli.py`, and the
+    `isinstance(rule, Rule)` check in `engine.py` that a comment in
+    `test_engine.py` already documents as unreachable. No new
+    uncovered line was introduced.
+
+    Still open, and not this step's to close. Criterion 8
+    (`.context/specifications/cli.md`) and the second half of
+    criterion 10 (`.context/specifications/linter.md` documenting the
+    rule-module convention) are authored by the technical-architect at
+    step 6. Nothing was written to `.context/specifications/`.
+
+    Observations for triage, outside the ten criteria and not acted
+    on:
+
+      - The README's rule reference at lines 182-300 documents the
+        configuration keys correctly, so no example there breaks. It
+        does not yet say that an unrecognized or wrong-typed key is
+        now an error, or which keys are required. Worth a line when
+        step 8 revisits the Usage section.
+      - `validate_config` does not check that `config` is a mapping.
+        `run_linter` already raises for that at `engine.py:57-60` and
+        adding a second message for the same condition would risk the
+        contradiction criterion 9 warns about, so the engine keeps
+        ownership of it.
+      - The type vocabulary is coarse: `list` and `dict` are not
+        checked element-wise. Every rule that cares already checks
+        its own entries at value level, so nothing is unguarded, but
+        a future rule author could declare `list` and forget the
+        inner check.
