@@ -3008,3 +3008,220 @@ Author: program-manager
     The review loop is capped at 5 iterations. All ten acceptance
     criteria are ticked and stay ticked; step 9 neither ticks nor unticks
     any of them.
+
+### 2026-09-06T16:00:00+00:00
+
+Author: proofreader/software-engineering
+
+    Documentation review, iteration 1. Verdict: two findings, both
+    inside the three sites step 8 owns, both routing back to step 8.
+    Everything else in the README is accurate against the
+    implementation, and I found no fourth site this change falsified.
+
+    All sections of the issue are present and complete per
+    `templates/ISSUE.md` — Summary, Acceptance Criteria, Design
+    Decisions, Open Questions, Comments — and nothing blocked the
+    step. No acceptance criterion was ticked or unticked; all ten
+    stay as the PM left them.
+
+    The standard I applied, stated rather than left implicit. No
+    knowledge files were loaded: `AGENTS.md` maps none to the
+    `documentation-review` step and the issue's frontmatter
+    `knowledge` field is empty, so I worked from my base function.
+    Accuracy I judged against the code and against the running
+    program. Prose quality I judged against the README's own
+    established voice, wrapping (prose to 72 columns) and table
+    conventions rather than against a style knowledge file — the
+    standard there is mine, not a knowledge file's. The orchestrator
+    is reporting the mapping gap to the PM separately.
+
+    Finding 1 — `README.md:114-116` describes an output order the
+    tool does not produce.
+
+      The sentence reads: "The command prints rule violations to
+      stdout in `file:line:col: [rule_id] message` format, followed
+      by a `file: no issues found.` line for every file that came
+      back clean."
+
+      "Followed by" asserts that the clean-file lines come after the
+      violations. They do not. `cli.py:129-208` processes one path at
+      a time and prints that path's output before moving to the next,
+      so the two kinds of line interleave in argument order. Measured
+      on this machine, with `intro.md` and `guide.md` clean and
+      `bad.md` over the limit:
+
+          $ tiredize --rules rules.yaml intro.md bad.md guide.md
+          intro.md: no issues found.
+          bad.md:3:80: [line_length] Line exceeds maximum length of 80 (120 found).
+          guide.md: no issues found.
+
+      The clean line precedes the violation, which is the opposite of
+      what the sentence promises. There is a second half to it: a
+      file that produced violations never also gets a `no issues
+      found.` line (`cli.py:205-208` is an either/or), so the
+      sentence can also be read as promising a per-file summary line
+      that never arrives.
+
+      This matters because the paragraph is the reader's only account
+      of what the tool writes to stdout, and it sits immediately
+      above the `### Exit status` section whose purpose is precision
+      about the same run.
+
+      Correction: state that output is grouped per file, in the order
+      the paths were given, and that each file yields either its
+      violations or the clean line. For example — "For each file, in
+      the order given, the command prints that file's rule violations
+      to stdout as `file:line:col: [rule_id] message`, or a single
+      `file: no issues found.` line if it has none. Runtime errors go
+      to stderr as `error: <message>`." The final sentence is already
+      correct and can stand as it is.
+
+    Finding 2 — `README.md:401-440`, the Custom Rules skeleton
+    introduces `_RULE_ID` and never says what it is or how it relates
+    to the rule ID the engine actually uses.
+
+      The skeleton declares three module-level constants under one
+      comment — "Every key this rule accepts, mapped to its type, and
+      the subset it requires" — which describes `_ALLOWED_KEYS` and
+      `_REQUIRED_KEYS` and does not describe `_RULE_ID` at all. The
+      prose that follows (lines 425-440) explains the
+      `validate_config()` call, how to classify a key as required or
+      optional, the five type names, and the empty-`_ALLOWED_KEYS`
+      case. `_RULE_ID` is explained nowhere.
+
+      A reader is therefore left to guess, and the README tells them
+      two things that pull apart. `README.md:450` says "The rule ID
+      is derived from the module filename (e.g., `my_rule.py`
+      produces rule ID `my_rule`)", which is true —
+      `rules/__init__.py:63-72` computes it from the module name and
+      `engine.py:70` stamps it onto every result. But `_RULE_ID` is a
+      hand-written string that the engine never reads: it appears
+      only in `validate_config()`'s error messages
+      (`utils.py:160-180`). Set it to anything other than the
+      filename and the tool reports configuration errors against a
+      rule id that does not exist in the reader's rules file, while
+      findings from the same rule are labelled with the filename.
+      Nothing in the README, and nothing in `linter.md`, warns of it.
+
+      Correction: one sentence in the prose at `README.md:425-440`
+      saying what `_RULE_ID` is for and that it must match the module
+      filename — for example, "`_RULE_ID` names the rule in
+      `validate_config()`'s error messages; keep it equal to the
+      module filename, which is the ID the engine uses and the one
+      readers write in their rules file." While the sentence is being
+      added, the comment above the constants is worth widening from
+      the key sets to all three names, since as written it describes
+      two of the three.
+
+    The two constraints, both verified rather than taken on step 8's
+    word.
+
+      - Errors-abort is written as a property of the tool, not of
+        `-m`. `README.md:146` reads "Errors abort and findings
+        continue, whichever way you invoke the tool", and the worked
+        example at `README.md:151` is a console-script run. The
+        `### Exit status` section names no invocation form in its
+        table or in either of the findings/runtime-error paragraphs.
+        Nothing frames the change as `-m`-only. Honoured. I also
+        confirmed the behaviour is genuinely shared: `tiredize
+        --rules rules.yaml intro.md missing.md guide.md` and the same
+        arguments through `python3 -m tiredize` both print
+        `intro.md: no issues found.` to stdout, `error: Path does not
+        exist: missing.md` to stderr, never touch `guide.md`, and
+        exit `1`.
+      - Reader-facing prose never instructs `python -m tiredize`.
+        `grep -n "python -m" README.md` returns exactly one line,
+        `README.md:78`, and it is the conditional step 8 described:
+        "Write `python -m tiredize` only where `python` is known to
+        be the Python 3 interpreter tiredize was installed into —
+        many systems ship `python3` and no `python` at all." The
+        invocation block at `README.md:69-72` gives `tiredize` and
+        `python3 -m tiredize`. The resolution holds throughout the
+        file; there is no second occurrence anywhere. Honoured. On
+        this machine `python` is not found and `python -m tiredize`
+        returns 127, so the caveat is not hypothetical.
+
+    Verified by running, not by reading. Exit statuses `0` (clean
+    input), `1` (findings) and `2` (no arguments) through both the
+    console script and `python3 -m tiredize`; `--help` exits `0` with
+    an empty stderr; `--bogus x` and `--rules` with its value missing
+    both exit `2`. All three configuration faults, each exiting `1`
+    with the message on stderr — including the line the README quotes
+    at `README.md:250`, which is byte-for-byte what the tool prints:
+    `error: Rule 'line_length': unknown configuration key
+    'max_length'. Accepted keys: exclude, maximum_length.` The
+    required/optional claims: `tabs: {}` still flags a tab and
+    `trailing_whitespace: {}` still flags trailing whitespace, so
+    both "forbidden when the key is omitted" rows are right;
+    `links: {validate: false}` is accepted and exits `0`, so the
+    present-not-truthy paragraph is right; `elements: {}` and
+    `links: {}` both fail with "required configuration key ... is
+    missing", so both `Yes` rows are right. Every YAML example in the
+    README was extracted from the file and run as a rules file — all
+    seven are accepted under the new validation, so none of the
+    examples was falsified by criterion 9. The two schema examples
+    were run against a document built to match and both exit `0`.
+    Stream parity checked by diff on a configuration-error run:
+    stdout and stderr byte-identical across the two entry points.
+
+    The Custom Rules skeleton was extracted from the README
+    programmatically and executed rather than read. It imports
+    cleanly, `validate()` returns `[]` for a good config, and it
+    raises all three documented `ValueError`s with the rule id and
+    the offending key. I also appended its directory to
+    `tiredize.linter.rules.__path__` and confirmed `discover_rules()`
+    finds it and `run_linter()` surfaces its configuration errors
+    unchanged, so the skeleton is a working rule and not just
+    plausible-looking code. Finding 2 is a gap in what the prose
+    explains, not a defect in the code it shows.
+
+    Verified by reading, against `tiredize/cli.py`,
+    `tiredize/__main__.py`, `tiredize/linter/utils.py`,
+    `tiredize/linter/engine.py`, `tiredize/linter/rules/*.py` and
+    `tiredize/markdown/types/document.py`. The `Required` column
+    matches `_REQUIRED_KEYS` in all six rule modules, checked module
+    by module rather than sampled. The runtime-error list at
+    `README.md:139-142` is exactly the set `cli.py:133-199` catches.
+    The status table matches every return in `main()`. The five type
+    names at `README.md:437-438` match `_CONFIG_TYPE_CHECKS` at
+    `utils.py:19-28`. The element-name table at `README.md:378-391`
+    matches `_ELEMENT_MAP` name for name, all twelve. Both in-page
+    anchors resolve to real headings, and all three specification
+    links point at files that exist.
+
+    Full document reviewed, not only the changed sections. I read the
+    README end to end and looked specifically for preexisting wording
+    the change contradicts. The only other exit-status claim in the
+    file was the "nonzero exit code" sentence, which step 8 replaced;
+    no other section mentions module invocation, abort behaviour or
+    rule-key handling. Installation, the parser and frontmatter
+    Features paragraphs, the two Configuration examples and the
+    element-name table are all untouched by this change and accurate.
+
+    Triage observation, not acted on and no fix requested. I assessed
+    step 8's Features-section observation rather than repeating it,
+    and it is correct: `README.md:26-28` says built-in rules "cover
+    line length, tab usage, trailing whitespace, and link
+    validation", omitting `unicode` and `elements`, both of which
+    have full reference subsections. `git show main:README.md` has
+    the identical sentence, and this branch adds and removes no
+    rules, so the omission is pre-existing and not falsified here —
+    step 8 was right to leave it. I add one thing to the record: the
+    Features paragraph is now the only place in the README that
+    enumerates the built-in rules without the `Required` column's
+    account of them, so a reader who stops at Features still gets a
+    four-rule picture of a six-rule tool. That is an argument for
+    fixing it eventually, not for folding it into this branch.
+
+    Beyond it I found no fourth README site this change falsified.
+    Per the PM's routing, if I had, I would record it here rather
+    than request a fix; I have nothing to record.
+
+    Both findings are inside the three sites and route to step 8. No
+    other file needs an edit: the code is not implicated, and neither
+    specification is — `linter.md` is silent on `_RULE_ID`'s
+    relationship to the filename too, but that is a contributor
+    document confirmed accurate at step 7 and outside this step's
+    remit.
+
+    Action: @program-manager — request for edit
