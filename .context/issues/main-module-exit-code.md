@@ -735,3 +735,184 @@ Author: qa-engineer/software-engineering/testing
     value is distinguished from an unknown key, and what the message
     says). Once scoped, step 2 can be re-entered to add the acceptance
     tests for it. Stopping rather than assuming.
+
+### 2026-09-05T16:00:00+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Step 2 re-entered for criteria 9 and 10 only. The 23 tests written
+    at the first pass are untouched — no test was edited, renamed,
+    reordered or deleted, and no existing skip marker was removed.
+
+    Delivered one new class in `tests/test_main_module.py`,
+    `TestRuleConfigurationValidation`: 10 test functions, 20 pytest
+    items (two are parametrized over the six built-in rules). File
+    total is now 33 test functions / 43 items. Two new module-level
+    helpers were added alongside the existing ones — `_rule_modules()`
+    and `_write_rule_config()` — plus the constants `RULES_PACKAGE`,
+    `BASELINE_RULE_CONFIGS` and `WRONG_TYPED_RULE_CONFIGS`.
+
+    Entry point. These drive the `tiredize` console script, not
+    `python -m tiredize`, following the `TestIssueAssigneeVocabulary`
+    precedent. Criteria 9 and 10 are linter-engine behaviour, not `-m`
+    plumbing. Driving them through `-m` would make every one of them
+    fail today for two independent reasons — the absent configuration
+    validation *and* the discarded exit code — so a failure would not
+    be attributable to the behaviour under test, and a regression in
+    one defect could be masked by the other. The console script's exit
+    status is already correct today, so each failure here is
+    attributable to configuration validation alone. That both entry
+    points report these errors identically is already covered by
+    `TestStreamParity`, which asserts stdout, stderr and exit-status
+    parity for a runtime error.
+
+    Coverage by acceptance criterion:
+
+    9. An invalid rule configuration is a runtime error. All four
+       states named in the criterion get a case, on `line_length`
+       because its required-versus-optional split is unambiguous under
+       the derivation rule in Design Decisions — `maximum_length` is
+       read and the rule produces nothing when it is absent
+       (required); `exclude` has a fallback default (optional).
+
+         - `test_unknown_key_is_an_error` — a key the rule does not
+           accept (`max_length`, the real typo from `test_cli.py`).
+         - `test_required_key_with_wrong_type_is_an_error` —
+           `maximum_length` holding a string.
+         - `test_optional_key_with_wrong_type_is_an_error` —
+           `exclude` holding a bare string where a list is wanted.
+           Optional does not mean unchecked.
+         - `test_required_key_omitted_is_an_error` — `maximum_length`
+           absent, `exclude` present so the block is still a mapping.
+         - `test_unicode_required_key_omitted_is_an_error` — the same
+           state on a second rule whose required key is equally
+           unambiguous (`unicode` reads `allowed` and produces nothing
+           when it is absent).
+         - `test_omitted_optional_key_is_not_an_error` — the negative
+           case. An omitted optional key stays legal and exits `0`.
+         - `test_invalid_configuration_aborts_the_run` — two paths,
+           the bad configuration, and assertions that the later path
+           never appears in stdout and that no `no issues found` line
+           is printed at all.
+
+       Every error case asserts all three halves of the observable
+       contract: exit status `1`, the rule id in stderr, and the
+       offending key in stderr.
+
+    10. Every built-in rule validates its configuration this way.
+
+         - `test_unknown_key_is_an_error_for_every_rule` —
+           parametrized over all six non-private rule modules
+           (`elements`, `line_length`, `links`, `tabs`,
+           `trailing_whitespace`, `unicode`). Each case starts from a
+           valid baseline configuration for that rule and appends one
+           key no rule accepts, so the appended key is the only fault
+           and the case holds whether the baseline keys are required
+           or optional.
+         - `test_wrong_typed_value_is_an_error_for_every_rule` —
+           parametrized over the same six. Each takes a key the rule
+           does accept and gives it a value of the wrong type. Also
+           independent of the required-versus-optional reading.
+         - `test_every_rule_module_has_a_configuration_case` — the
+           guard. It reads the non-private `*.py` stems out of
+           `tiredize/linter/rules/` and asserts that set equals the
+           key set of both parametrization maps. Adding a rule module
+           without adding it to both maps fails this test, which is
+           what gives "a new rule author cannot omit it by accident"
+           teeth on the code half of the criterion.
+
+       The required-key-omitted state is deliberately *not*
+       parametrized over all six. For `tabs`, `trailing_whitespace`,
+       `elements` and `links` the derivation rule does not settle
+       whether the key is required — `tabs.allowed` and
+       `trailing_whitespace.allowed` are read with no fatal branch;
+       `elements.disallow` has an `or []` fallback but then produces
+       nothing when empty; `links.validate` cannot distinguish an
+       absent key from `false`. Pinning a reading there would be
+       inventing policy, which Design Decisions forbids. The fixtures
+       above are built to hold under either reading instead.
+
+       Criterion 10's second half — that
+       `.context/specifications/linter.md` documents the convention —
+       is not machine-assertable, the same category as criterion 8.
+       Whether prose adequately teaches a convention is a judgement
+       call with no machine-readable schema in this repository, and
+       the document is authored by the technical-architect at step 6,
+       so any test for it would have to stay skipped through steps 3
+       to 5 against the convention that step 3 clears every skip. It
+       will be verified by inspection twice: at step 6, by the
+       technical-architect, against `templates/SPECIFICATION.md` and
+       against the "Rule Module Convention" and "Configuration
+       Helpers" sections that must now name the validation
+       requirement; and at step 5 acceptance verification, by reading
+       the section and confirming a new rule author following it alone
+       would write the check. No hollow test was invented for it.
+
+    Pre-skip failure evidence. The class was first run with no skip
+    markers: 18 failed, 2 passed. Every failure was an assertion
+    failure with observed-versus-expected values — no import error, no
+    setup error, no missing fixture, no `FileNotFoundError` on the
+    console script.
+
+      - All 18 failed identically on the first assertion,
+        `assert result.returncode == 1` reported as `assert 0 == 1`,
+        with `stderr=''` and stdout carrying
+        `.../nap_time.md: no issues found.` — the invalid
+        configuration was accepted in silence and the rule no-opped,
+        which is precisely the defect criteria 9 and 10 exist to
+        close.
+      - `test_invalid_configuration_aborts_the_run` failed the same
+        way and its stdout showed both paths reported —
+        `.../nap_time.md: no issues found.` followed by
+        `.../second_nap.md: no issues found.` — so the abort
+        assertions further down would have failed too had the exit
+        status matched.
+      - The two passing tests are
+        `test_omitted_optional_key_is_not_an_error` and
+        `test_every_rule_module_has_a_configuration_case`. Both are
+        meaningful guards rather than accidental passes, so both are
+        left unskipped: the first fails if validation over-reaches and
+        demands an optional key; the second fails if a rule module is
+        added without a validation case.
+
+    Skip markers step 3 must remove — eight functions, 18 items, all
+    carrying `@pytest.mark.skip(reason=PENDING)`:
+    `test_unknown_key_is_an_error`,
+    `test_required_key_with_wrong_type_is_an_error`,
+    `test_optional_key_with_wrong_type_is_an_error`,
+    `test_required_key_omitted_is_an_error`,
+    `test_unicode_required_key_omitted_is_an_error`,
+    `test_invalid_configuration_aborts_the_run`,
+    `test_unknown_key_is_an_error_for_every_rule`,
+    `test_wrong_typed_value_is_an_error_for_every_rule`. No test was
+    weakened to make it pass and the pre-commit hook was not bypassed.
+
+    Suite state: 731 passed / 86 skipped, up from 729 / 68.
+    `flake8 tiredize tests` is clean. `tiredize/` is byte-for-byte
+    unchanged — `git diff --stat 7380a85 HEAD -- tiredize/` is empty
+    and the working tree shows no modification under `tiredize/`.
+    `tests/test_cli.py` was not touched.
+
+    Observations for triage, outside criteria 9 and 10 and not acted
+    on:
+
+      - The error message wording is not pinned by these tests beyond
+        "names the rule id and the offending key", which is all the
+        criterion promises. If the messages are meant to be uniform
+        across rules — the stated reason for the shared helper — that
+        uniformity is a code-review check at step 4, not something
+        these tests assert.
+      - `line_length.exclude` and `unicode.exclude` accept element
+        names and raise `ValueError` on an unknown one, and
+        `links.valid_status_codes` validates its entries. Those are
+        value-level checks that already produce a runtime error today.
+        Criterion 9 is about key-level validation, so the two layers
+        will coexist; whoever implements the shared helper should be
+        careful not to duplicate or contradict the existing
+        element-name and status-code messages.
+      - The `elements` rule's `disallow` and the `links` rule's
+        `validate` read as enable-toggles rather than required keys.
+        If the implementer's reading differs from that, nothing in
+        this suite breaks — the fixtures were built to be neutral —
+        but it is worth a deliberate call at step 3 rather than an
+        accidental one.

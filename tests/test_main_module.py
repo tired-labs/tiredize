@@ -34,6 +34,36 @@ FRONTMATTER_SCHEMA = (
 MARKDOWN_SCHEMA = (
     REPO_ROOT / ".context" / "schemas" / "issue-markdown.yaml"
 )
+RULES_PACKAGE = REPO_ROOT / "tiredize" / "linter" / "rules"
+
+# One valid configuration body per built-in rule. Each supplies every
+# key the rule could plausibly require, so when a case appends a fault
+# the fault is the only thing wrong with the block.
+BASELINE_RULE_CONFIGS = {
+    "elements": "  disallow: [table]\n",
+    "line_length": "  maximum_length: 200\n",
+    "links": "  validate: false\n",
+    "tabs": "  allowed: true\n",
+    "trailing_whitespace": "  allowed: true\n",
+    "unicode": "  allowed: true\n",
+}
+
+# One key per built-in rule, holding a value of the wrong type. Each
+# key is one the rule accepts, so these exercise the wrong-type state
+# rather than the unknown-key state, whether the key is required or
+# optional.
+WRONG_TYPED_RULE_CONFIGS = {
+    "elements": ("disallow", "  disallow: table\n"),
+    "line_length": (
+        "maximum_length", "  maximum_length: forty winks\n"
+    ),
+    "links": ("validate", "  validate: yes please\n"),
+    "tabs": ("allowed", "  allowed: sure thing\n"),
+    "trailing_whitespace": (
+        "allowed", "  allowed: sure thing\n"
+    ),
+    "unicode": ("allowed", "  allowed: sure thing\n"),
+}
 
 # Tests below assert the contract, not today's behaviour. They fail
 # until the fix lands; see the tracking issue named in this reason.
@@ -67,6 +97,21 @@ def _issue_frontmatter(assignee: str) -> str:
         "\n"
         "# Tea Break Protocol\n"
     )
+
+
+def _rule_modules() -> set[str]:
+    """The built-in rule ids, read from the package directory.
+
+    A rule id is the module filename and a module whose name starts
+    with an underscore is not a rule — both are documented conventions
+    in `.context/specifications/linter.md`. Reading the directory
+    rather than calling `discover_rules()` keeps this suite black-box.
+    """
+    return {
+        path.stem
+        for path in RULES_PACKAGE.glob("*.py")
+        if not path.stem.startswith("_")
+    }
 
 
 def _run_console(args: list[str]) -> subprocess.CompletedProcess:
@@ -122,6 +167,13 @@ def _write_markdown_schema(directory: Path) -> Path:
         "  - name: Nap Time\n"
     )
     return schema
+
+
+def _write_rule_config(directory: Path, body: str) -> Path:
+    """Write an arbitrary rules configuration file."""
+    rules = directory / "questionable_rules.yaml"
+    rules.write_text(body)
+    return rules
 
 
 def _write_rules_config(directory: Path) -> Path:
@@ -441,3 +493,218 @@ class TestIssueAssigneeVocabulary:
             *[str(path) for path in issues],
         ])
         assert result.returncode == 0, result.stdout + result.stderr
+
+
+class TestRuleConfigurationValidation:
+    """An invalid rule configuration is a runtime error.
+
+    Contract: three states are errors — a key the rule does not
+    accept, a key the rule accepts holding a value of the wrong type,
+    and a required key omitted. Each prints to stderr naming the rule
+    id and the offending key, exits `1`, and aborts the run. An
+    omitted optional key stays legal.
+
+    These run the console script rather than `python -m tiredize`.
+    The behaviour under test lives in the linter, not in the `-m`
+    plumbing, and the console script's exit status is already correct
+    today — so a failure here is attributable to rule-configuration
+    validation and not to the exit-code defect this issue also fixes.
+    That both entry points report it identically is covered by
+    `TestStreamParity`.
+    """
+
+    # --- The three error states, on a rule with an unambiguous
+    # --- required key (`maximum_length`) and an unambiguous optional
+    # --- one (`exclude`).
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_unknown_key_is_an_error(self, tmp_path):
+        """`max_length` is not a key `line_length` accepts.
+
+        The real-world instance: `tests/test_cli.py` configures this
+        exact typo, so the rule silently never runs.
+        """
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            "line_length:\n"
+            "  maximum_length: 200\n"
+            "  max_length: 80\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert "line_length" in result.stderr
+        assert "max_length" in result.stderr
+        assert "no issues found" not in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_required_key_with_wrong_type_is_an_error(self, tmp_path):
+        """`maximum_length` wants an integer, not a string."""
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            "line_length:\n"
+            "  maximum_length: forty winks\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert "line_length" in result.stderr
+        assert "maximum_length" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_optional_key_with_wrong_type_is_an_error(self, tmp_path):
+        """`exclude` wants a list, not a bare string.
+
+        Optional does not mean unchecked: a key the rule accepts is
+        an error when its value is of the wrong type, whether or not
+        the rule requires it.
+        """
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            "line_length:\n"
+            "  maximum_length: 200\n"
+            "  exclude: code_block\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert "line_length" in result.stderr
+        assert "exclude" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_required_key_omitted_is_an_error(self, tmp_path):
+        """`line_length` cannot run without `maximum_length`.
+
+        Required is derived from the rule's existing behaviour: the
+        rule reads the key and produces nothing when it is absent.
+        """
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            "line_length:\n"
+            "  exclude: [code_block]\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert "line_length" in result.stderr
+        assert "maximum_length" in result.stderr
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_unicode_required_key_omitted_is_an_error(self, tmp_path):
+        """A second rule with an unambiguously required key.
+
+        `unicode` reads `allowed` and produces nothing when it is
+        absent, the same shape as `line_length.maximum_length`.
+        """
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            "unicode:\n"
+            "  exclude: [code_block]\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert "unicode" in result.stderr
+        assert "allowed" in result.stderr
+
+    # --- The negative case: optional keys stay optional ---
+
+    def test_omitted_optional_key_is_not_an_error(self, tmp_path):
+        """`exclude` may be left out; that is not a fault.
+
+        Unskipped: it passes today and guards the other direction —
+        validation that demanded every documented key would break it.
+        """
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            "line_length:\n"
+            "  maximum_length: 200\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 0, (
+            result.stdout + result.stderr
+        )
+        assert "no issues found" in result.stdout
+
+    # --- An invalid configuration aborts the run ---
+
+    @pytest.mark.skip(reason=PENDING)
+    def test_invalid_configuration_aborts_the_run(self, tmp_path):
+        """A later path goes unprocessed and is never reported."""
+        first = _write_clean_document(tmp_path)
+        second = tmp_path / "second_nap.md"
+        second.write_text("# Nap Time\n\nMore Zzz.\n")
+        rules = _write_rule_config(
+            tmp_path,
+            "line_length:\n"
+            "  maximum_length: 200\n"
+            "  max_length: 80\n",
+        )
+        result = _run_console([
+            "--rules", str(rules),
+            str(first), str(second),
+        ])
+        assert result.returncode == 1
+        assert "line_length" in result.stderr
+        assert "max_length" in result.stderr
+        assert str(second) not in result.stdout
+        assert "no issues found" not in result.stdout
+
+    # --- Every built-in rule validates its configuration ---
+
+    @pytest.mark.skip(reason=PENDING)
+    @pytest.mark.parametrize(
+        "rule_id", sorted(BASELINE_RULE_CONFIGS)
+    )
+    def test_unknown_key_is_an_error_for_every_rule(
+        self, rule_id, tmp_path
+    ):
+        """No rule may quietly swallow a key it does not accept.
+
+        The baseline block is a valid configuration for the rule, so
+        the appended key is the only fault and the case holds whether
+        the baseline keys are required or optional.
+        """
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(
+            tmp_path,
+            f"{rule_id}:\n"
+            + BASELINE_RULE_CONFIGS[rule_id]
+            + "  snooze_button: true\n",
+        )
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert rule_id in result.stderr
+        assert "snooze_button" in result.stderr
+        assert "no issues found" not in result.stdout
+
+    @pytest.mark.skip(reason=PENDING)
+    @pytest.mark.parametrize(
+        "rule_id", sorted(WRONG_TYPED_RULE_CONFIGS)
+    )
+    def test_wrong_typed_value_is_an_error_for_every_rule(
+        self, rule_id, tmp_path
+    ):
+        """No rule may treat a wrong-typed value as absent."""
+        key, body = WRONG_TYPED_RULE_CONFIGS[rule_id]
+        doc = _write_clean_document(tmp_path)
+        rules = _write_rule_config(tmp_path, f"{rule_id}:\n" + body)
+        result = _run_console(["--rules", str(rules), str(doc)])
+        assert result.returncode == 1
+        assert rule_id in result.stderr
+        assert key in result.stderr
+        assert "no issues found" not in result.stdout
+
+    def test_every_rule_module_has_a_configuration_case(self):
+        """A new rule cannot be added without a case here.
+
+        Unskipped: this passes today and is the guard that gives the
+        "a new rule author cannot omit it by accident" intent teeth —
+        dropping a module into `tiredize/linter/rules/` without
+        adding it to both maps above breaks this test.
+        """
+        modules = _rule_modules()
+        assert modules, "expected rule modules in the rules package"
+        assert modules == set(BASELINE_RULE_CONFIGS)
+        assert modules == set(WRONG_TYPED_RULE_CONFIGS)
