@@ -331,11 +331,30 @@ error states must be distinguished before the accessors are reached,
 which is why the check belongs at the top of `validate()` rather than
 inside the accessors.
 
-**Deriving required versus optional.** Do not invent a policy per rule.
-A key the rule currently treats as fatal — reading it and returning `[]`
-when it is `None`, as `line_length.py:62-64` does with `maximum_length` —
-is required. A key with a fallback default — `get_config_list(...) or []`,
-as with `exclude` — is optional. Preserve each rule's existing intent.
+**Deriving required versus optional.** The governing principle is that
+**enabling a rule must never be a no-op**: if a rule appears in the
+configuration, it must do something. So a key is *required* when its
+absence leaves the rule inert, and *optional* when the rule still does
+its job without it.
+
+Applied to the current rules: `line_length.maximum_length` is required
+(`line_length.py:62-64` returns `[]` without it). `elements.disallow` and
+`links.validate` are **also required** — `elements.py:24-26` and
+`links.py:45-47` both return `[]` when the key is absent, so configuring
+either rule without its key enables a check that checks nothing. That is
+precisely the silent no-op these criteria exist to eliminate.
+`line_length.exclude`, `links.timeout`, `links.headers`,
+`links.valid_status_codes` and the other fallback-default keys are
+optional.
+
+Required means the key must be *present*, not that it must be truthy.
+`links: {validate: false}` is legal and deliberately disables URL
+checking; the key is there, so it is not the silent-typo failure mode.
+
+This supersedes an earlier code-shape heuristic recorded here that
+classified by whether a key had a fallback default. `elements.disallow`
+and `links.validate` have both a default and an early return, so that
+heuristic could not settle them.
 
 **Spec consequence.** This changes the rule-module convention, so step 6
 now updates `.context/specifications/linter.md` as well as authoring
