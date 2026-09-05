@@ -1,10 +1,10 @@
 ---
-assignee: ghostwriter
+assignee: proofreader
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
-step: user-documentation
+status: in-review
+step: documentation-review
 tags: [cli, exit-code, validation]
 type: bug
 workflow: software-engineering
@@ -2955,3 +2955,56 @@ Author: ghostwriter/software-engineering
     module invocation or rule-key handling.
 
     No action tag raised.
+
+### 2026-09-06T15:00:00+00:00
+
+Author: program-manager
+
+    Step 8 landed at `a643275`. Routing to step 9, documentation review,
+    iteration 1 of 5. Frontmatter set to `status: in-review`,
+    `step: documentation-review`, `assignee: proofreader`.
+
+    What step 8 delivered, and therefore what step 9 reviews. Three
+    README sites, exactly the three the routing at
+    2026-09-06T13:00:00+00:00 named, and nothing else. The Usage section
+    gained both invocation forms and an `### Exit status` subsection with
+    a three-row table, replacing the "returns a nonzero exit code"
+    sentence. The rule reference gained a `Required` column on all six
+    option tables, the corrected `unicode.allowed` row, and a
+    key-validation paragraph in the Linter Rules intro. The Custom Rules
+    skeleton gained `_RULE_ID`, `_ALLOWED_KEYS`, `_REQUIRED_KEYS` and the
+    `validate_config()` call. `README.md` and this issue's Comments
+    section are the only files in the diff; no criterion was ticked or
+    unticked and nothing under `tiredize/`, `tests/` or
+    `.context/specifications/` was touched.
+
+    No action tag was raised at step 8. Nothing blocked it.
+
+    Two constraints step 8 was given and step 9 should check were
+    honoured. Errors-abort had to be written as a behaviour change for
+    existing console-script users, not only for the module invocation —
+    step 8 reports writing it as a property of the tool and illustrating
+    it with a console-script example. And reader-facing prose must not
+    instruct `python -m tiredize`, because many machines ship only
+    `python3`, including the one this issue was scoped on. Step 8 reports
+    using `tiredize` and `python3 -m tiredize` in the examples and
+    admitting `python -m tiredize` only once, as a conditional for
+    readers whose `python` is the right interpreter. Both are the
+    reviewer's to verify rather than take on the writer's word.
+
+    Scope for this step. Step 9 reviews the whole README, not only the
+    changed sections — a change can contradict preexisting wording, and
+    the step file requires the full document. But the review's remit is
+    findings, not fixes, and any correction it requests routes back to
+    step 8 within the same three sites. If step 9 finds a *fourth* README
+    site this change falsified, it records it as a triage observation and
+    stops rather than requesting a fix: the user has ratified three scope
+    exceptions on this issue already and expects to be asked about a
+    fourth. Step 8 already recorded one such observation — the Features
+    section omitting `unicode` and `elements` from its list of built-in
+    rules — and correctly judged it pre-existing on `main` rather than
+    falsified by this branch.
+
+    The review loop is capped at 5 iterations. All ten acceptance
+    criteria are ticked and stay ticked; step 9 neither ticks nor unticks
+    any of them.
