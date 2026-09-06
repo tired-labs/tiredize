@@ -3718,3 +3718,543 @@ Author: program-manager
 
     All ten acceptance criteria are ticked. The Open Questions section
     should be confirmed fully resolved as part of the checklist.
+
+### 2026-09-06T22:00:00+00:00
+
+Author: workflow-owner/software-engineering/git
+
+    Closeout. Verdict: the branch is complete and coherent against all
+    ten acceptance criteria, every pipeline step is accounted for in git
+    history and in Comments, and no discrepancy blocks acceptance. The
+    branch is handed to the user for approval gate 3. Nothing was
+    pushed, merged or rebased, and the issue stays where step 9 left it
+    — not moved to `completed/`, `status` not set to `done`. Those are
+    the PM's after the user accepts.
+
+    Everything below was observed on this branch rather than carried
+    over from the reports it checks.
+
+    Issue validated against `templates/ISSUE.md`. All five body sections
+    present in template order — Summary, Acceptance Criteria, Design
+    Decisions, Open Questions, Comments. Frontmatter carries all nine
+    fields. The one Open Question, the silent unknown-rule-configuration
+    key raised at step 2, is marked resolved in place with the decision
+    recorded and its design carried into Design Decisions under
+    "Validating rule configuration". No question is left open. All ten
+    criteria are ticked and I neither ticked nor unticked any.
+
+    Step verification. Every step has at least one commit recording its
+    work, and every commit on the branch belongs to a step or to a PM
+    routing entry. 48 commits, working tree clean.
+
+      - Step 1, scoping. `1094ba8`, `326b2ff`, `8f716e1`, `e78da7e`,
+        `184062f`, `4d16d39`, `7ba1424`, `c827865`, `5878425`. Two
+        approval gates passed; the criteria grew from five to ten across
+        them.
+      - Step 2, acceptance test design. `204bbeb`, `d1adfe5`, `79db0fb`,
+        `019233b`, `3cbaeb7`. Re-entered once, for criteria 9 and 10
+        only, with the first pass's 23 tests untouched.
+      - Step 3, implementation. `610c27a`, `c9a0d49`, `4cb8cb4`,
+        `ea889a5`, `14e7d10`, plus the revision at `5653386`.
+      - Step 4, code and test review. `84f32be` (iteration 1, two
+        findings), `63ef6b0` (iteration 2, clean). Two iterations of
+        five.
+      - Step 5, acceptance verification. `8e91d99`, pass on the first
+        pass. One iteration of five.
+      - Step 6, technical reference. `82f8d75`, `03a6cd6`, `08b1cab`,
+        plus the scoped revision at `50c5209`.
+      - Step 7, architecture review. `76ed4f0` (iteration 1, one
+        reference finding), `c91c312` (iteration 2, clean). Two
+        iterations of five.
+      - Step 8, user documentation. `a643275`, `42df038`.
+      - Step 9, documentation review. `5e3907f` (iteration 1, two
+        findings), `5947a35` (iteration 3, clean). Three iterations of
+        five.
+      - Step 10, closeout. This comment.
+
+    The conditional steps, checked against the workflow's conditions
+    rather than against the pipeline's account of them.
+
+      - Step 6 was not a no-op and correctly was not. Three contracts
+        changed — the exit status of `python -m tiredize`, `main()`'s
+        abort semantics, and the rule-module convention — so the
+        architect authored `.context/specifications/cli.md` and updated
+        `.context/specifications/linter.md`. Both exist on the branch;
+        `cli.md` is new at 176 lines and `linter.md` is +193.
+      - Steps 8 and 9 ran, and ran only because step 7 required them.
+        The decision is logged with its reasoning at
+        2026-09-06T08:00:00+00:00, made by the technical-architect and
+        not by the PM or the scoping seed, and it names three
+        user-visible changes that nothing user-facing documented. Step 9
+        ran because step 8 ran. Both conditions are satisfied in the
+        right order by the right role.
+
+    Final deliverable, confirmed criterion by criterion. I drove both
+    entry points by hand rather than reading the tests.
+
+      1. Exit status equals `main()`'s return. `0` on a clean document,
+         `1` on a `line_length` finding, `2` with no arguments, `0` on
+         `--help`. All through `python3 -m tiredize`.
+      2. `tiredize/__main__.py` is `raise SystemExit(main())`, the
+         preferred idiom, with a docstring explaining why the wrapper is
+         needed.
+      3. `tests/test_main_module.py` spawns subprocesses and asserts all
+         three statuses; the file is 49 items across five classes with
+         zero `@pytest.mark.skip` markers, and all 49 pass.
+      4. `git diff main..HEAD -- tests/test_cli.py` is exactly two
+         hunks: `max_length` to `maximum_length` in
+         `test_valid_document_passes_rules`, which criterion 4 permits
+         by name, and one added test. No other existing test in the file
+         is edited or deleted.
+      5. Parity held on six argument lists spanning clean input,
+         findings, a runtime error, the usage error, an argparse error
+         and `--help` — exit status, stdout and stderr byte-identical
+         between `python3 -m tiredize` and the console script at
+         `/home/admin/.local/bin/tiredize` on every one.
+      6. A missing document followed by a clean one prints the error to
+         stderr, never reports the later path, and exits `1`.
+      7. `.context/schemas/issue-frontmatter.yaml` lists
+         `program-manager` and no longer lists `PM`;
+         `context-process-migration.md` carries
+         `assignee: program-manager`; no `assignee: PM` survives. All
+         ten files in `.context/issues/` validate clean against both
+         project schemas together, exit `0`.
+      8. `.context/specifications/cli.md` exists and carries the
+         template's sections in the template's order — Overview,
+         Contracts and Interfaces, File Layout, one domain section
+         (Exit Status Contract), Design Decisions — with the status
+         table, the findings-continue and errors-abort semantics, and
+         the corrected `--help` treatment.
+      9. All three fault states are runtime errors that abort, each
+         naming the rule id and the offending key on stderr and exiting
+         `1`; an omitted optional key exits `0`.
+     10. Verified on all six built-in rules individually, not sampled:
+         `elements`, `line_length`, `links`, `tabs`,
+         `trailing_whitespace` and `unicode` each reject an unknown key
+         with their own accepted-key list. `linter.md`'s Rule Module
+         Convention carries requirement 4 with a worked skeleton, and
+         the new Rule Configuration Validation section carries the fault
+         states, the type vocabulary and the per-rule key table.
+
+    The three ratified scope exceptions all landed on the branch as
+    described, and each is accounted for as a ratified decision rather
+    than as drift.
+
+      - `linter.md`'s File Layout now lists all six rule modules plus
+        `_elements.py`, so it no longer contradicts the section added
+        two headings below it.
+      - `.context/PROJECT.md`'s CLI entry carries
+        ``Spec: `specifications/cli.md`.`` in the form the four other
+        subsystem entries use.
+      - `README.md`'s Custom Rules section teaches `_RULE_ID`,
+        `_ALLOWED_KEYS`, `_REQUIRED_KEYS` and the `validate_config()`
+        call.
+
+    Closeout checklist.
+
+      - [x] Issue file updated with final design decisions, all open
+            questions resolved, and every acceptance criterion checked
+            off. Design Decisions carries eleven subsections including
+            the two the folded-in criteria required; the single Open
+            Question is resolved in place; all ten criteria ticked.
+      - [x] Specification updated to reflect the accepted change.
+            Contracts changed in two subsystems, and step 6's output is
+            on the branch: `cli.md` new, `linter.md` updated in four
+            places. Step 7 checked both against the code path by path.
+      - [x] User-facing documentation verified accurate against the
+            implementation. Three README sites revised, +144/-31 against
+            `main`, reviewed twice by the proofreader, who executed the
+            YAML examples and the Custom Rules skeleton rather than
+            reading them.
+      - [x] Decisions whose reversal would materially change a subsystem
+            migrated into the relevant specification. "Errors abort the
+            run" is in `cli.md`'s Design Decisions with the
+            batch-validator alternative recorded as the alternative;
+            "Validating rule configuration" is split across five entries
+            in `linter.md`. The fix idiom is recorded as contract rather
+            than as decision, correctly — it changes no behavior. What
+            was deliberately not migrated is test-suite and process
+            history, which belongs to no subsystem.
+
+    Completion report.
+
+    **Problem.** `tiredize/__main__.py` called `main()` and discarded
+    its return value, so `python -m tiredize` always exited `0` —
+    findings, missing files, bad schemas and the usage error alike. The
+    module invocation could not signal failure and was unusable as a CI
+    or pre-commit gate, which is the use the README pitches the tool at.
+    Two further defects were folded in on the user's direction: the
+    exit-code contract was inconsistent, because a missing input
+    document set the status and continued while configuration errors
+    aborted; and every rule-configuration accessor returned `None` for a
+    key that was missing and for one holding a wrong-typed value alike,
+    so a typo in any rule's configuration silently switched that rule
+    off across the whole tool. This repository's own test suite shipped
+    an instance of it.
+
+    **Solution.** `tiredize/__main__.py` now raises `SystemExit(main())`
+    with a docstring explaining why module execution needs what the
+    console script gets from its generated wrapper. `main()`'s
+    `FileNotFoundError` handler returns instead of continuing, so the
+    rule is uniform: errors abort, findings continue — a change that
+    lands on the console script too, not only on `-m`.
+    `validate_config(config, allowed, required, rule_id)` is new in
+    `tiredize/linter/utils.py`; each of the six built-in rules declares
+    `_RULE_ID`, `_ALLOWED_KEYS` and `_REQUIRED_KEYS` at module level and
+    calls the helper as the first statement of `validate()`. Faults are
+    reported in a fixed order — unknown keys, then omitted required
+    keys, then wrong-typed values — with unknown keys first because a
+    typo makes the other two misleading. The `Rule` dataclass and rule
+    discovery are untouched, and the new `ValueError` leaves
+    `run_linter()` through the exception channel the CLI already caught,
+    which is why the blast radius stopped at the rules and the helper.
+    `.context/schemas/issue-frontmatter.yaml` was reconciled with
+    upstream so `program-manager` replaces `PM`.
+
+    **Test summary.** Full suite 844 passed / 50 skipped / 0 failed, 894
+    collected items, `flake8 tiredize tests` clean — run here, not
+    carried over. All 50 skips are the pre-existing `gfm-parity` skips
+    in the markdown parser tests. Across the eleven changed test files
+    the test-function count goes from 216 on `main` to 304, +88.
+
+      - `tests/test_main_module.py`, new: 39 functions / 49 items in
+        five classes. `TestExitStatus`, `TestStreamParity`,
+        `TestIssueAssigneeVocabulary` and `TestRuleConfigurationValidation`
+        are the 43-item black-box acceptance tier written at step 2
+        against the Public Contract; `TestModuleExecution` is the
+        six-item white-box tier added at step 3, driving the module body
+        through `runpy.run_module` for coverage the subprocess tests
+        cannot reach. Zero skip markers.
+      - `tests/linter/test_utils.py`: 49 to 70 functions, 74 items —
+        `validate_config`'s three fault states, ordering when faults
+        coexist, one wrong type per declared type, bool/int confusion
+        both ways, `None` values, empty collections and strings,
+        non-ASCII keys and values, no-mutation and idempotency.
+      - `tests/linter/rules/test_loader.py`: 6 to 11 functions, 29
+        items — parametrized guards over every discovered built-in rule,
+        so a rule module added without the declaration fails a test.
+      - `tests/test_cli.py`: one test added
+        (`test_missing_document_aborts_remaining_paths`) and one
+        repaired under criterion 4's carve-out.
+      - The six rule test files and `test_engine.py`: per-rule
+        configuration sections, and seven pre-existing tests rewritten
+        from asserting the silent no-op to asserting the error. Each
+        asserts strictly more than the test it replaced.
+
+    **Coverage.** 99% overall, 1553 statements, 11 uncovered — measured
+    here and matching step 5's figure exactly. Changed source files:
+    `tiredize/__main__.py` 100% (was 0%), `tiredize/linter/utils.py`
+    100%, `rules/tabs.py`, `rules/trailing_whitespace.py` and
+    `rules/links.py` 100%, `rules/unicode.py` 98% (line 56),
+    `rules/elements.py` 97% (62), `rules/line_length.py` 95% (55-58),
+    `cli.py` 98% (59, 213). Every uncovered line is a pre-existing gap
+    in code this issue did not touch: the range-merge branches in
+    `line_length` and `unicode`, the zero-length-element `continue` in
+    `elements`, the empty-YAML `return {}` and the
+    `if __name__ == "__main__"` guard in `cli.py`. The remaining
+    uncovered lines in the report — `engine.py:64`, `section.py:167`,
+    `table.py:61`, `markdown_schema.py:173` — are in files this branch
+    does not modify. No new uncovered line was introduced, and the one
+    file that had a visible hole no longer does.
+
+    **Review — incorporated.** Four findings across four review gates,
+    all fixed, none disputed.
+
+      - Step 4 iteration 1, finding 2: the orphaned `Config gating`
+        banner in `tests/linter/rules/test_unicode.py`, left behind by
+        step 3's own edit. Routed back to step 3 and deleted at
+        `5653386`.
+      - Step 4 iteration 1, finding 1: `README.md:237` telling readers
+        that omitting `unicode.allowed` disables the rule, which
+        criterion 9 turned into a runtime error. Deferred by the PM to
+        step 8 rather than fixed at step 3, on the grounds that
+        user-facing prose is the ghostwriter's, and landed there.
+      - Step 7 iteration 1: `cli.md` listed `--help` among argparse's
+        own errors and then said those exit `2`. It exits `0` and writes
+        to stdout. Routed to step 6 alone — correctly, since the defect
+        was in the reference and not the code — and corrected at
+        `50c5209` across four sites, with the stream table gaining the
+        argparse-error row that the same omission had left out from the
+        other side. Step 7 iteration 2 confirmed it and only then was
+        criterion 8 ticked.
+      - Step 9 iteration 1: `README.md`'s output paragraph claimed
+        findings print "followed by" the clean-file lines, when output
+        interleaves in argument order; and the Custom Rules skeleton
+        introduced `_RULE_ID` without explaining it, a hand-written
+        string the engine never reads. Both applied at `42df038`, both
+        with deliberate wording departures the reviewer then accepted —
+        "findings" rather than "rule violations", because the narrower
+        word would have promised a clean line to a file whose only
+        finding came from a schema.
+
+    **Review — not incorporated.** Nine observations were recorded
+    across steps 3, 4, 5, 7 and 8 and deliberately not acted on. I
+    confirmed the state of each on the branch rather than taking the
+    record's word.
+
+      - The null rule-configuration block. `line_length:` with nothing
+        under it is still reported by the engine as
+        `Invalid configuration for rule line_length: None`, naming the
+        rule but not the required key — confirmed by running it. Raised
+        at step 4 and again from the outside at step 5. Pre-existing,
+        unchanged by the diff, and the contract still holds: stderr,
+        exit `1`, run aborted. Step 3 recorded a deliberate decision to
+        leave the non-mapping case with the engine so a second message
+        for the same condition could not contradict the first. Left as
+        is, and it is the likeliest real-world shape of a required key
+        omitted for a single-key rule.
+      - Criterion 7's recursive-versus-glob reading. Read recursively,
+        "every file in `.context/issues/`" would include the 20 archived
+        files in `completed/`, which do not validate. I ran them: every
+        failure is a missing `workflow`, `tags` or `knowledge` field on
+        a v1-format issue, not one is assignee-related, and
+        `git diff main..HEAD -- .context/schemas/` is the assignee list
+        alone, so those fields were already required on `main`. The
+        schema's own documented usage line and the gate-2-approved
+        `test_every_issue_file_validates_clean` both use the
+        non-recursive `*.md` glob. The archive is outside the criterion
+        on the approved reading and its state is untouched by this
+        branch. Whoever finishes `context-process-migration` will meet
+        it.
+      - `validate_config` does not check that `config` is a mapping.
+        `run_linter` already raises for that, and a second message would
+        risk the contradiction criterion 9 warns about.
+      - The type vocabulary is coarse: `list` and `dict` are not checked
+        element-wise. Every rule that cares checks its own entries at
+        value level, so nothing is unguarded, but a future rule author
+        could declare `list` and forget the inner check.
+      - `validate_config` declares a `str` type no built-in uses, and
+        its "accepts no configuration keys" branch cannot fire for a
+        built-in. Both belong to the helper's contract for custom rules
+        and both are directly covered in `tests/linter/test_utils.py`.
+      - The boundary enforced by prose alone. `discover_rules()`
+        requires only a `validate` function, so a third-party rule that
+        skips `validate_config()` reinstates the silent no-op and no
+        test can catch it. This follows from the deliberate decision to
+        declare key sets in the module rather than on `Rule`;
+        `linter.md` states the requirement as non-optional and
+        `README.md`'s Custom Rules section now tells the reader the
+        same, which is the strongest instrument the chosen design
+        leaves.
+      - `linter.md`'s URL Validation section shows `check_url_valid`
+        without its `valid_status_codes` parameter. I checked
+        `utils.py:192-200`: the parameter is there and the signature in
+        the specification is one argument short. Stale on `main` before
+        this branch, outside step 6's scoped revision, and the only
+        remaining inaccuracy I found in a specification this pipeline
+        touched. It is not a defect in this change.
+      - `.context/PROJECT.md` says the CLI "orchestrates three
+        subsystems" and then lists four. Confirmed on the branch;
+        pre-existing on `main`, and the specification-pointer addition
+        at `08b1cab` correctly did not act on it.
+      - `tests/linter/rules/test_loader.py:139` asserts every built-in
+        rule declares at least one key, while `linter.md:94-96` says a
+        rule accepting no keys still calls `validate_config()` with an
+        empty `_ALLOWED_KEYS`. Both defensible — the specification
+        describes the convention including custom rules, the guard pins
+        the built-ins — but a future built-in with no configuration keys
+        would fail a guard the specification does not mention.
+
+    **Follow-up work.** No issues were created; these are candidates for
+    the user to rule on.
+
+      - The `AGENTS.md` knowledge-mapping gap. Its `knowledge:` block
+        has no entry for `user-documentation` or `documentation-review`,
+        so the ghostwriter and the proofreader ran on base function
+        alone with the issue's `knowledge` field empty. Both step files
+        name `markdown-style` and `ai-prose-hygiene` in their Inputs and
+        both files exist in the configuration repository, so this is a
+        missing mapping rather than missing knowledge. Both agents
+        disclosed it in their comments rather than letting it pass, and
+        both fell back to the README's own conventions. The prose held
+        up under review, but nothing in the configuration guaranteed it
+        would. This is a defect in the project's own configuration and
+        outside the ten criteria. Worth closing before the next issue
+        runs a documentation track.
+      - The README Features section. It says the built-in rules "cover
+        line length, tab usage, trailing whitespace, and link
+        validation" — four, where the reference documents six.
+        `git show main:README.md` carries the identical sentence, so it
+        is pre-existing and this branch neither introduced nor worsened
+        it; steps 8 and 9 both verified that independently and both
+        correctly left it alone. Step 9 added the argument for fixing
+        it: Features is now the only enumeration of the built-in rules
+        that does not account for the new Required column, so a reader
+        who stops there gets a four-rule picture of a six-rule tool.
+      - Beyond those two, the nine not-incorporated observations above
+        are each a candidate in their own right. The three I would put
+        first, on the grounds that each is a live inaccuracy or a real
+        gap rather than a recorded tension: the `linter.md` URL
+        Validation signature, the null rule-configuration block's
+        message, and the custom-rule boundary that only prose enforces.
+
+    **Breaking changes.** Three, all deliberate, all named by an
+    acceptance criterion, and all now documented for users rather than
+    only for contributors.
+
+      1. `python -m tiredize` exits non-zero where it previously always
+         exited `0`. Anything that treated a `0` from the module
+         invocation as a pass will start failing — which is the point.
+      2. Runtime errors abort the run. `tiredize --rules r.yaml *.md`
+         with one missing file used to report the survivors and now
+         stops at the first error. This lands on the console script as
+         well as on `-m`, so it is a behavior change for existing users
+         who never touched module invocation.
+      3. A rules file that used to run can now hard-fail. An unknown
+         key, a wrong-typed value or an omitted required key is a
+         runtime error that aborts. Four rules that previously returned
+         no findings for an absent required key now raise. Anyone whose
+         rules file carries `max_length` — the exact typo this
+         repository's own suite shipped — meets it on upgrade.
+
+    Work trail. What was built and how it evolved.
+
+    Scoping opened at five criteria for what looked like a one-line
+    propagation fix and closed at ten. Three things grew it, each a user
+    decision rather than an agent's. At approval gate 1 the user chose
+    "errors abort, findings continue" over the batch-validator behavior,
+    having heard the argument for keeping it, which turned a pure
+    propagation fix into a change to `main()` and therefore to the
+    console script. The same gate folded in the `assignee: PM` schema
+    fix over a recorded scope-discipline objection, and put
+    `.context/specifications/cli.md` in scope, pre-empting the
+    architect's step-6 judgment on whether a specification was warranted
+    while leaving its content to them.
+
+    The third growth came from the tests. Writing acceptance tests at
+    step 2, the qa-engineer found that
+    `tests/test_cli.py::test_valid_document_passes_rules` configured
+    `max_length` where the rule reads `maximum_length`, so the test
+    asserted a clean document against a rule that never ran — and that
+    the defect was not local to `line_length` but structural, since
+    every accessor in `utils.py` returns `None` for missing and
+    wrong-typed alike. The qa-engineer stopped rather than assuming and
+    raised the only open question of the issue. The user folded it in as
+    criteria 9 and 10 against the PM's recommendation to split it,
+    roughly doubling the issue and moving it from CLI plumbing into the
+    linter engine. Step 2 was re-entered for the new criteria with the
+    first pass's 23 tests untouched, and criterion 4 was amended to
+    permit repairing the one test criterion 9 would otherwise break
+    while criterion 4 forbade touching.
+
+    One design question needed settling twice. An early code-shape
+    heuristic classified a configuration key as required by whether it
+    had a fallback default, which could not settle `elements.disallow`
+    or `links.validate` — both have a default and an early return. The
+    principle that replaced it — enabling a rule must never be a no-op,
+    so a key is required when its absence leaves the rule inert — settled
+    those two as required and settled `tabs.allowed` and
+    `trailing_whitespace.allowed` as optional, since both rules still
+    forbid what they exist to forbid with the key absent. Step 2 had
+    deliberately built its parametrized fixtures to hold under either
+    reading, which is why the classification could be settled at step 3
+    without invalidating tests written before it.
+
+    From step 3 the trail is four review gates and two revisions.
+    Step 4 iteration 1 found two documentation-level defects and nothing
+    in the source; the PM split the request, routing the test-scaffolding
+    half back to step 3 and deferring the README half to step 8 with a
+    recorded contingency for what would happen if the documentation
+    track never ran. Step 5 passed on the first attempt after driving 59
+    argument lists through both entry points. Step 6 wrote both
+    specifications and declared two out-of-scope corrections rather than
+    absorbing them, both of which the user ratified. Step 7 caught the
+    one real defect in the reference — a status code, in a document
+    whose whole subject is status codes, written for a reader wiring a
+    CI gate — and withheld criterion 8 until step 6 fixed it. Step 9
+    found two more prose defects and accepted both of step 8's departures
+    from its own suggested wording, one of which prevented a fresh
+    inaccuracy.
+
+    Open questions and disputed edits. One open question, raised at step
+    2 and resolved by the user as criteria 9 and 10. No edit was ever
+    disputed: every finding at every gate was accepted by its producer,
+    and the two wording departures at step 8 were recorded with reasons
+    and accepted by the reviewer rather than escalated. No iteration cap
+    was approached — the worst gate ran two of five reviews, and the
+    documentation loop closed at three of five.
+
+    Process improvement suggestions from agents. One tag was raised, at
+    step 6, and step 7 met the same gap from the reviewing side and
+    declined to raise a duplicate. It is summarized under process
+    friction below.
+
+    Process friction. Where effort was spent that a better-shaped
+    process would not have needed. What went well is not recorded here.
+
+    Action: @workflow-owner — process improvement
+
+    `knowledge/specifications.md` has no guidance for authoring a
+    deliberately partial specification, which is exactly what criterion
+    8 required. Its structure section assumes a specification describes
+    its subsystem whole, and its rule that a specification is a
+    reference and not a history leaves no sanctioned way to say "this
+    section does not exist yet" without the sentence reading as a TODO,
+    which the same file forbids. The architect resolved it by declaring
+    the partiality in the Overview as a scope boundary rather than as
+    planned work and pointing the reader at the source for what is not
+    covered — a reading they explicitly flagged as their own rather than
+    the knowledge file's. The gap has a second half the reviewer found
+    from the other side at step 7: there is no criterion for *judging* a
+    partial specification either, so the standard applied at architecture
+    review — does it cover what it claims, and are its silences declared
+    rather than accidental — was also the agent's own. Seeding a
+    specification from one issue and growing it across later ones is a
+    pattern this project will hit again, and it hit it here on the first
+    try. A short paragraph in `knowledge/specifications.md` on how a
+    partial specification declares its own boundary, and how a reviewer
+    should judge one, would close both halves.
+
+    Action: @workflow-owner — process improvement
+
+    `AGENTS.md`'s knowledge map has no entry for `user-documentation` or
+    `documentation-review`, so both documentation-track agents ran on
+    base function alone. The cost was real but small and it landed
+    entirely on quality assurance rather than on rework: the ghostwriter
+    and the proofreader each had to derive a prose standard from the
+    README's own conventions and then say so in their comments, and the
+    proofreader had to state its own review standard before it could
+    apply one. Both files the step Inputs name exist in the
+    configuration repository. The output held up, but it held up on two
+    agents' judgment rather than on anything the configuration
+    guaranteed, and the gate that would have caught a lapse is the same
+    judgment. This is the one place in the run where the process did not
+    give a step what its own step file says it needs.
+
+    Action: @workflow-owner — process improvement
+
+    Two criteria arrived after the criteria they invalidated. Criteria 9
+    and 10 were folded in at approval gate 2, after step 2 had already
+    written 23 tests and after criterion 4 had already promised that
+    every existing test in `tests/test_cli.py` would pass unmodified —
+    a promise criterion 9 then broke, forcing an amendment to carve out
+    one test by name. The re-entry itself was cheap and clean, because
+    step 2 is before implementation and nothing had been built yet. The
+    friction is narrower: nothing in the workflow prompts a check of
+    whether a newly folded-in criterion contradicts an existing one, so
+    the collision was found by an agent reading carefully rather than by
+    the process. A scoping step that amends criteria mid-flight is worth
+    one explicit pass over the criteria it did not touch.
+
+    Action: @workflow-owner — process improvement
+
+    Step 4's edit request needed splitting across two steps, which the
+    workflow does not describe. The gate found one test-scaffolding
+    defect belonging to step 3 and one README defect belonging to a step
+    8 that had not been decided on yet, and the routing rules assume a
+    request routes whole to one producer. The PM handled it by splitting
+    the request and recording a contingency for the case where step 7
+    declined the documentation track and the deferred finding would have
+    had no home. That worked, and the contingency did not fire — but it
+    was invented at routing time, and a review gate finding a defect
+    that belongs to a conditional step not yet decided is a shape this
+    workflow will meet again whenever steps 4 and 5 precede the step-7
+    documentation decision. Worth naming in the workflow rather than
+    re-invented.
+
+    No `Action: @program-manager — open question` is raised. Nothing
+    discrepant enough to block closeout was found; the two places where
+    the record and the branch could have parted are noted in the report
+    above and neither is a defect in the delivered work.
+
+    Handing to the PM for presentation at approval gate 3.
