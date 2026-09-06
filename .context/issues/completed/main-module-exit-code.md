@@ -3,7 +3,7 @@ assignee: workflow-owner
 created: 2026-06-15
 knowledge: []
 priority: medium
-status: in-progress
+status: done
 step: closeout
 tags: [cli, exit-code, validation]
 type: bug
@@ -4258,3 +4258,43 @@ Author: workflow-owner/software-engineering/git
     above and neither is a defect in the delivered work.
 
     Handing to the PM for presentation at approval gate 3.
+
+### 2026-09-06T23:00:00+00:00
+
+Author: program-manager
+
+    Approval gate 3: the user accepted the completed work. Status set to
+    `done` and the issue moved to `.context/issues/completed/`.
+
+    The branch `issues/main-module-exit-code` is not pushed, merged or
+    rebased, and acceptance does not authorize any of those. Merging is
+    a separate decision the user makes explicitly.
+
+    Four follow-up candidates are recorded in the closeout report at
+    2026-09-06T22:00:00+00:00 and have not been ruled on. None is a
+    defect in the delivered work; all are pre-existing or configuration
+    gaps found while working this issue. They are preserved here because
+    this file is the only place they are written down:
+
+      - The `AGENTS.md` knowledge-mapping gap: no entry for
+        `user-documentation` or `documentation-review`, so both
+        documentation-track agents ran on base function alone. A defect
+        in this project's own configuration.
+      - `.context/specifications/linter.md`'s URL Validation section
+        shows `check_url_valid` without its `valid_status_codes`
+        parameter. Stale on `main`; the only remaining inaccuracy in a
+        specification this pipeline updated.
+      - The README Features section lists four built-in rules where the
+        reference documents six. Pre-existing on `main`, and now the
+        only enumeration that does not account for the new Required
+        column.
+      - A null rule-configuration block is reported by the engine
+        without naming the missing key. Pre-existing, contract intact,
+        and the likeliest real-world shape of an omitted required key.
+
+    Also carried forward, from the workflow owner's process friction:
+    `knowledge/specifications.md` gives no guidance for authoring or
+    judging a deliberately partial specification, and a review gate that
+    finds a defect belonging to a conditional step not yet decided has
+    no described routing. Both belong to the sibling configuration
+    repository, not to this one.
