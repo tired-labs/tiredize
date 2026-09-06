@@ -204,3 +204,92 @@ def test_exclude_unknown_element_raises():
     doc.load(text="# H\n")
     with pytest.raises(ValueError, match="unknown_element"):
         validate(doc, {"maximum_length": 80, "exclude": ["unknown_element"]})
+
+
+# ===================================================================
+#  Configuration validation (key level)
+#
+#  `maximum_length` is required: without it the rule measures
+#  nothing, so enabling `line_length` would be a no-op. `exclude` is
+#  optional but still type-checked. See "Validating rule
+#  configuration" in .context/issues/main-module-exit-code.md.
+# ===================================================================
+
+
+def test_missing_maximum_length_raises():
+    """Enabling the rule without `maximum_length` measures nothing."""
+    doc = Document()
+    doc.load(text="# H\nA line.\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"exclude": ["code_block"]})
+    message = str(excinfo.value)
+    assert "line_length" in message
+    assert "maximum_length" in message
+
+
+def test_unknown_key_raises():
+    """`max_length` is the real-world typo this check exists for."""
+    doc = Document()
+    doc.load(text="# H\nA line.\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"maximum_length": 80, "max_length": 80})
+    message = str(excinfo.value)
+    assert "line_length" in message
+    assert "max_length" in message
+
+
+def test_maximum_length_wrong_type_raises():
+    """`maximum_length` wants an integer, not a string."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="maximum_length"):
+        validate(doc, {"maximum_length": "forty winks"})
+
+
+def test_maximum_length_bool_raises():
+    """YAML `true` is not an integer, mirroring get_config_int."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="maximum_length"):
+        validate(doc, {"maximum_length": True})
+
+
+def test_exclude_wrong_type_raises():
+    """An optional key is still type-checked."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="exclude"):
+        validate(doc, {"maximum_length": 80, "exclude": "code_block"})
+
+
+def test_unknown_key_reported_before_bad_element_name():
+    """Key-level validation runs before the value-level check."""
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {
+            "maximum_length": 80,
+            "exclude": ["unknown_element"],
+            "snooze_button": True,
+        })
+    assert "snooze_button" in str(excinfo.value)
+
+
+def test_maximum_length_zero_is_accepted():
+    """Zero is a legal, if severe, limit -- required means present."""
+    doc = Document()
+    doc.load(text="# H\n")
+    results = validate(doc, {"maximum_length": 0})
+    assert len(results) == 1
+
+
+def test_non_string_exclude_entry_still_raises_value_level_error():
+    """Key-level validation does not swallow the value-level check.
+
+    `exclude` is a list, so the key-level check passes; the entry
+    inside it is then rejected by the rule's own message.
+    """
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError, match="entries must be strings"):
+        validate(doc, {"maximum_length": 80, "exclude": [42]})

@@ -63,7 +63,7 @@ def test_valid_document_passes_rules(capsys, tmp_path):
     rules = tmp_path / "lenient_rules.yaml"
     rules.write_text(
         "line_length:\n"
-        "  max_length: 80\n"
+        "  maximum_length: 80\n"
     )
     result = main([
         "--rules", str(rules),
@@ -258,6 +258,31 @@ def test_nonexistent_document_path(capsys, tmp_path):
     assert result == 1
     captured = capsys.readouterr()
     assert "error:" in captured.err
+
+
+def test_missing_document_aborts_remaining_paths(capsys, tmp_path):
+    """A runtime error stops the run; findings would not.
+
+    The uniform rule is "errors abort, findings continue", so a path
+    that cannot be loaded leaves every later path unprocessed.
+    """
+    ghost = tmp_path / "phantom_thread.md"
+    later = tmp_path / "second_nap.md"
+    later.write_text("# Nap Time\n\nZzz.\n")
+    schema = tmp_path / "sleepy_schema.yaml"
+    schema.write_text(
+        "sections:\n"
+        "  - name: Nap Time\n"
+    )
+    result = main([
+        "--markdown-schema", str(schema),
+        str(ghost), str(later),
+    ])
+    assert result == 1
+    captured = capsys.readouterr()
+    assert "error:" in captured.err
+    assert str(later) not in captured.out
+    assert "no issues found" not in captured.out
 
 
 def test_nonexistent_schema_path(capsys, tmp_path):

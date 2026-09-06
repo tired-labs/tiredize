@@ -6,6 +6,8 @@ endings, unicode, idempotency, and state mutation.
 
 import copy
 
+import pytest
+
 from tiredize.linter.rules.tabs import validate
 from tiredize.markdown.types.document import Document
 
@@ -120,14 +122,36 @@ def test_config_missing_allowed_key():
     assert len(results) == 1
 
 
-def test_config_allowed_wrong_type():
-    """Non-bool 'allowed' means get_config_bool returns None (falsy).
+# ===================================================================
+#  Configuration validation (key level)
+#
+#  `allowed` is optional: with the key absent the rule still forbids
+#  tabs, so enabling `tabs` is never a no-op. A wrong-typed value is
+#  an error all the same. See "Validating rule configuration" in
+#  .context/issues/main-module-exit-code.md.
+# ===================================================================
 
-    Tabs should be reported as violations."""
+
+def test_config_allowed_wrong_type_raises():
+    """A non-bool 'allowed' is a configuration error, not a default."""
     doc = Document()
     doc.load(text="# Oops\n\twrong type\n")
-    results = validate(doc, {"allowed": "yes"})
-    assert len(results) == 1
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": "yes"})
+    message = str(excinfo.value)
+    assert "tabs" in message
+    assert "allowed" in message
+
+
+def test_unknown_key_raises():
+    """A key the rule does not accept is an error."""
+    doc = Document()
+    doc.load(text="# Oops\n\twrong type\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": True, "snooze_button": True})
+    message = str(excinfo.value)
+    assert "tabs" in message
+    assert "snooze_button" in message
 
 
 # ===================================================================
