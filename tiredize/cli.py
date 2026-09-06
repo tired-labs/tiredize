@@ -93,6 +93,23 @@ def _run_frontmatter_schema(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """
+    Validate every requested path and return the process exit status.
+
+    Returns:
+        0 - every path was loaded and produced no findings.
+        1 - at least one path produced findings, or a runtime error
+            occurred.
+        2 - usage error: no paths, or no configuration flag.
+
+    Findings do not stop the run: every path is processed, every
+    finding is reported, and the status is 1 at the end. Runtime
+    errors do stop it: the first one prints to stderr and the status
+    is returned immediately, leaving later paths unprocessed.
+
+    Argparse's own errors raise SystemExit(2) from inside this
+    function rather than returning.
+    """
     parser = _build_arg_parser()
     args = parser.parse_args(argv)
 
@@ -114,12 +131,14 @@ def main(argv: list[str] | None = None) -> int:
         try:
             doc.load(path=Path(path_str))
         except FileNotFoundError as exc:
+            # A runtime error aborts the run. Findings continue to the
+            # next path; errors do not, so any remaining paths are
+            # left unprocessed.
             print(
                 f"error: {exc}",
                 file=sys.stderr,
             )
-            exit_code = 1
-            continue
+            return 1
 
         all_results: list[RuleResult] = []
 

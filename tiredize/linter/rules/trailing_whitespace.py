@@ -6,7 +6,18 @@ from typing import Any
 from tiredize.core_types import Position
 from tiredize.core_types import RuleResult
 from tiredize.linter.utils import get_config_bool
+from tiredize.linter.utils import validate_config
 from tiredize.markdown.types.document import Document
+
+
+# Configuration keys this rule accepts, and the subset it requires.
+# `allowed` is optional: with the key absent the rule still forbids
+# trailing whitespace, so enabling the rule is never a no-op.
+_RULE_ID = "trailing_whitespace"
+_ALLOWED_KEYS = {
+    "allowed": "bool",
+}
+_REQUIRED_KEYS: tuple[str, ...] = ()
 
 
 def validate(
@@ -15,7 +26,17 @@ def validate(
 ) -> list[RuleResult]:
     """
     Validate document meets trailing whitespace requirements.
+
+    Configuration:
+        allowed: bool - When True, trailing whitespace is permitted.
+            Optional; it is forbidden when the key is absent.
+
+    Raises:
+        ValueError: the configuration names a key this rule does not
+            accept, or gives an accepted key a wrong-typed value.
     """
+    validate_config(config, _ALLOWED_KEYS, _REQUIRED_KEYS, _RULE_ID)
+
     results: list[RuleResult] = []
     text = document.string
     cursor = 0

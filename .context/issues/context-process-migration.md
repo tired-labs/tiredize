@@ -1,5 +1,5 @@
 ---
-assignee: PM
+assignee: program-manager
 created: 2026-06-14
 knowledge: []
 priority: high

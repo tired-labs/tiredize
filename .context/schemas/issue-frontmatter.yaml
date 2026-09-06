@@ -59,9 +59,9 @@ fields:
     type: string
     required: false
     allowed:
-      - PM
-      - qa-engineer
+      - program-manager
       - software-engineer
+      - qa-engineer
       - technical-architect
       - ghostwriter
       - proofreader

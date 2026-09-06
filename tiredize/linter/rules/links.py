@@ -11,7 +11,23 @@ from tiredize.linter.utils import get_config_bool
 from tiredize.linter.utils import get_config_dict
 from tiredize.linter.utils import get_config_int
 from tiredize.linter.utils import get_config_list
+from tiredize.linter.utils import validate_config
 from tiredize.markdown.types.document import Document
+
+
+# Configuration keys this rule accepts, and the subset it requires.
+# `validate` is required because the rule checks no links without it:
+# enabling `links` with no `validate` would be a no-op. Present and
+# false is legal and deliberately disables URL checking.
+_RULE_ID = "links"
+_ALLOWED_KEYS = {
+    "exclude": "list",
+    "headers": "dict",
+    "timeout": "int",
+    "valid_status_codes": "list",
+    "validate": "bool",
+}
+_REQUIRED_KEYS = ("validate",)
 
 
 def _is_excluded(url: str, exclusions: list[str]) -> bool:
@@ -34,14 +50,25 @@ def validate(
     Validate document meets link requirements.
 
     Configuration:
-        validate: bool - Enable link validation
+        validate: bool - Enable link validation. Required; set it to
+            false to leave the rule enabled but check nothing.
         exclude: list[str] - Hostname glob patterns to skip
-            (e.g. '*.example.com')
-        headers: dict[str, str] - HTTP headers to include in requests
-        timeout: int - Timeout in seconds for link validation requests
+            (e.g. '*.example.com'). Optional.
+        headers: dict[str, str] - HTTP headers to include in requests.
+            Optional.
+        timeout: int - Timeout in seconds for link validation requests.
+            Optional.
         valid_status_codes: list[int] - HTTP status codes treated as valid.
-            Defaults to all 2xx and 3xx codes.
+            Optional; defaults to all 2xx and 3xx codes.
+
+    Raises:
+        ValueError: the configuration names a key this rule does not
+            accept, gives an accepted key a wrong-typed value, omits
+            a required key, or holds a malformed exclude pattern or
+            status code.
     """
+    validate_config(config, _ALLOWED_KEYS, _REQUIRED_KEYS, _RULE_ID)
+
     cfg_validate = get_config_bool(config, "validate")
     if not cfg_validate:
         return []

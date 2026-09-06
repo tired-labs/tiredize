@@ -11,6 +11,8 @@ from HTTP internals.
 import copy
 from unittest.mock import patch
 
+import pytest
+
 from tiredize.linter.rules.links import validate
 from tiredize.markdown.types.document import Document
 
@@ -31,12 +33,65 @@ def test_validate_false_returns_empty():
     assert results == []
 
 
-def test_validate_missing_returns_empty():
-    """When config has no 'validate' key, no links are checked."""
+# ===================================================================
+#  Configuration validation (key level)
+#
+#  `validate` is required: without it the rule checks no links, so
+#  enabling `links` would be a no-op. Present-but-false is legal and
+#  deliberately disables URL checking. See "Validating rule
+#  configuration" in .context/issues/main-module-exit-code.md.
+# ===================================================================
+
+
+def test_validate_missing_raises():
+    """Enabling the rule without `validate` would check nothing."""
     doc = Document()
     doc.load(text="# Links\n[click](https://example.com)\n")
-    results = validate(doc, {})
-    assert results == []
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {})
+    message = str(excinfo.value)
+    assert "links" in message
+    assert "validate" in message
+
+
+def test_unknown_key_raises():
+    """A key the rule does not accept is an error."""
+    doc = Document()
+    doc.load(text="# Links\n[click](https://example.com)\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"validate": False, "snooze_button": True})
+    message = str(excinfo.value)
+    assert "links" in message
+    assert "snooze_button" in message
+
+
+def test_validate_wrong_type_raises():
+    """`validate` wants a boolean, not a string."""
+    doc = Document()
+    doc.load(text="# Links\n[click](https://example.com)\n")
+    with pytest.raises(ValueError, match="validate"):
+        validate(doc, {"validate": "yes please"})
+
+
+def test_timeout_wrong_type_raises():
+    """An optional key is still type-checked."""
+    doc = Document()
+    doc.load(text="# Links\n[click](https://example.com)\n")
+    with pytest.raises(ValueError, match="timeout"):
+        validate(doc, {"validate": True, "timeout": "a while"})
+
+
+def test_unknown_key_reported_before_bad_status_code():
+    """Key-level validation runs before the value-level check."""
+    doc = Document()
+    doc.load(text="# Links\n[click](https://example.com)\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {
+            "validate": True,
+            "valid_status_codes": ["ok"],
+            "snooze_button": True,
+        })
+    assert "snooze_button" in str(excinfo.value)
 
 
 def test_validate_true_no_links():
@@ -558,3 +613,19 @@ def test_relative_url_not_affected_by_domain_exclusion():
             "exclude": ["*.mycompany.com"],
         })
     mock_check.assert_called_once()
+
+
+def test_non_string_exclude_entry_still_raises_value_level_error():
+    """Key-level validation does not swallow the value-level check."""
+    doc = Document()
+    doc.load(text="# Links\n[click](https://example.com)\n")
+    with pytest.raises(ValueError, match="entries must be strings"):
+        validate(doc, {"validate": True, "exclude": [42]})
+
+
+def test_bool_status_code_still_raises_value_level_error():
+    """`valid_status_codes` is a list, so its entries are checked."""
+    doc = Document()
+    doc.load(text="# Links\n[click](https://example.com)\n")
+    with pytest.raises(ValueError, match="valid_status_codes"):
+        validate(doc, {"validate": True, "valid_status_codes": [True]})

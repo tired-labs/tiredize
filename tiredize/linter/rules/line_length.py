@@ -9,7 +9,19 @@ from tiredize.core_types import RuleResult
 from tiredize.linter.rules._elements import _ELEMENT_MAP
 from tiredize.linter.utils import get_config_int
 from tiredize.linter.utils import get_config_list
+from tiredize.linter.utils import validate_config
 from tiredize.markdown.types.document import Document
+
+
+# Configuration keys this rule accepts, and the subset it requires.
+# `maximum_length` is required because the rule measures nothing
+# without it; `exclude` has a working default of "exclude nothing".
+_RULE_ID = "line_length"
+_ALLOWED_KEYS = {
+    "exclude": "list",
+    "maximum_length": "int",
+}
+_REQUIRED_KEYS = ("maximum_length",)
 
 
 def _build_excluded_ranges(
@@ -56,12 +68,20 @@ def validate(
 
     Configuration:
         maximum_length: int - The maximum allowed line length.
+            Required.
         exclude: list[str] - Element types whose lines are exempt from
-            the limit.
+            the limit. Optional; defaults to no exemptions.
+
+    Raises:
+        ValueError: the configuration names a key this rule does not
+            accept, gives an accepted key a wrong-typed value, omits
+            a required key, or names an unknown element in exclude.
     """
+    validate_config(config, _ALLOWED_KEYS, _REQUIRED_KEYS, _RULE_ID)
+
+    # validate_config has confirmed maximum_length is present and an
+    # int, so the accessor cannot return None here.
     maximum_length = get_config_int(config, "maximum_length")
-    if maximum_length is None:
-        return []
 
     exclude = get_config_list(config, "exclude") or []
     excluded_ranges = _build_excluded_ranges(document, exclude)

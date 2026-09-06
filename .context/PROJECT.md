@@ -34,8 +34,10 @@ across sections is out of scope.
 ## Architecture
 
 The CLI (`tiredize/cli.py`) accepts up to three configuration inputs,
-each targeting a different validation concern. It orchestrates three
-subsystems:
+each targeting a different validation concern.
+Spec: `specifications/cli.md`.
+
+It orchestrates three subsystems:
 
 1. **Markdown Parser** (`tiredize/markdown/`) -- Parses raw markdown
    into typed dataclass elements. Owns the document model.

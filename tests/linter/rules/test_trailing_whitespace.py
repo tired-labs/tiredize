@@ -7,6 +7,8 @@ state mutation.
 
 import copy
 
+import pytest
+
 from tiredize.linter.rules.trailing_whitespace import validate
 from tiredize.markdown.types.document import Document
 
@@ -116,12 +118,36 @@ def test_config_missing_allowed_key():
     assert len(results) == 1
 
 
-def test_config_allowed_wrong_type():
-    """Non-bool 'allowed' returns None (falsy), so whitespace is reported."""
+# ===================================================================
+#  Configuration validation (key level)
+#
+#  `allowed` is optional: with the key absent the rule still forbids
+#  trailing whitespace, so enabling the rule is never a no-op. A
+#  wrong-typed value is an error all the same. See "Validating rule
+#  configuration" in .context/issues/main-module-exit-code.md.
+# ===================================================================
+
+
+def test_config_allowed_wrong_type_raises():
+    """A non-bool 'allowed' is a configuration error, not a default."""
     doc = Document()
     doc.load(text="# Nope \n")
-    results = validate(doc, {"allowed": 42})
-    assert len(results) == 1
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": 42})
+    message = str(excinfo.value)
+    assert "trailing_whitespace" in message
+    assert "allowed" in message
+
+
+def test_unknown_key_raises():
+    """A key the rule does not accept is an error."""
+    doc = Document()
+    doc.load(text="# Nope \n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": True, "snooze_button": True})
+    message = str(excinfo.value)
+    assert "trailing_whitespace" in message
+    assert "snooze_button" in message
 
 
 # ===================================================================
