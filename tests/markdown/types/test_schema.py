@@ -658,3 +658,55 @@ sections:
 """
     with pytest.raises(ValueError, match="integer"):
         load_schema(yaml_str)
+
+
+def test_load_allow_subsections_true():
+    yaml_str = """
+sections:
+  - name: "Background"
+    allow_subsections: true
+"""
+    config = load_schema(yaml_str)
+    assert config.sections[0].allow_subsections is True
+
+
+def test_load_allow_subsections_false():
+    yaml_str = """
+sections:
+  - name: "Summary"
+    allow_subsections: false
+"""
+    config = load_schema(yaml_str)
+    assert config.sections[0].allow_subsections is False
+
+
+def test_load_allow_subsections_defaults_to_none():
+    yaml_str = """
+sections:
+  - name: "Background"
+"""
+    config = load_schema(yaml_str)
+    assert config.sections[0].allow_subsections is None
+
+
+def test_load_allow_subsections_non_bool_rejected():
+    yaml_str = """
+sections:
+  - name: "Background"
+    allow_subsections: "yes"
+"""
+    with pytest.raises(ValueError, match="must be a bool"):
+        load_schema(yaml_str)
+
+
+def test_load_allow_subsections_with_sections_rejected():
+    yaml_str = """
+sections:
+  - name: "Background"
+    allow_subsections: true
+    sections:
+      - name: "Detail"
+        level: 2
+"""
+    with pytest.raises(ValueError, match="not both"):
+        load_schema(yaml_str)

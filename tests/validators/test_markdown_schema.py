@@ -1287,3 +1287,168 @@ def test_ordered_repeat_wrong_level_all_occurrences():
         if r.rule_id == "schema.markdown.wrong_level"
     ]
     assert len(wrong_level) == 3
+
+
+# --- allow_subsections ---
+
+
+def _nested_doc():
+    doc = Document()
+    doc.load(text=(
+        "# Title\n\n"
+        "## Background\n\n"
+        "### Layer Two\n\n"
+        "#### Layer Three\n\n"
+        "##### Layer Four\n\n"
+        "## Summary\n\n"
+        "### Stray\n"
+    ))
+    return doc
+
+
+def test_allow_subsections_true_accepts_any_depth():
+    schema = SchemaConfig(
+        sections=[SchemaSection(
+            pattern=".+",
+            sections=[
+                SchemaSection(
+                    name="Background",
+                    level=2,
+                    allow_subsections=True,
+                ),
+                SchemaSection(
+                    name="Summary",
+                    level=2,
+                    allow_subsections=True,
+                ),
+            ],
+        )]
+    )
+    results = validate(_nested_doc(), schema)
+    assert len(results) == 0
+
+
+def test_allow_subsections_false_rejects_children():
+    schema = SchemaConfig(
+        sections=[SchemaSection(
+            pattern=".+",
+            sections=[
+                SchemaSection(
+                    name="Background",
+                    level=2,
+                    allow_subsections=True,
+                ),
+                SchemaSection(
+                    name="Summary",
+                    level=2,
+                    allow_subsections=False,
+                ),
+            ],
+        )]
+    )
+    results = validate(_nested_doc(), schema)
+    assert len(results) == 1
+    assert results[0].rule_id == (
+        "schema.markdown.subsections_not_allowed"
+    )
+    assert "Stray" in results[0].message
+
+
+def test_allow_subsections_unset_keeps_existing_behavior():
+    schema = SchemaConfig(
+        sections=[SchemaSection(
+            pattern=".+",
+            sections=[
+                SchemaSection(
+                    name="Background",
+                    level=2,
+                    allow_subsections=True,
+                ),
+                SchemaSection(name="Summary", level=2),
+            ],
+        )]
+    )
+    results = validate(_nested_doc(), schema)
+    assert len(results) == 1
+    assert results[0].rule_id == (
+        "schema.markdown.unexpected_section"
+    )
+
+
+def test_allow_subsections_true_unordered_mode():
+    schema = SchemaConfig(
+        enforce_order=False,
+        sections=[SchemaSection(
+            pattern=".+",
+            sections=[
+                SchemaSection(
+                    name="Background",
+                    level=2,
+                    allow_subsections=True,
+                ),
+                SchemaSection(
+                    name="Summary",
+                    level=2,
+                    allow_subsections=True,
+                ),
+            ],
+        )]
+    )
+    results = validate(_nested_doc(), schema)
+    assert len(results) == 0
+
+
+def test_allow_subsections_false_unordered_mode():
+    schema = SchemaConfig(
+        enforce_order=False,
+        sections=[SchemaSection(
+            pattern=".+",
+            sections=[
+                SchemaSection(
+                    name="Background",
+                    level=2,
+                    allow_subsections=True,
+                ),
+                SchemaSection(
+                    name="Summary",
+                    level=2,
+                    allow_subsections=False,
+                ),
+            ],
+        )]
+    )
+    results = validate(_nested_doc(), schema)
+    assert len(results) == 1
+    assert results[0].rule_id == (
+        "schema.markdown.subsections_not_allowed"
+    )
+
+
+def test_allow_subsections_true_on_repeating_section():
+    doc = Document()
+    doc.load(text=(
+        "# Title\n\n"
+        "## Procedures\n\n"
+        "### Procedure A: One\n\n"
+        "#### Detail\n\n"
+        "### Procedure B: Two\n\n"
+        "#### Detail\n\n"
+        "##### Deeper\n"
+    ))
+    schema = SchemaConfig(
+        sections=[SchemaSection(
+            pattern=".+",
+            sections=[SchemaSection(
+                name="Procedures",
+                level=2,
+                sections=[SchemaSection(
+                    pattern=r"^Procedure [A-Z]:\s+.+$",
+                    level=3,
+                    repeat_min=1,
+                    allow_subsections=True,
+                )],
+            )],
+        )]
+    )
+    results = validate(doc, schema)
+    assert len(results) == 0

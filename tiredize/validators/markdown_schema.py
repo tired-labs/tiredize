@@ -88,10 +88,9 @@ def _consume_repeating(
                 position=doc_section.header.position,
                 rule_id="schema.markdown.wrong_level",
             ))
-        _validate_ordered(
-            doc_section.subsections,
-            schema_entry.sections,
-            results, allow_extra,
+        _validate_subsections(
+            doc_section, schema_entry,
+            results, allow_extra, ordered=True,
         )
         count += 1
         ptr += 1
@@ -188,6 +187,53 @@ def _skip_schema_entries(
             skipped_required.append(entry)
 
 
+def _validate_subsections(
+    doc_section,
+    schema_entry,
+    results,
+    allow_extra,
+    ordered,
+):
+    """
+    Descend into a matched section's children.
+
+    'allow_subsections: true' accepts any subsection tree without inspecting
+    it, which saves declaring a catch-all pattern at every heading level.
+    'allow_subsections: false' rejects any subsection at all. When the key is
+    unset, the entry's own 'sections' list is validated as usual.
+    """
+    if schema_entry.allow_subsections is True:
+        return
+
+    if schema_entry.allow_subsections is False:
+        for sub in doc_section.subsections:
+            results.append(RuleResult(
+                message=(
+                    f"Section '{sub.header.title}' is not allowed: "
+                    f"'{schema_entry.name or schema_entry.pattern}' "
+                    f"permits no subsections"
+                ),
+                position=sub.header.position,
+                rule_id=(
+                    "schema.markdown.subsections_not_allowed"
+                ),
+            ))
+        return
+
+    if ordered:
+        _validate_ordered(
+            doc_section.subsections,
+            schema_entry.sections,
+            results, allow_extra,
+        )
+    else:
+        _validate_unordered(
+            doc_section.subsections,
+            schema_entry.sections,
+            results, allow_extra,
+        )
+
+
 def _validate_ordered(
     doc_sections,
     schema_sections,
@@ -232,10 +278,9 @@ def _validate_ordered(
                     skipped_schema, count, results
                 )
             else:
-                _validate_ordered(
-                    doc_section.subsections,
-                    skipped_schema.sections,
-                    results, allow_extra,
+                _validate_subsections(
+                    doc_section, skipped_schema,
+                    results, allow_extra, ordered=True,
                 )
                 doc_ptr += 1
             continue
@@ -290,10 +335,9 @@ def _validate_ordered(
                             "schema.markdown.wrong_level"
                         ),
                     ))
-                _validate_ordered(
-                    doc_section.subsections,
-                    schema_entry.sections,
-                    results, allow_extra,
+                _validate_subsections(
+                    doc_section, schema_entry,
+                    results, allow_extra, ordered=True,
                 )
                 doc_ptr += 1
 
@@ -384,10 +428,9 @@ def _validate_unordered(
                             "schema.markdown.wrong_level"
                         ),
                     ))
-                _validate_unordered(
-                    ds.subsections,
-                    schema_entry.sections,
-                    results, allow_extra,
+                _validate_subsections(
+                    ds, schema_entry,
+                    results, allow_extra, ordered=False,
                 )
             _check_repeat_bounds(
                 schema_entry, count, results
@@ -433,10 +476,9 @@ def _validate_unordered(
                             "schema.markdown.wrong_level"
                         ),
                     ))
-                _validate_unordered(
-                    first_ds.subsections,
-                    schema_entry.sections,
-                    results, allow_extra,
+                _validate_subsections(
+                    first_ds, schema_entry,
+                    results, allow_extra, ordered=False,
                 )
                 for i, ds in matches[1:]:
                     claimed.add(i)

@@ -10,6 +10,7 @@ import yaml
 
 @dataclass(frozen=True)
 class SchemaSection:
+    allow_subsections: bool | None = None
     level: int = 1
     name: str | None = None
     pattern: str | None = None
@@ -27,7 +28,10 @@ class SchemaConfig:
 
 
 _TOP_LEVEL_KEYS = {'allow_extra_sections', 'enforce_order', 'sections'}
-_SECTION_KEYS = {'level', 'name', 'pattern', 'repeat', 'required', 'sections'}
+_SECTION_KEYS = {
+    'allow_subsections', 'level', 'name', 'pattern',
+    'repeat', 'required', 'sections',
+}
 
 
 def load_schema(yaml_string: str) -> SchemaConfig:
@@ -175,6 +179,20 @@ def _load_section(raw: dict, parent_level: int) -> SchemaSection:
         raise ValueError(
             "'sections' must be a list."
         )
+
+    allow_subsections = raw.get('allow_subsections')
+    if allow_subsections is not None:
+        if not isinstance(allow_subsections, bool):
+            raise ValueError(
+                f"'allow_subsections' must be a bool, "
+                f"got {type(allow_subsections).__name__}."
+            )
+        if raw_sections:
+            raise ValueError(
+                "Section must have 'allow_subsections' or "
+                "'sections', not both."
+            )
+
     required = raw.get('required', True)
     if not isinstance(required, bool):
         raise ValueError(
@@ -182,6 +200,7 @@ def _load_section(raw: dict, parent_level: int) -> SchemaSection:
             f"got {type(required).__name__}."
         )
     return SchemaSection(
+        allow_subsections=allow_subsections,
         level=level,
         name=name,
         pattern=pattern,
