@@ -500,10 +500,18 @@ def test_extended_autolink_domain_hyphen_and_digits_allowed():
 
 
 def test_extended_autolink_domain_may_be_non_ascii():
-    """Alphanumeric is read as Unicode alphanumeric, so an
-    internationalised domain name links."""
+    """The specification never defines "alphanumeric"; cmark-gfm's
+    host check is Unicode-aware for `www.` and `http(s)` domains, so
+    an internationalised domain name links. (Email addresses are
+    ASCII-only; see the email form below.)"""
     assert _extended("www.bücher.example") == [
         ("www.bücher.example", "http://www.bücher.example"),
+    ]
+    assert _extended("www.münchen.de") == [
+        ("www.münchen.de", "http://www.münchen.de"),
+    ]
+    assert _extended("https://münchen.de/x") == [
+        ("https://münchen.de/x", "https://münchen.de/x"),
     ]
 
 
@@ -654,8 +662,22 @@ def test_extended_autolink_email_empty_domain_segment_ends_the_domain():
     assert _extended("a@b.c..d") == [("a@b.c", "mailto:a@b.c")]
 
 
-def test_extended_autolink_email_may_be_non_ascii():
-    assert _extended("josé@b.c") == [("josé@b.c", "mailto:josé@b.c")]
+def test_extended_autolink_email_must_be_ascii():
+    """cmark-gfm checks email local parts and domains with ASCII
+    `isalnum`, unlike its Unicode-aware host check for `www.` and
+    `http(s)` domains. A non-ASCII letter is not an address
+    character: before the `@` it breaks the local part, so there is
+    no candidate at all; in the domain it ends the domain where it
+    stands, like `/` does, and the link is what came before -- or
+    nothing, if that leaves the domain without a period."""
+    assert _extended("josé@example.com") == []
+    assert _extended("jose@exämple.com") == []
+    assert _extended("jose@example.cöm") == [
+        ("jose@example.c", "mailto:jose@example.c"),
+    ]
+    assert _extended("jose@example.com") == [
+        ("jose@example.com", "mailto:jose@example.com"),
+    ]
 
 
 def test_extended_autolink_email_trailing_period_and_paren():
@@ -678,6 +700,24 @@ def test_extended_autolink_xmpp_resource_characters():
     ]
     assert _extended("xmpp:a@b.c/r_s") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
     assert _extended("xmpp:a@b.c/r-s") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
+
+
+def test_extended_autolink_protocol_address_must_be_ascii():
+    """`mailto:` and `xmpp:` addresses follow the email rule, so they
+    are ASCII-only too: a non-ASCII letter in the local part or
+    before the domain's period leaves no link, and one after the
+    period ends the address there."""
+    assert _extended("mailto:josé@b.c") == []
+    assert _extended("mailto:jose@bé.c") == []
+    assert _extended("xmpp:josé@b.c") == []
+    assert _extended("xmpp:jose@b.cé") == [("xmpp:jose@b.c", "xmpp:jose@b.c")]
+
+
+def test_extended_autolink_xmpp_resource_must_be_ascii():
+    """The resource follows the email rule as well: a non-ASCII
+    letter ends it, like `_` and `-` do."""
+    assert _extended("xmpp:a@b.c/ré") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
+    assert _extended("xmpp:a@b.c/é") == [("xmpp:a@b.c", "xmpp:a@b.c")]
 
 
 def test_extended_autolink_xmpp_empty_resource_is_not_part_of_link():

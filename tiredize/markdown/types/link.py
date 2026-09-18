@@ -147,6 +147,11 @@ class ExtendedAutolink:
     two segments. The path runs to the next whitespace or `<` and is
     then trimmed by extended autolink path validation (see `_trim`).
 
+    The specification never defines "alphanumeric", so cmark-gfm
+    breaks the tie: `www.` and `http(s)` domains accept Unicode
+    letters and digits, while email addresses -- bare, `mailto:` and
+    `xmpp:`, resource included -- are ASCII only.
+
     `string` is the matched text after trimming, exactly as it
     appears in the source. `url` is the link target GitHub would
     navigate to: `string` unchanged for `http`, `https`, `mailto:`
@@ -165,8 +170,14 @@ class ExtendedAutolink:
     # specification allows; `_scan` then validates the domain and
     # trims the tail, because those rules are procedural (count
     # parentheses, check the last two domain segments) and are not
-    # expressible in one pattern. `\w` is used for "alphanumeric" so
-    # internationalised names link as they do on GitHub.
+    # expressible in one pattern.
+    #
+    # "Alphanumeric" follows cmark-gfm where the specification is
+    # silent: the email alternative uses ASCII `[A-Za-z0-9]` in the
+    # local part, the domain and the xmpp resource (cmark-gfm checks
+    # them with `isalnum`), whereas the www/url domain in `RE_DOMAIN`
+    # uses `\w` (cmark-gfm's host check is Unicode-aware), so
+    # internationalised domain names link as they do on GitHub.
     #
     # The email alternative's domain and xmpp resource are written as
     # non-empty segments joined by `.`, so a trailing `.` -- or a `.`
@@ -178,17 +189,21 @@ class ExtendedAutolink:
             (?P<www>www\.[^\s<]*)         # www. then to whitespace or <
           | (?P<url>(?i:https?)://[^\s<]*)   # http(s):// likewise
           | (?P<protocol>mailto:|xmpp:)?  # Optional protocol, lower-case
-            (?P<local>[\w.+-]+)           # Local part
+            (?P<local>[A-Za-z0-9._+-]+)   # Local part, ASCII only
             @
-            (?P<domain>[\w-]+(?:\.[\w-]+)*)   # Domain segments
-            (?P<resource>
-                /(?:[^\W_]|@)+(?:\.(?:[^\W_]|@)+)*   # xmpp /resource
+            (?P<domain>                   # Domain segments, ASCII only
+                [A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*
+            )
+            (?P<resource>                 # xmpp /resource, ASCII only
+                /[A-Za-z0-9@]+(?:\.[A-Za-z0-9@]+)*
             )?
         )
     """
 
     # The leading part of a www/url candidate that must be a valid
     # domain: segments of alphanumerics, `_` and `-` joined by `.`.
+    # `\w` here is deliberate: unlike the email domain above, this
+    # one is Unicode-aware (see the note on RE_CANDIDATE).
     RE_DOMAIN = r"""
         [\w-]+(?:\.[\w-]+)*
     """
