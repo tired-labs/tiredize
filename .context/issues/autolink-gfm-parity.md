@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: technical-architect
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-review
-step: acceptance-verification
+step: technical-reference
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -1659,3 +1659,153 @@ Author: qa-engineer/software-engineering/testing
 
     pytest tail: `1084 passed, 47 skipped in 8.53s`. flake8: no
     output, exit 0.
+
+### 2026-09-18T15:56:46+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Technical reference. Judgment: a specification change is
+    warranted. The diff 64a07ba..6b3a820 renames two parser elements
+    and their `Section` fields, changes what each matches and what
+    `url` carries (normalised `http://`/`mailto:` hrefs), replaces a
+    regex with a procedural matcher, and changes which links the
+    `links` rule validates, uniformly across four link kinds. Those
+    are contracts, data formats and processing order, and both
+    specifications described the old behaviour. Committed as 91a6162
+    (both spec files, one commit); the issue file follows separately.
+
+    `.context/specifications/markdown-parser.md`, by section:
+
+    - Overview: added the ownership boundary (parser decides what a
+      document contains, linter judges it) and the parser's own
+      boundary for autolinks -- the GFM text is implemented, not
+      GitHub's renderer.
+    - Contracts and Interfaces: new "Autolink Elements" subsection
+      showing both dataclasses and their `extract`/`sanitize`
+      signatures, the `string`/`url` semantics, the `Section` fields
+      and the vocabulary names.
+    - File Layout: `link.py` lists `InlineLink, Autolink,
+      ExtendedAutolink`.
+    - Regex Constants: the false "BareLink Relative Path Matching"
+      subsection is removed (the Windows-path sentence with it). The
+      Pattern Reference blocks for `BracketLink.RE_LINK_BRACKET` and
+      `BareLink.RE_URL` (the stale `\S+` form) are replaced by
+      `Autolink.RE_AUTOLINK` (the whole of 6.8, no post-processing),
+      `ExtendedAutolink.RE_CANDIDATE` (explicitly a candidate finder,
+      not the extended pattern) and the two helpers `RE_DOMAIN` and
+      `RE_ENTITY_TAIL`, with the Unicode/ASCII split noted.
+    - New "Autolinks" domain section: the pinned authority (0.29-gfm,
+      published 2019-04-06 at github.github.com/gfm, sections 6.8 and
+      6.9, examples 603-635, read 2026-09-18; the cmark-gfm
+      `test/spec.txt` named as older and not authoritative), the
+      6.8 and 6.9 rules as the Public Contract states them, the six
+      extraction passes (blank, candidate, start, preceding character
+      on the source text, validate/trim, resume), the span-based
+      `sanitize()` and its non-idempotence, the quadratic timing
+      shapes, then "Decided readings where the specification is
+      silent" (five items) and "Known divergences from cmark-gfm"
+      (eight items, quoted below).
+    - Sanitize Chain: table rows renamed; the design-principle
+      paragraph now says ExtendedAutolink also reads the original text
+      for the preceding-character rule; a new paragraph records that
+      both autolink `sanitize()` methods are span-based, with the
+      inline-code consequence for `Autolink.sanitize()`.
+    - Design Decisions: four migrated from the issue -- parity, not a
+      superset; the text is followed concretely with cmark-gfm as
+      tie-break; `url` is the href and `string` the label; the
+      elements take the specification's names with no alias.
+
+    `.context/specifications/linter.md`, by section:
+
+    - URL Validation: `check_url_valid` signature now shows
+      `valid_status_codes: list[int | str] | None = None` (the known
+      omission, fixed); the third URL type reads "anything else" and
+      states that the function does not filter by scheme -- the rule
+      does.
+    - New "Element Vocabulary" subsection under Contracts: the twelve
+      names, the `Section` field each reads and the finding label,
+      with the unknown-name `ValueError` and "no aliases" stated.
+    - New "Link Validation" domain section: the four `Section` fields
+      read; the scheme gate (`_has_checkable_scheme`, `_RE_SCHEME`,
+      why not `urlparse`) with its three outcomes; the consequence
+      that any target whose leading token parses as a scheme --
+      `localhost:8080`, `example.com:8080/x`, `C:\path` -- is skipped
+      silently while true scheme-less targets (anchors, `./` paths,
+      `example.com`) still reach `check_url_valid`; `www.` arriving
+      as `http://` and bare email as `mailto:`; the exclusion gate by
+      hostname; the four finding messages.
+    - Design Decisions: one migrated -- the `links` rule checks only
+      http/https, uniformly across link kinds.
+
+    Divergence list as written in markdown-parser.md:
+
+    1. Trailing `;`, `'`, `"` stay part of an extended autolink. The
+       specification's trailing-punctuation list omits them; cmark-gfm
+       strips all three. `see www.a.b/x;` links `www.a.b/x;` here and
+       `www.a.b/x` on GitHub. An entity-like `&name;` tail is still
+       removed (that rule is in the text).
+    2. The preceding-character rule applies to all four extended
+       forms and is judged on the source text. cmark-gfm applies it to
+       `www.` only, so `"https://x.org"` and `"foo@bar.com"` link on
+       GitHub but not here; `(https://x.org)` and `see foo@bar.com`
+       link in both.
+    3. The `&name;` entity tail uses Unicode alphanumerics (`[^\W_]`)
+       where cmark-gfm accepts ASCII letters only, so `www.a.b/x&hl2;`
+       links as `www.a.b/x` here and `www.a.b/x&hl2` on GitHub.
+    4. Whitespace is Unicode (`str.isspace()` / `\s`) in both the
+       preceding-character rule and path termination, whereas the
+       specification's section 2.1 and cmark-gfm use the ASCII set. A
+       link preceded by U+00A0 or U+3000 is admitted here and not on
+       GitHub; such a character inside a path ends the link here but
+       not there.
+    5. A double-`@` token links its leftmost valid address.
+       `a@b.c@d.e` links `a@b.c` here; cmark-gfm rejects a domain run
+       holding a second `@` and links from the second `@`'s local
+       part instead.
+    6. `http://localhost/x` is not an extended autolink because the
+       text requires at least one `.` in the domain; cmark-gfm's url
+       matcher allows a dot-less domain. (`<http://localhost/x>` is
+       an `Autolink` in both.)
+    7. An email whose domain ends in a digit links (`a@b.c1`,
+       `a@b.1`): the text forbids only a final `-` or `_`, whereas
+       cmark-gfm requires a letter or `.`.
+    8. `xmpp:a@b.c/` links as `xmpp:a@b.c`; cmark-gfm produces no link
+       for a trailing empty resource.
+
+    The remaining five items from the orchestrator's list are
+    agreement with cmark-gfm, not divergences, and are recorded under
+    "Decided readings where the specification is silent": Unicode
+    domains / ASCII emails; a non-ASCII character in an email domain
+    or xmpp resource truncates rather than voids (`jose@example.cöm`
+    -> `jose@example.c`, `xmpp:a@b.c/ré` -> `xmpp:a@b.c/r`) while one
+    before the `@` voids; a bare address starts at the maximal
+    backward run of `[A-Za-z0-9._+-]` (`"first_last@example.com"`
+    yields nothing, `www.a_b@c.d` links as `mailto:www.a_b@c.d`);
+    `www.a` and `www.localhost` link; `http://`/`https://`
+    case-insensitive, `mailto:`/`xmpp:` case-sensitive. Every item in
+    both lists was re-run against tip 6b3a820 before being written.
+
+    Not documented, deliberately: the `_is_excluded()` crash on a
+    malformed URL with `exclude` configured (owned by the draft issue
+    `links-exclude-malformed-url-crash`; a specification carries no
+    TODOs, and the "Exclusion gate" text describes the current
+    `urlparse` comparison without promising more); the four remaining
+    non-GFM element names, which are out of scope and not planned work
+    for this spec; the `schema-finding-taxonomy` principle, which is
+    not this issue's; the stale header comments in two test files,
+    which are test-tree matters; the 0-based CLI column, which is
+    pre-existing `line_col` behaviour already stated in the spec. The
+    per-element `RE_*` convention line under "Element Type Pattern"
+    was left as it is: `ExtendedAutolink` still carries `RE_*`
+    constants, and the Pattern Reference now says which one is a
+    candidate finder.
+
+    Verification: the two spec files run clean through tiredize with a
+    scratch rules file (trailing_whitespace, tabs, line_length 80
+    excluding tables and code blocks, links validate false) except for
+    the pre-existing 96-character `validate` signature on linter.md
+    line 59, which is outside the passages edited. Issue
+    self-validation (`--markdown-schema` and `--frontmatter-schema`
+    over `.context/issues/*.md`) result is recorded in the commit that
+    carries this Comment. No action tag is needed: the step completed
+    cleanly.
