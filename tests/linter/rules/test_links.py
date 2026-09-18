@@ -616,6 +616,33 @@ def test_relative_url_not_affected_by_domain_exclusion():
     mock_check.assert_called_once()
 
 
+@pytest.mark.skip(
+    reason="links-exclude-malformed-url-crash: _is_excluded raises on "
+    "URLs urlparse cannot parse"
+)
+def test_malformed_url_with_exclude_configured_is_a_finding_not_a_crash():
+    """A URL urlparse cannot parse (an unclosed IPv6 bracket) must be
+    reported as a finding even when `exclude` is configured. Today
+    `_is_excluded` calls `urlparse(url).hostname`, which raises
+    `ValueError: Invalid IPv6 URL` before check_url_valid can report
+    the failure as a tuple; without `exclude` the helper returns early
+    and the same document is fine (see
+    test_scheme_gate_does_not_raise_on_malformed_url). Verified to
+    fail on 2026-09-18; unskip when the named issue lands."""
+    doc = Document()
+    doc.load(text="# Nav\n<http://[::1>\n")
+    with patch(
+        MOCK_TARGET, return_value=(False, None, "invalid url")
+    ) as mock_check:
+        results = validate(doc, {
+            "validate": True,
+            "exclude": ["*.example.com"],
+        })
+    mock_check.assert_called_once()
+    assert len(results) == 1
+    assert "http://[::1" in results[0].message
+
+
 def test_non_string_exclude_entry_still_raises_value_level_error():
     """Key-level validation does not swallow the value-level check."""
     doc = Document()
