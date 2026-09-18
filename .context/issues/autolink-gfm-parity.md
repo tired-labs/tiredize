@@ -1,5 +1,5 @@
 ---
-assignee: qa-engineer
+assignee: program-manager
 created: 2026-09-14
 knowledge: []
 priority: medium
@@ -669,3 +669,12 @@ Author: qa-engineer/software-engineering/testing
     Marker restored: `@pytest.mark.skip(reason=PENDING)`. flake8
     clean; full suite 848 passed, 150 skipped (unchanged, since no
     test was added). Ready for the gate.
+
+### 2026-09-18T15:00:00+00:00
+
+Author: program-manager/software-engineering
+
+    Approval point 2 passed. The user approved the acceptance test
+    suite as the definition of correct: 104 tests, every specification
+    example 603–635 pinned, both halves where both apply. Routing to
+    step 3, implementation.
