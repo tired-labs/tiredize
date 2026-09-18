@@ -2186,3 +2186,276 @@ Author: program-manager/software-engineering
     6–7), README (steps 8–9), and the `gfm-parity` register (updated by
     the PM in this commit: BareLink and BracketLink checked off, skip
     count 50 → 46). Routing to step 10, closeout.
+
+### 2026-09-18T16:35:21+00:00
+
+Author: workflow-owner/software-engineering/git
+
+    Closeout of `autolink-gfm-parity`, steps 1-9, on branch
+    `issues/autolink-gfm-parity` at 73e0cb7 (40 commits over main
+    bcc8f29; 6bcb1b6 is the PM's routing commit and not a deliverable).
+    Every claim below was re-run or re-read here, not taken from the
+    Comments: `python3 -m pytest -q -rs` at tip and on a `git archive`
+    copy of bcc8f29 in the scratchpad, flake8, coverage, `grep` for the
+    old names, the two specifications, the README, the register, and
+    the draft issue file. Nothing under the project tree was changed
+    except this Comment.
+
+    Closeout checklist:
+
+    - [x] Issue file updated with final design decisions, all open
+          questions resolved, and every acceptance criterion checked
+          off. Open Questions is empty; 19 of 19 criteria are `[x]`
+          (73e0cb7); eight Design Decisions record the scoping and
+          post-step-3 rulings.
+    - [x] Specification updated to reflect the accepted change when
+          contracts changed. Step 6's 91a6162 landed: markdown-parser.md
+          (+369 lines: Autolink Elements contract, Autolinks domain
+          section with the pinned authority, decided readings and eight
+          divergences, renamed sanitize chain) and linter.md (+108:
+          Element Vocabulary, Link Validation, corrected
+          `check_url_valid` signature). Verified accurate against tip by
+          step 7 with 102 probe assertions.
+    - [x] User-facing documentation verified accurate against the
+          implementation. README changed in cf2b4ee (five passages),
+          reviewed clean at step 9 (1765847).
+    - [x] Decisions that, if reversed, would materially change a
+          subsystem migrated into the relevant specification. Four in
+          markdown-parser.md (parity not superset; text followed
+          concretely with cmark-gfm as tie-break; `url` is the href;
+          spec names with no alias) and one in linter.md (http/https
+          only, uniform across link kinds). The issue-only decisions
+          (test oracle, register boundary, skip convention) were rightly
+          left in the issue.
+
+    Completion report.
+
+    Problem. A PR #44 user hit escaped punctuation (`\*.dll`, `\|`,
+    `\_x\_.md`, `\\server\share`) reported as unreachable links:
+    `BareLink.RE_URL` read a backslash as a Windows path. Scoping found
+    the narrow fix a half-measure -- tiredize's autolink rules were
+    neither a subset nor a superset of GFM's (no `www.`, no email, no
+    non-http `<scheme:>`, `./` paths linked, trailing punctuation kept,
+    mid-word matches), so a user could not predict from GitHub's
+    rendering what tiredize would check. The user set the goal as 1:1
+    parity with GFM 0.29-gfm sections 6.8 and 6.9.
+
+    Solution. `BracketLink` became `Autolink` (one VERBOSE regex: any
+    2-32 character scheme URI, or an HTML5 email, inside `<...>`) and
+    `BareLink` became `ExtendedAutolink` (a candidate regex plus a
+    procedural pass: address start, preceding character judged on the
+    source text, domain validation, path trimming, resume), matching
+    every one of the specification's 33 examples 603-635. `url` carries
+    the GFM href (`http://` for `www.`, `mailto:` for bare addresses);
+    `string` the label. `./`, `../` and `\` tokens in prose are no
+    longer links. `Section` fields, the `elements` vocabulary and the
+    finding labels take the specification's names. The `links` rule
+    gained a scheme gate (`_has_checkable_scheme`, regex-based so it
+    never raises) and validates http/https targets only, for every link
+    kind. Both specifications and the README describe the new
+    behaviour; the parser spec pins the authority (0.29-gfm, published
+    2019-04-06, read 2026-09-18 from github.github.com/gfm), five
+    decided readings where the text is silent and eight divergences
+    from cmark-gfm.
+
+    Test summary. Suite on main bcc8f29: 844 passed / 50 skipped (894
+    tests). At tip: 1084 passed / 47 skipped (1131 tests), 0 failed;
+    net +237 tests, one removed. Step 2 added 104 black-box acceptance
+    tests before any code: `tests/markdown/types/test_link_gfm_
+    autolinks.py` (new, 63: one test per example 603-635 with both
+    halves for 617/620/621, preceding-character rule, escape and
+    relative-path negatives, position, sanitize), `test_links.py` (+23:
+    non-http schemes never validated, `www.` checked over `http://`,
+    element names in messages, prose paths and escapes silent, relative
+    paths through inline links and reference definitions unchanged),
+    `test_elements.py` (+10), `test_line_length.py` (+4) and
+    `test_unicode.py` (+4) for the new vocabulary and old-name
+    rejection. All 104 failed before implementation (100 on
+    ImportError/AttributeError/ValueError/assertion, 4 relative-path
+    guards passing on both) and pass at tip; step 5 re-verified each
+    criterion independently and through the CLI. Step 3 and its three
+    revisions added white-box tests in `test_link.py`: scheme-length
+    and label boundaries, ASCII emails vs Unicode domains, case rules,
+    the cmark-gfm tail divergences, candidates glued to blanked
+    constructs (10), `_`-bearing local parts behind an invalid preceding
+    character (9), idempotent sanitize, no input mutation. The four
+    pre-existing autolink tests were renamed to the new vocabulary
+    (backslash test inverted; mid-word registry-key test given its
+    docstring). flake8 clean.
+
+    Coverage. `tiredize/markdown/types/link.py` 182/182 statements,
+    100%; `tiredize/linter/rules/links.py` 96/96, 100%;
+    `tiredize/linter/rules/_elements.py` 3/3, 100%;
+    `tiredize/markdown/types/section.py` 80 statements, one uncovered
+    (line 167, pre-existing and untouched by this issue). Package 99%
+    (1680 statements, 11 missed, all outside the changed files).
+
+    Review -- incorporated. Step 4 iteration 1: the preceding-character
+    rule was judged on the sanitized copy, so a link glued to a blanked
+    construct (`[x](u)www.c.d`, `` `code`https://c.d ``) was accepted
+    as "after whitespace" -- fixed in b8be8f4 by passing the source
+    text to `_scan` and adding `_valid_preceding`. Step 4 iteration 2:
+    a bare address with `_` in its local part behind an invalid
+    preceding character was extracted as a fragment after the last `_`
+    (`"first_last@x.y"` gave `last@x.y`) -- fixed in a01c97c by
+    `_start`, which walks back over the local part before judging, the
+    cmark-gfm address-start tie-break. Post-step-3 user rulings routed
+    as a revision: email alphanumerics became ASCII while domains stay
+    Unicode (553f25c); the `_is_excluded` crash became a skipped
+    regression test naming a filed issue (f0173fd). Step-2 gate: the
+    criterion-7 `exclude`-on-`elements` error was corrected and example
+    617's section-6.9 half was pinned (f277771). Step-3 interpretation
+    1 (old names must survive in the rejection tests) was reconciled
+    into the criterion (9b4312a). Steps 5, 7 and 9 returned clean.
+
+    Review -- not incorporated. Recorded as observations by steps 4, 7,
+    8 and 9 and deliberately left, each with the reason given at the
+    time: (a) trailing `;`, `'`, `"` kept, the preceding rule applied to
+    all four extended forms, Unicode `&name;` tail, Unicode whitespace,
+    leftmost address on a double-`@` token, dot-less `localhost`
+    rejected, digit-final email domains, `xmpp:a@b.c/` -- all follow
+    the decided "specification text wins" rule and are documented as
+    divergences rather than changed; (b) quadratic timing on 10 k-char
+    whitespace-free delimiter runs -- not markdown prose, a local fix
+    in `_scan` was described; (c) `ExtendedAutolink.sanitize()` is not
+    idempotent on `a@b.c+d@f.g` -- inherent to a context-sensitive
+    matcher blanked with spaces, no caller chains it, documented in the
+    spec; (d) the four `links` loops duplicate one gate-gate-check
+    block, `_has_checkable_scheme` returns True for no scheme, and
+    `_blank_spans` lives in `link.py` -- pre-existing shape or naming,
+    no behaviour consequence; (e) README "four built-in rules" (six
+    exist) and "A regex-based parser", and six pre-existing em-dash
+    sentence breaks -- outside the brief; (f) the README's absolute
+    "links what GitHub links" sentence -- within the architect's brief
+    (proofreader observation 1); (g) two stale "do not exist until
+    step 3" header comments in `test_link_gfm_autolinks.py` and
+    `test_links.py` -- step boundary; (h) `linter.md` "`./relative`"
+    and "case-insensitive on the pattern" imprecisions -- pre-existing
+    wording outside the edited passages.
+
+    Follow-up work. Candidates, none acted on here: (1) the
+    `_is_excluded()` ValueError on a malformed URL with `exclude`
+    configured -- filed as `.context/issues/links-exclude-malformed-
+    url-crash.md` (draft, exists on the branch); (2) the four remaining
+    non-GFM element names (`code_inline`, `quoteblock`, `header`,
+    `reference_definition`) -- deferred to the user's planned
+    gfm-compliance audit, not filed; (3) the quadratic timing shapes and
+    the `_scan` short-cut described at step 4 iteration 3; (4)
+    `ExtendedAutolink.sanitize()` non-idempotence and the over-claiming
+    `test_extended_autolink_sanitize_idempotent` name; (5) folding the
+    four `links` loops into one, renaming `_has_checkable_scheme`, and
+    moving `_blank_spans` to `markdown/utils.py` when `InlineLink` needs
+    it; (6) README: "four built-in rules", "A regex-based parser", the
+    absolute "links what GitHub links" sentence, and the unanchored
+    "no longer"/"now" in the `links` section; (7) the two stale test
+    header comments; (8) `linter.md` "`./relative`" and
+    "case-insensitive" wording; (9) the AGENTS.md knowledge mapping has
+    no `user-documentation` or `documentation-review` entry (the user
+    holds a suggested update). Skip ledger, verified with `pytest -rs`:
+    before, 50 skipped (all `gfm-parity:`); after, 47 skipped. Removed
+    (4): `test_bracket_link_ftp` ("gfm-parity: non-HTTP URI schemes not
+    supported") unskipped as `test_autolink_ftp`; `test_bracket_link_
+    email` ("gfm-parity: email autolinks not supported") unskipped as
+    `test_autolink_email`; `test_bare_link_trailing_punctuation_
+    stripped` ("gfm-parity: trailing punctuation not stripped from
+    URLs") unskipped as `test_extended_autolink_trailing_punctuation_
+    stripped`; `test_bare_link_www` ("gfm-parity: www. autolinks not
+    supported") deleted as superseded by examples 622/623. Added (1):
+    `test_malformed_url_with_exclude_configured_is_a_finding_not_a_
+    crash` in `tests/linter/rules/test_links.py`, reason
+    "links-exclude-malformed-url-crash: _is_excluded raises on URLs
+    urlparse cannot parse", whose slug names the draft issue above. The
+    `gfm-parity` register count went 50 to 46 and its BareLink and
+    BracketLink entries are checked off (73e0cb7).
+
+    Breaking changes. (1) The `elements` vocabulary: `link_bare` is now
+    `autolink_extended` and `link_bracket` is now `autolink` in
+    `elements.disallow`, `line_length.exclude` and `unicode.exclude`;
+    the old names fail at configuration load with `Unknown element name
+    in disallow: '...'` (or `exclude`), no alias. Labels are "Autolink"
+    and "Extended autolink". (2) `Section.links_bare` and
+    `Section.links_bracket` are now `Section.autolinks_extended` and
+    `Section.autolinks`; the classes `BareLink` and `BracketLink` are
+    now `ExtendedAutolink` and `Autolink`, with new match semantics and
+    a normalised `url`. (3) The `links` rule validates only `http` and
+    `https` targets for every link kind: `mailto:`, `ftp:`, `xmpp:`,
+    `irc:` and unregistered schemes, and scheme-less host:port targets
+    such as `localhost:8080` or `example.com:8080/x`, no longer produce
+    findings. (4) `./`, `../` and `\` tokens in prose are no longer
+    links; relative paths inside `[text](./f)` and `[ref]: ./f` are
+    still checked.
+
+    Work trail. Step 1 (PM, 64a07ba): the issue was scoped as
+    `bare-link-backslash-collision`, reopened once at the user's
+    direction to full 6.8/6.9 parity and renamed, corrected once when
+    the pasted published text proved newer than cmark-gfm's
+    `test/spec.txt` under the same version string, then approved with
+    the element rename folded in at the gate. Step 2 (qa-engineer,
+    56e8cd5, f277771): 104 tests, pre-skip failure evidence recorded,
+    two gate corrections (0e7db11, 870f5cb), approved (edebaa1). Step 3
+    (software-engineer, d3ffc90, 137e4ee, d8d6baf, 42c7234): one commit
+    per criterion group; seven contract interpretations listed for
+    review, of which the user ruled on alphanumerics, the uniform gate
+    and the skip convention (17ac81b) and the engineer revised
+    (553f25c, f0173fd). Step 4 (software-engineer): three iterations --
+    53afde9 one finding, 80f5244 one finding, 2525367/f298e81 clean --
+    each fixed by a step-3 revision (b8be8f4, a01c97c) with tests
+    written first. Step 5 (qa-engineer, 6b3a820): PASS, with an
+    independent transcription of all 51 example paragraphs, CLI runs
+    and a 25-document corpus (12 findings with 10 false positives on
+    main; 3 with 0 on the branch). Step 6 (technical-architect,
+    91a6162, e7e3fca): both specifications updated. Step 7
+    (technical-architect, d6f1e00): clean; documentation track
+    required, five README passages named. Step 8 (ghostwriter,
+    cf2b4ee, 0f678b2): the five passages. Step 9 (proofreader,
+    1765847, f68603f): clean. PM 73e0cb7: criteria and register. No
+    open question was raised by a worker during the pipeline; all
+    rulings came from the two approval gates and the user's post-step-3
+    review. No disputed edit was raised; both edit requests were
+    applied as prescribed. No `status: blocked` appears in the history.
+
+    Process improvement suggestions from the agents:
+
+    - Step 7 (technical-architect): when a Design Decision adopts an
+      external implementation as tie-break (here cmark-gfm
+      `extensions/autolink.c`), record the commit or read date consulted,
+      as is done for the specification text; otherwise the reference
+      inherits claims no later reviewer can check.
+    - Step 9 (proofreader): ai-prose-hygiene's two-comma cap and its
+      "one serial list per sentence" rule leave a plain list of four or
+      more items undefined; the knowledge file should say whether a
+      single serial list is exempt from the count or must be bulleted.
+
+    Process friction observed:
+
+    - Scoping was reopened once before approval (a narrow fix expanded
+      to full parity) and corrected once more mid-scoping when the
+      cmark-gfm `test/spec.txt` was found stale against the published
+      site under the same version string; the rewritten Summary,
+      Contract and Criteria were produced three times.
+    - Step 3 needed two user-directed revisions before step 4 began:
+      the old-names criterion contradicted the rejection tests it
+      mandated, and the contract left "alphanumeric" undefined, so the
+      engineer listed seven interpretations for the PM to adjudicate.
+    - Step 4 took three iterations for two real findings, each a
+      one-function fix; iteration 2's finding had been present since
+      d8d6baf and was missed at iteration 1.
+    - Steps 8 and 9 had no AGENTS.md knowledge mapping and ran on the
+      step files' parenthetical knowledge names.
+    - Comment timestamps do not sort: PM entries carry nominal times
+      (13:00, 14:00, 16:35) while worker entries carry the clock, so a
+      worker entry appended after a PM entry can be stamped earlier; the
+      log reads in append order only.
+    - The "no-change confirmation commit" was made two ways: steps 4
+      (iteration 3) and 9 committed an empty confirmation and then the
+      Comment separately; steps 5 and 7 let the Comment commit be the
+      confirmation. Both satisfy git.md; one form would be easier to
+      audit.
+
+    Disagreement with the routing brief: the main baseline is 844
+    passed / 50 skipped, not 843 (843 was the 2026-09-14 count with the
+    throwaway patch's one failure). Everything else the brief stated
+    was confirmed.
+
+    Closeout completes cleanly. No action tag is needed; the branch is
+    ready for the user's acceptance at the approval gate.
