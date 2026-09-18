@@ -189,8 +189,15 @@ def test_example_616_empty_brackets():
 
 @pytest.mark.skip(reason=PENDING)
 def test_example_617_spaces_around_uri_inside_brackets():
+    """The spaces make this fail section 6.8. Under the section 6.9
+    extension `http://foo.bar` follows whitespace, so it is an
+    extended autolink; the surrounding `<`, spaces, and `>` are not
+    part of it."""
     text = "< http://foo.bar >"
     assert autolinks(text) == []
+    assert extended_autolinks(text) == [
+        ("http://foo.bar", "http://foo.bar"),
+    ]
 
 
 @pytest.mark.skip(reason=PENDING)

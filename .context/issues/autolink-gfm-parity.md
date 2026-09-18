@@ -1,5 +1,5 @@
 ---
-assignee: program-manager
+assignee: qa-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
@@ -641,3 +641,31 @@ Author: program-manager/software-engineering
     every specification example pinned by a unit test, both halves
     where both apply. Criterion 1 amended. Routing back to the
     qa-engineer for that one addition before approval is recorded.
+
+### 2026-09-18T13:21:07+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Step-2 revision per the gate ruling on example 617.
+    `test_example_617_spaces_around_uri_inside_brackets` in
+    `tests/markdown/types/test_link_gfm_autolinks.py` is extended in
+    place, in the same shape as 620 and 621: it still asserts
+    `autolinks(text) == []` and now also asserts
+    `extended_autolinks("< http://foo.bar >") ==
+    [("http://foo.bar", "http://foo.bar")]`, with a docstring giving
+    the reason — `http://foo.bar` follows whitespace, so it qualifies
+    under §6.9 even though the bracketed form fails §6.8. Criterion 1
+    is now covered as amended. No other file changed.
+
+    Pre-skip evidence: with the marker removed the test fails on
+    `ImportError: cannot import name 'Autolink'`, the same reason as
+    the rest of the module. With the new names aliased in memory to
+    today's `BracketLink` / `BareLink` (scratch copy, nothing
+    committed) the test passes: today's `BareLink` already matches
+    `http://foo.bar` after whitespace with `string == url`, so the
+    §6.9 half pins existing agreement with GFM rather than a change,
+    as 615–620 did before.
+
+    Marker restored: `@pytest.mark.skip(reason=PENDING)`. flake8
+    clean; full suite 848 passed, 150 skipped (unchanged, since no
+    test was added). Ready for the gate.
