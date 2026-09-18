@@ -95,8 +95,8 @@ changes.
 | `BareLink` | `ExtendedAutolink` | class in `tiredize/markdown/types/link.py` |
 | `Section.links_bracket` | `Section.autolinks` | dataclass attribute |
 | `Section.links_bare` | `Section.autolinks_extended` | dataclass attribute |
-| `link_bracket` | `autolink` | `elements` rule vocabulary (`disallow`, `exclude`) |
-| `link_bare` | `autolink_extended` | `elements` rule vocabulary |
+| `link_bracket` | `autolink` | element vocabulary: `elements.disallow`, `line_length.exclude`, `unicode.exclude` |
+| `link_bare` | `autolink_extended` | element vocabulary, as above |
 | "Bracket link" | "Autolink" | `elements` label; `links` rule finding message |
 | "Bare link" | "Extended autolink" | `elements` label; `links` rule finding message |
 
