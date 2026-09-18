@@ -1,10 +1,10 @@
 ---
-assignee: program-manager
+assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-review
-step: implementation
+step: code-and-test-review
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -941,3 +941,133 @@ Author: software-engineer/software-engineering/git,python,testing
     anticipated because the two protocol/resource ASCII tests are
     new; the 47th skip is the regression test above. The issue file
     is committed separately as a third commit.
+
+### 2026-09-18T14:56:25+00:00
+
+Author: software-engineer/software-engineering/code-review,python,testing
+
+    Code and test review of 64a07ba..5ef3554 (`tiredize/` and
+    `tests/`; the `.context/` and README changes belong to later
+    steps). Verdict: one finding, routed back as an edit request.
+    Everything else checked is clean: 1065 passed / 47 skipped,
+    flake8 clean, no `PENDING` markers, no old name under `tiredize/`,
+    and under `tests/` only the six rejection-test hits the corrected
+    criterion allows.
+
+    Findings by category:
+
+    - Unused parameters or dead code: none found.
+    - Duplicate or redundant logic: none found.
+    - Missing input validation: none found.
+    - Inconsistencies between parallel code paths: none found. The
+      four `links` loops apply the scheme gate, then the exclusion,
+      identically; both `sanitize()` methods derive spans from their
+      own `extract()`.
+    - Silent acceptance of invalid input: none found.
+    - Reachable bugs or error-handling gaps: none found. Neither
+      extractor raises on any probe, including empty text, a lone
+      `<`, astral characters before a link, and the 10k-character
+      adversarial lines below.
+    - Contract violations: one, below.
+    - Spec fidelity gaps: none found. Every docstring and pattern
+      comment in `link.py` and `links.py` matches the behaviour I
+      observed, including the Unicode/ASCII split (`\w` in
+      `RE_DOMAIN`, `[A-Za-z0-9]` in the email alternative).
+
+    Finding 1 -- contract violation, `ExtendedAutolink`, low-to-
+    medium severity. The preceding-character rule is evaluated
+    against the sanitized copy, not against `text`. Every construct
+    blanked before scanning (inline link, autolink, image, inline
+    code, reference definition) becomes spaces, so a candidate that
+    directly follows one is accepted as "after whitespace" although
+    the character before it in the source is `)`, `>`, `` ` `` or
+    similar, none of which the contract allows. Reproductions, each
+    yielding one extended autolink where the contract says none:
+    `[x](https://a.b)www.c.d`, `` `code`https://c.d/e ``,
+    `<https://a.b>www.c.d`, `![i](p.png)www.c.d`. The same inputs
+    with a real space are correctly matched. It reaches the rule:
+    `Document.load("# H\nSee [docs](https://a.b)https://dead.example/x")`
+    gives a `Section.autolinks_extended` entry for
+    `https://dead.example/x`, which the `links` rule would then
+    request -- the false-positive class this issue exists to remove.
+    Location: `tiredize/markdown/types/link.py`, `_scan` (lines
+    222-247) and its call from `extract` (line 383). Correction:
+    give `_scan` the original `text` alongside the sanitized copy
+    (same length, so offsets line up) and reject a candidate inside
+    the loop -- `pos = match.start() + 1; continue` -- unless
+    `match.start() == 0` or `text[match.start() - 1]` is whitespace
+    (`str.isspace()`, the same set the regex's `\s` uses) or one of
+    `*`, `_`, `~`, `(`. The check must sit inside `_scan`, not as a
+    filter on its result: `[x](u)www.a.b(www.c.d)` today yields
+    `www.a.b(www.c.d)`, and a post-filter would drop it without ever
+    seeing the valid `www.c.d` after `(`. Update the `_scan`
+    docstring, and add white-box tests in `test_link.py` for the four
+    reproductions, the `(www.c.d)` recovery, and the spaced positive
+    controls. cmark-gfm's `www_match` and `url_match` read the
+    preceding byte from the raw paragraph, so GitHub agrees with the
+    contract here; for the email form the contract's rule is the
+    decided one regardless.
+
+    Tests reviewed. The acceptance suite is untouched and is the
+    contract: 33 example tests, both halves for 617/620/621. The
+    white-box tests in `test_link.py` cover the required audits --
+    empty and one-character inputs, the 2/32 scheme and 63-label
+    boundaries, non-ASCII positions before and inside links,
+    idempotent sanitize, no input mutation, cross-component blanking
+    -- and they pin decided behaviour: the trailing `;`/`'`/`"`
+    divergence, the case-sensitivity choices, the ASCII email rule,
+    and the dot-less `localhost` rejection are each tied to a
+    contract sentence or a recorded decision. No characterization
+    test found. The gap is the one the finding names: nothing
+    exercises a candidate immediately after a blanked span.
+
+    Regex timing, 10k-character lines in a scratch script (Python
+    3.13): every plausible shape is under 5 ms -- runs of `.`, `&`,
+    `(`, `)`, `www.`, `http://`, `mailto:`, `a@a@a@...`, a 10k local
+    part, 5k dotted domain segments, 5k trailing punctuation, 5k
+    unmatched `)`, 40k of base64url-like words. Three shapes are
+    quadratic, not exponential (10k / 20k / 40k): a whitespace-free
+    run of `_` alone (0.64 / 2.5 / 10.2 s), `www.` + `a_a_a_...`
+    (0.32 / 1.3 / 5.9 s), and `www.a.b/&a;&a;...` (0.32 / 1.3 /
+    5.2 s). Mechanism: every position after `_` is a candidate start
+    for the email alternative, whose local-part scan runs to the end
+    of the token; and `_trim` re-runs `re.search` for the entity
+    tail over a fresh `candidate[:end]` slice per `;`. Both need a
+    single multi-kilobyte whitespace-free token built from
+    delimiters, which is not markdown prose. Not a finding; noted
+    for the record.
+
+    Observations, not findings:
+
+    - `www.` + a single segment (`www.a`, `www.localhost`) links; the
+      `www` segment satisfies "at least one period". cmark-gfm does
+      the same, so it is a valid tie-break, but it is pinned in
+      `test_extended_autolink_domain_needs_at_least_one_period`
+      without appearing in the step-3 interpretation list or the
+      class docstring. Worth a line in the step-6 divergence and
+      interpretation record.
+    - The entity tail follows the specification ("one or more
+      alphanumeric"), so `www.a.b/x&hl2;` links as `www.a.b/x`;
+      cmark-gfm accepts letters only there and would link
+      `www.a.b/x&hl2`. That is a third spec-over-cmark tail
+      divergence missing from the Design Decision's "known
+      divergences" list, which the step-6 specification must carry.
+      In the same rule `[^\W_]` is Unicode, whereas the tie-break
+      decision reads "alphanumeric" as ASCII wherever cmark-gfm does
+      (`cmark_isalpha`); only a `&<non-ASCII letters>;` tail can
+      tell, so not worth a change on its own, but the step-3 author
+      may want it consistent if touching `_trim` anyway.
+    - Stale header text, left under the step boundary as the step-3
+      comment already notes: the module docstring of
+      `test_link_gfm_autolinks.py` and the section comment in
+      `test_links.py` still say the names "do not exist until
+      step 3".
+    - `_has_checkable_scheme` treats `[x](localhost:8080)` and
+      `[x](C:\path)` as scheme-bearing and skips them, where the
+      previous code produced a "not reachable" finding via the
+      `requests` error. That follows from the uniform-gate decision
+      and matches how urllib splits them; recording it so the README
+      wording at step 7 can say "any scheme other than http/https",
+      not "mailto and friends".
+
+    Action: @program-manager — request for edit
