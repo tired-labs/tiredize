@@ -386,6 +386,59 @@ are out of scope here. They should be filed as one dedicated issue so
 users see a single further breaking change rather than one per
 element.
 
+### The specification is followed concretely; cmark-gfm breaks ties
+
+Decided by the user after step 3, 2026-09-18. Where the published
+specification text and GitHub's reference implementation (`cmark-gfm`,
+`extensions/autolink.c`) disagree, the specification wins. It is a
+concrete, versioned, testable definition; the implementation drifts
+from it (it has dropped `ftp://` as an extended scheme and added
+`mailto:`/`xmpp:` since the text was written) and tracking it would
+mean re-auditing C source on every release. The known divergences are
+all in the tails and none produces a wrong finding:
+
+- Trailing `;`, `'`, `"` stay part of an extended autolink. The
+  specification's trailing-punctuation list does not include them;
+  `cmark-gfm` strips all three (`;` as an entity if preceded by
+  `&name`, otherwise alone).
+- The preceding-character rule (line start, whitespace, `*`, `_`,
+  `~`, `(`) applies to all four extended forms, as the §6.9 text
+  states. `cmark-gfm` applies it only to `www.`, so `"https://x.org"`
+  and `"foo@bar.com"` link on GitHub but not here.
+
+Where the specification is **silent**, do what `cmark-gfm` does; if
+that is also unclear, the user decides. The first application is the
+meaning of "alphanumeric" in valid domains and email addresses, which
+the specification never defines: `cmark-gfm` accepts Unicode
+letters and digits in `www.`/`http` domains but ASCII only in email
+local parts and domains, so tiredize does the same. (Step 3 had read
+Unicode for both; this is a one-line correction routed back to
+step 3.)
+
+The parser specification at step 6 must pin the specification
+version and read date (0.29-gfm, published 2019-04-06, read
+2026-09-18 from `https://github.github.com/gfm/`) and carry this
+divergence list, so a user who meets one finds it documented.
+
+### The `links` scheme gate is uniform across link kinds
+
+Decided by the user after step 3. The http/https-only gate applies to
+inline links and reference definitions as well as autolinks, so a
+`[text](mailto:…)` or `[ref]: ftp://…` no longer produces a guaranteed
+false positive. Step 3 implemented it this way; the contract had only
+spoken of autolinks, and the user confirmed the extension rather than
+have it deferred.
+
+### Out-of-scope defects become skipped regression tests
+
+Decided by the user after step 3. A defect found during this issue
+but outside its criteria is recorded as a failing unit test, verified
+to fail, then skipped with `reason="<issue-slug>: …"` naming a filed
+issue. The first use is the `_is_excluded()` crash on a malformed URL
+when `exclude` is configured, tracked as
+`links-exclude-malformed-url-crash` (draft). The convention itself is
+proposed for the dotclaude standard, not defined here.
+
 ### Scoping seeds
 
 These seed the technical-architect's later judgment. They are seeds,
@@ -810,3 +863,18 @@ Author: software-engineer/software-engineering/git,python,testing
     procedural by design. The README `links` section should say that
     only http/https targets are checked for every link kind, and
     that `www.` links are checked over `http://`.
+
+### 2026-09-18T16:15:00+00:00
+
+Author: program-manager/software-engineering
+
+    Post-step-3 review with the user of the engineer's contract
+    interpretations. Decided and recorded under Design Decisions:
+    the specification is followed concretely with cmark-gfm as the
+    tie-break where it is silent; the links scheme gate is uniform;
+    out-of-scope defects become skipped regression tests naming a
+    filed issue. Two consequences route back to step 3 as a revision:
+    email "alphanumeric" becomes ASCII (domains stay Unicode), and a
+    skipped regression test is added for the `_is_excluded()` crash,
+    referencing the new draft issue `links-exclude-malformed-url-crash`.
+    Step 4 begins once the revision lands.
