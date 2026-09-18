@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-progress
-step: implementation
+status: in-review
+step: code-and-test-review
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -1134,3 +1134,143 @@ Author: software-engineer/software-engineering/git,python,testing
     still in place); flake8 clean; `link.py` 172 statements, 100%;
     `links.py` 96, 100%; package 99%. The issue file is committed
     separately.
+
+### 2026-09-18T15:12:10+00:00
+
+Author: software-engineer/software-engineering/code-review,python,testing
+
+    Code and test review, iteration 2, of 64a07ba..7ad6b11 (`tiredize/`
+    and `tests/`), with the revision 5ef3554..7ad6b11 read closely.
+    Verdict: the revision corrects the iteration-1 finding fully and
+    introduces nothing new; one further finding in the diff as a
+    whole, present since d8d6baf and missed at iteration 1, is routed
+    back as an edit request. Suite at tip 1075 passed / 47 skipped,
+    flake8 clean, no `PENDING` marker, no old name under `tiredize/`,
+    and under `tests/` only the six rejection-test hits the corrected
+    criterion allows.
+
+    The revision, checked point by point:
+
+    - The preceding-character rule is judged on `text` at
+      `match.start()`; every blanking function preserves length and
+      newline positions (`sanitize_text` pads per line, `_blank_spans`
+      one-for-one), verified over 3004 texts including multi-line,
+      non-ASCII and astral input, so the offsets line up.
+    - A candidate never overlaps a blanked span (candidates exclude
+      whitespace; blanks are spaces), so `string` from the sanitized
+      copy equals the source slice; `url` and `position` agree with
+      `string` on every extracted link in that corpus, and
+      `sanitize()` equals the text blanked at `extract()` spans for
+      both classes, idempotently.
+    - The rescan from `start + 1` recovers `www.c.d` in
+      `[x](u)www.a.b(www.c.d)` and composes correctly with the
+      validation-rejection resume and the accepted-link resume.
+    - The ten new tests fail without the fix (run against a copy of
+      53afde9: 6 failed, the 4 spaced controls passed) and pin decided
+      behaviour. `Document.load` on the four iteration-1 reproductions
+      now yields no extended autolink; with a real space each links.
+
+    Findings by category:
+
+    - Unused parameters or dead code: none found.
+    - Duplicate or redundant logic: none found.
+    - Missing input validation: none found.
+    - Inconsistencies between parallel code paths: none found.
+    - Silent acceptance of invalid input: none found.
+    - Reachable bugs or error-handling gaps: none found. Neither
+      extractor raised on 3004 fuzzed texts or the 10k-character
+      lines below.
+    - Contract violations: one, below.
+    - Spec fidelity gaps: none found. Docstrings and pattern comments
+      in `link.py` and `links.py` match observed behaviour, including
+      the Unicode/ASCII split.
+
+    Finding 1 -- contract violation, `ExtendedAutolink`, low severity.
+    A bare email address whose local part contains `_` and which
+    follows an invalid preceding character is extracted as a fragment
+    starting after the last `_`. `_` is the one character that is
+    both a local-part character and a preceding delimiter, so when
+    the full candidate is rejected the one-character rescan finds a
+    shorter candidate inside it that begins right after the `_`.
+    Reproductions, each yielding one link where the decided rule
+    ("`"foo@bar.com"` links on GitHub but not here") says none:
+    `"first_last@example.com"` gives `last@example.com`;
+    `user:first_last@example.com` and `:mailto:first_last@x.y` give
+    `last@example.com` / `last@x.y`; `[x](u)ab_c@d.e` gives `c@d.e`;
+    `<x@y.z>a_b@c.d` gives `b@c.d`; `"-_a@b.c"` gives `a@b.c`. The
+    same shape without `_` (`"first.last@example.com"`,
+    `"first-last@example.com"`) correctly yields nothing, and the
+    `www.`/`http` forms are unaffected (`x_www.a.b` links `www.a.b`,
+    which cmark-gfm's `www_match` also does). No recorded decision
+    produces a fragment: GitHub links the whole address, the decided
+    preceding rule links nothing. The specification never says where
+    an address begins; cmark-gfm's `postprocess_text` defines it as
+    the maximal backward run of local-part characters before the
+    `@`, which is the tie-break the Design Decision prescribes.
+    Consequences today: a wrong `string`/`position` in
+    `Section.autolinks_extended`, which the `elements` rule would
+    flag at the wrong span and `line_length`/`unicode` `exclude`
+    would cover only partly; the `links` rule is unaffected since
+    `mailto:` is not checked. Present since d8d6baf, not introduced by
+    the revision. Location: `tiredize/markdown/types/link.py`,
+    `_scan` (lines 251-265). Correction: for a candidate whose
+    `local` group matched and whose `protocol` group did not, walk
+    `start` back from `match.start()` over the local-part characters
+    `[A-Za-z0-9._+-]` (in `text_sanitized`, so a blanked construct
+    stops the walk) and judge `_valid_preceding(text, start)` there;
+    on acceptance the link starts at that `start`, with `url` being
+    `mailto:` + `text[start:end]`. On rejection keep the existing
+    `pos = match.start() + 1` resume. Protocol candidates are
+    unchanged: the character before `mailto:`/`xmpp:` is the right
+    one to judge. I applied exactly this to a scratch copy of the tip
+    package and ran `tests/markdown/types/`: 236 passed, 7 skipped
+    (the pre-existing inline-link skips), so no pinned case moves;
+    the only outputs that change are the fragments above, which
+    become no link, and the contrived `www.a_b@c.d`, which becomes
+    the whole address `mailto:www.a_b@c.d` as on GitHub. Update the
+    `_scan` docstring (it currently says a rejected candidate is
+    "skipped by one character", which stays true, and should add
+    that a bare address is judged from the start of its local part)
+    and add white-box tests in `test_link.py`: the quoted and
+    colon-prefixed reproductions yielding `[]`, the glued
+    `[x](u)ab_c@d.e` yielding `[]`, and a positive control such as
+    `see a_b@c.d.` still yielding `a_b@c.d`. `_a@b.c` and
+    `a@b-(c@d.e)` keep their current pins.
+
+    Tests reviewed. The step-2 suite is untouched and remains the
+    contract. The white-box additions of this revision sit in the
+    right subsection, are parametrised over the four blanked
+    constructs and the three link forms, carry positive controls,
+    and assert the contract rather than the code. The audits from
+    iteration 1 still hold (boundaries, non-ASCII positions,
+    idempotency, mutation, cross-component blanking). The gap is the
+    one Finding 1 names: no test exercises a local part containing
+    `_` behind an invalid preceding character, which is the only
+    input on which the rescan can produce a fragment.
+
+    Regex timing, 10k-character lines (Python 3.13, scratch script):
+    prose with mixed links 7 ms; `[x](u)` + 9.8k of `www.a.b` 3 ms;
+    `` `c` `` + `a_` x 5000 + `@b.c` 2 ms; 770 glued `[x](u)www.a.b`
+    6 ms; 700 glued `` `c`https://a.b `` 6 ms; 10k unmatched `)` 6 ms;
+    1250 lines of `www.a.b` 16 ms; 1000 NBSP-prefixed links 10 ms;
+    `www.` + 5k dotted segments 4 ms. The two shapes iteration 1
+    recorded remain the only slow ones (`_` x 10000: 1.2 s;
+    `www.a.b/` + `&a;` x 3333: 0.64 s) and are unchanged by the
+    revision. Not a finding.
+
+    Observations, not findings (the iteration-1 list is carried by
+    the PM and not repeated):
+
+    - "After whitespace" is `str.isspace()` / `\s` here, which is
+      Unicode whitespace; the specification's own definition of a
+      whitespace character (section 2.1) and cmark-gfm's
+      `cmark_isspace` are ASCII, so a link preceded by U+00A0 or
+      U+3000 links here and not on GitHub, and such a character inside
+      a path ends the link here but not there. One more line for the
+      step-6 divergence list; not worth a change on its own.
+    - `[x](example.com:8080/x)` is skipped by `_has_checkable_scheme`
+      (scheme `example.com`), the same class as the `localhost:8080`
+      observation already recorded; noted so the step-7 wording
+      covers host:port targets too.
+
+    Action: @program-manager — request for edit
