@@ -217,11 +217,26 @@ class ExtendedAutolink:
     # Trailing characters that are never part of an extended autolink.
     TRAILING_PUNCTUATION = "?!.,:*_~"
 
+    # Non-whitespace characters an extended autolink may follow.
+    PRECEDING_DELIMITERS = "*_~("
+
     # Static methods
     @staticmethod
-    def _scan(text: str) -> list[tuple[int, int, str]]:
+    def _scan(
+        text: str,
+        text_sanitized: str
+    ) -> list[tuple[int, int, str]]:
         """
-        Find every extended autolink in `text` as (start, end, url).
+        Find every extended autolink as (start, end, url).
+
+        Candidates are searched in `text_sanitized`, where the
+        constructs that may not contain an extended autolink have
+        been blanked to spaces, but the preceding-character rule is
+        checked against `text`: the blanks would otherwise read as
+        whitespace and let a candidate glued to `[x](url)`, `<url>`,
+        an image or inline code through, although the source
+        character before it is `)`, `>` or a backtick. The two
+        strings have the same length, so offsets line up.
 
         Candidates are validated in order of position. A rejected
         candidate is skipped by one character rather than by its
@@ -233,10 +248,13 @@ class ExtendedAutolink:
         pattern = re.compile(ExtendedAutolink.RE_CANDIDATE, re.VERBOSE)
         result: list[tuple[int, int, str]] = []
         pos = 0
-        while pos <= len(text):
-            match = pattern.search(text, pos)
+        while pos <= len(text_sanitized):
+            match = pattern.search(text_sanitized, pos)
             if match is None:
                 break
+            if not ExtendedAutolink._valid_preceding(text, match.start()):
+                pos = match.start() + 1
+                continue
             found = ExtendedAutolink._validate(match)
             if found is None:
                 pos = match.start() + 1
@@ -309,6 +327,22 @@ class ExtendedAutolink:
         return "." in domain and domain[-1] not in "-_"
 
     @staticmethod
+    def _valid_preceding(text: str, start: int) -> bool:
+        """
+        The preceding-character rule: a candidate at `start` may only
+        follow the start of `text`, whitespace (`str.isspace()`, the
+        same set the pattern's `\\s` matches) or one of `*`, `_`,
+        `~`, `(`.
+        """
+        if start == 0:
+            return True
+        before = text[start - 1]
+        return (
+            before.isspace()
+            or before in ExtendedAutolink.PRECEDING_DELIMITERS
+        )
+
+    @staticmethod
     def _validate(match: re.Match[str]) -> tuple[int, str] | None:
         """
         Turn a candidate match into (end, url), or None to reject it.
@@ -371,6 +405,9 @@ class ExtendedAutolink:
         Code blocks, inline code, images, autolinks, inline links and
         reference definitions are blanked first, so a URL inside
         `[text](url)` or `<url>` is never also an extended autolink.
+        The preceding-character rule is still judged on `text`, so a
+        URL glued to the end of one of those constructs is not a link
+        either.
         """
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
@@ -380,7 +417,7 @@ class ExtendedAutolink:
         text_sanitized = ReferenceDefinition.sanitize(text_sanitized)
 
         result: list[ExtendedAutolink] = []
-        for start, end, url in ExtendedAutolink._scan(text_sanitized):
+        for start, end, url in ExtendedAutolink._scan(text, text_sanitized):
             result.append(
                 ExtendedAutolink(
                     position=Position(

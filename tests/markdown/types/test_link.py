@@ -770,6 +770,56 @@ def test_extended_autolink_email_local_part_absorbs_leading_delimiters():
     assert _extended("_a@b.c") == [("_a@b.c", "mailto:_a@b.c")]
 
 
+# The constructs blanked before scanning (inline link, inline code,
+# autolink, image) become spaces in the sanitized copy. The preceding
+# character rule is about the source text, so `)`, `` ` `` and `>`
+# still count as the character before the candidate, not the space
+# that replaced them.
+
+BLANKED_CONSTRUCTS = [
+    "[x](https://a.b)",
+    "`code`",
+    "<https://a.b>",
+    "![i](p.png)",
+]
+
+
+@pytest.mark.parametrize("before", BLANKED_CONSTRUCTS)
+def test_extended_autolink_not_directly_after_blanked_construct(before):
+    assert _extended(f"{before}www.c.d") == []
+    assert _extended(f"{before}https://c.d/e") == []
+    assert _extended(f"{before}mailto:a@b.c") == []
+
+
+@pytest.mark.parametrize("before", BLANKED_CONSTRUCTS)
+def test_extended_autolink_after_blanked_construct_and_space(before):
+    assert _extended(f"{before} www.c.d") == [("www.c.d", "http://www.c.d")]
+    assert _extended(f"{before} https://c.d/e") == [
+        ("https://c.d/e", "https://c.d/e"),
+    ]
+    assert _extended(f"{before} mailto:a@b.c") == [
+        ("mailto:a@b.c", "mailto:a@b.c"),
+    ]
+
+
+def test_extended_autolink_rejected_after_blanked_construct_is_rescanned():
+    """The preceding-character check happens inside the scan, so a
+    candidate rejected for what precedes it does not hide a valid
+    link that starts inside it after a delimiter."""
+    assert _extended("[x](u)www.a.b(www.c.d)") == [
+        ("www.c.d", "http://www.c.d"),
+    ]
+
+
+def test_extended_autolink_sanitize_after_blanked_construct():
+    """sanitize() follows extract(): nothing blanked when the link is
+    glued to the construct, exactly the link blanked when spaced."""
+    glued = "[x](https://a.b)www.c.d"
+    assert ExtendedAutolink.sanitize(glued) == glued
+    spaced = "[x](https://a.b) www.c.d"
+    assert ExtendedAutolink.sanitize(spaced) == "[x](https://a.b) " + " " * 7
+
+
 def test_extended_autolink_scanning_resumes_after_rejected_candidate():
     """A rejected candidate does not hide a valid link that starts
     inside it after a delimiter."""
