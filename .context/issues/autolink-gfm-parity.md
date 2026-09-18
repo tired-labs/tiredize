@@ -1,10 +1,10 @@
 ---
-assignee: technical-architect
+assignee: ghostwriter
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-review
-step: architecture-review
+step: user-documentation
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
