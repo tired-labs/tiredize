@@ -180,6 +180,133 @@ def test_autolink_sanitize_preserves_length():
 
 
 # ===================================================================
+#  Autolink -- GFM 6.8 boundaries (white-box)
+#
+#  The specification examples live in test_link_gfm_autolinks.py.
+#  These pin the edges of the rules those examples illustrate: the
+#  scheme length and character set, the characters a URI may not
+#  contain, the HTML5 email label limits, and which branch wins when
+#  both could apply.
+# ===================================================================
+
+
+def _autolinks(text: str) -> list[tuple[str, str]]:
+    return [(link.string, link.url) for link in Autolink.extract(text)]
+
+
+def test_autolink_scheme_two_characters_is_the_minimum():
+    assert _autolinks("<ab:c>") == [("<ab:c>", "ab:c")]
+    assert _autolinks("<a:c>") == []
+
+
+def test_autolink_scheme_thirty_two_characters_is_the_maximum():
+    scheme_32 = "s" + "c" * 31
+    scheme_33 = scheme_32 + "c"
+    assert _autolinks(f"<{scheme_32}:x>") == [
+        (f"<{scheme_32}:x>", f"{scheme_32}:x"),
+    ]
+    assert _autolinks(f"<{scheme_33}:x>") == []
+
+
+def test_autolink_scheme_must_start_with_a_letter():
+    assert _autolinks("<1ab:c>") == []
+    assert _autolinks("<+ab:c>") == []
+
+
+def test_autolink_scheme_allows_plus_dot_and_hyphen_only():
+    assert _autolinks("<a+b.c-d:e>") == [("<a+b.c-d:e>", "a+b.c-d:e")]
+    assert _autolinks("<a_b:c>") == []
+    assert _autolinks("<a/b:c>") == []
+
+
+def test_autolink_uri_may_be_empty_after_the_colon():
+    assert _autolinks("<ab:>") == [("<ab:>", "ab:")]
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["\t", "\n", "\r", "\x00", "\x1f", "\x7f", "<"],
+    ids=["tab", "newline", "cr", "nul", "unit-sep", "del", "lt"],
+)
+def test_autolink_uri_rejects_ascii_whitespace_control_and_brackets(bad):
+    assert _autolinks(f"<https://a.b/x{bad}y>") == []
+
+
+def test_autolink_uri_keeps_non_ascii_and_punctuation():
+    text = "<https://a.b/日本語?q=1&r=[2]#frag'\"`>"
+    assert _autolinks(text) == [
+        (text, "https://a.b/日本語?q=1&r=[2]#frag'\"`"),
+    ]
+
+
+def test_autolink_uri_branch_wins_over_email_branch():
+    """`mailto:x@y.z` is a URI with scheme `mailto`, so the target is
+    the text as written -- no second `mailto:` is prepended."""
+    assert _autolinks("<mailto:x@y.z>") == [("<mailto:x@y.z>", "mailto:x@y.z")]
+
+
+def test_autolink_email_domain_without_a_dot_is_allowed():
+    """The HTML5 regex makes the dotted labels optional."""
+    assert _autolinks("<x@y>") == [("<x@y>", "mailto:x@y")]
+
+
+def test_autolink_email_local_part_allows_html5_specials():
+    local = "a.!#$%&'*+/=?^_`{|}~-"
+    text = f"<{local}@b.c>"
+    assert _autolinks(text) == [(text, f"mailto:{local}@b.c")]
+
+
+def test_autolink_email_local_part_rejects_other_characters():
+    assert _autolinks("<a b@c.d>") == []
+    assert _autolinks('<a"b@c.d>') == []
+    assert _autolinks("<a\\b@c.d>") == []
+
+
+def test_autolink_email_label_may_not_start_or_end_with_a_hyphen():
+    assert _autolinks("<a@-b.c>") == []
+    assert _autolinks("<a@b-.c>") == []
+    assert _autolinks("<a@b.-c>") == []
+    assert _autolinks("<a@b-c.d>") == [("<a@b-c.d>", "mailto:a@b-c.d")]
+
+
+def test_autolink_email_label_sixty_three_characters_is_the_maximum():
+    label_63 = "x" * 63
+    label_64 = "x" * 64
+    assert _autolinks(f"<a@{label_63}.c>") == [
+        (f"<a@{label_63}.c>", f"mailto:a@{label_63}.c"),
+    ]
+    assert _autolinks(f"<a@{label_64}.c>") == []
+
+
+def test_autolink_email_rejects_empty_label():
+    assert _autolinks("<a@b..c>") == []
+    assert _autolinks("<a@.b>") == []
+
+
+def test_autolink_stops_at_the_first_closing_bracket():
+    text = "<https://a.b/x>y>"
+    assert _autolinks(text) == [("<https://a.b/x>", "https://a.b/x")]
+
+
+def test_autolink_position_after_non_ascii_prefix():
+    text = "日本 <https://a.b>"
+    results = Autolink.extract(text)
+    assert len(results) == 1
+    assert results[0].position == Position(
+        offset=3, length=len("<https://a.b>")
+    )
+
+
+def test_autolink_sanitize_blanks_uri_and_email_forms_across_lines():
+    text = "one <irc://a.b>\ntwo <x@y.z>"
+    expected = (
+        "one " + " " * len("<irc://a.b>")
+        + "\ntwo " + " " * len("<x@y.z>")
+    )
+    assert Autolink.sanitize(text) == expected
+
+
+# ===================================================================
 #  ExtendedAutolink -- basic extraction
 # ===================================================================
 
@@ -387,7 +514,6 @@ def test_inline_link_escaped_bracket_in_text():
     assert results[0].url == "https://example.com"
 
 
-@pytest.mark.skip(reason="gfm-parity: non-HTTP URI schemes not supported")
 def test_autolink_ftp():
     """GFM autolinks support ftp:// scheme."""
     text = "<ftp://files.example.com>"
@@ -396,7 +522,6 @@ def test_autolink_ftp():
     assert results[0].url == "ftp://files.example.com"
 
 
-@pytest.mark.skip(reason="gfm-parity: email autolinks not supported")
 def test_autolink_email():
     """GFM supports email autolinks in angle brackets."""
     text = "<user@example.com>"

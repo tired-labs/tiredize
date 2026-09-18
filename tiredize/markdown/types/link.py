@@ -14,18 +14,59 @@ from tiredize.markdown.utils import search_all_re
 
 @dataclass(frozen=False)
 class Autolink:
+    """
+    An autolink per GFM 0.29-gfm section 6.8: an absolute URI or an
+    email address between `<` and `>`.
+
+    `string` is the matched text including the brackets. `url` is
+    the link target: the URI as written for a URI autolink, or
+    `mailto:` followed by the address for an email autolink.
+    Backslashes inside the brackets are literal characters, never
+    escapes.
+    """
     position: Position
     string: str
     url: str
 
+    # An absolute URI is a scheme, a colon, and any characters other
+    # than ASCII whitespace, ASCII control characters, `<` and `>`.
+    # A scheme is 2-32 characters: an ASCII letter, then ASCII
+    # letters, digits, `+`, `.` or `-`.
+    #
+    # An email address is anything matching the non-normative HTML5
+    # regex reproduced in the specification. Its domain labels are
+    # optional (`<x@y>` is an email autolink), each label is 1-63
+    # characters and may not start or end with a hyphen.
+    #
+    # The URI branch is tried first, so `<mailto:x@y.z>` is a URI
+    # whose target is written as-is (spec example 606), while
+    # `<x@y.z>` is an email whose target gains the `mailto:` prefix.
     RE_AUTOLINK = r"""
-        <                            # Opening angle bracket
-        (?P<url>https?:\/\/\S+)      # Capture the URL
-        >                            # Closing angle bracket
+        <                                   # Opening angle bracket
+        (?:
+            (?P<uri>
+                [A-Za-z][A-Za-z0-9+.\-]{1,31}   # Scheme, 2-32 characters
+                :                               # Colon
+                [^\x00-\x20\x7F<>]*             # No ASCII space/control/<>
+            )
+          | (?P<email>
+                [a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+    # Local part
+                @
+                [a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?   # First label
+                (?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*  # More
+            )
+        )
+        >                                   # Closing angle bracket
     """
 
     @staticmethod
     def extract(text: str, base_offset: int = 0) -> list[Autolink]:
+        """
+        Extract autolinks from markdown text.
+
+        Code blocks and inline code are blanked first, so a bracketed
+        URI inside backticks is not a link.
+        """
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         matches = search_all_re(
@@ -40,11 +81,17 @@ class Autolink:
                 length=match.end() - match.start()
             )
 
+            uri = match.group("uri")
+            if uri is not None:
+                url = uri
+            else:
+                url = "mailto:" + match.group("email")
+
             result.append(
                 Autolink(
                     position=position,
                     string=match.group(),
-                    url=match.group("url")
+                    url=url
                 )
             )
         return result

@@ -65,7 +65,6 @@ def extended_autolinks(text: str) -> list[tuple[str, str]]:
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_603_http_uri():
     text = "<http://foo.bar.baz>"
     assert autolinks(text) == [
@@ -73,7 +72,6 @@ def test_example_603_http_uri():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_604_query_string_kept_as_written():
     text = "<http://foo.bar.baz/test?q=hello&id=22&boolean>"
     assert autolinks(text) == [
@@ -84,7 +82,6 @@ def test_example_604_query_string_kept_as_written():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_605_irc_scheme():
     text = "<irc://foo.bar:2233/baz>"
     assert autolinks(text) == [
@@ -92,7 +89,6 @@ def test_example_605_irc_scheme():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_606_uppercase_scheme_is_a_uri_not_an_email():
     """`MAILTO:` is a scheme here, so the href is the URI as written
     -- no second `mailto:` is prepended."""
@@ -102,13 +98,11 @@ def test_example_606_uppercase_scheme_is_a_uri_not_an_email():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_607_unregistered_scheme_with_plus_signs():
     text = "<a+b+c:d>"
     assert autolinks(text) == [("<a+b+c:d>", "a+b+c:d")]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_608_made_up_scheme_with_comma():
     text = "<made-up-scheme://foo,bar>"
     assert autolinks(text) == [
@@ -116,13 +110,11 @@ def test_example_608_made_up_scheme_with_comma():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_609_dot_dot_is_a_valid_uri_inside_brackets():
     text = "<http://../>"
     assert autolinks(text) == [("<http://../>", "http://../")]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_610_localhost_scheme_with_port():
     text = "<localhost:5001/foo>"
     assert autolinks(text) == [
@@ -130,13 +122,11 @@ def test_example_610_localhost_scheme_with_port():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_611_space_inside_brackets_is_not_an_autolink():
     text = "<http://foo.bar/baz bim>"
     assert autolinks(text) == []
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_612_backslashes_are_literal_inside_brackets():
     """The href in the spec is percent-encoded by the renderer; the
     parser reports the URI as written in the source."""
@@ -151,7 +141,6 @@ def test_example_612_backslashes_are_literal_inside_brackets():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_613_email_autolink_gets_mailto_href():
     text = "<foo@bar.example.com>"
     assert autolinks(text) == [
@@ -159,7 +148,6 @@ def test_example_613_email_autolink_gets_mailto_href():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_614_email_with_plus_and_mixed_case_domain():
     text = "<foo+special@Bar.baz-bar0.com>"
     assert autolinks(text) == [
@@ -170,7 +158,6 @@ def test_example_614_email_with_plus_and_mixed_case_domain():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_615_backslash_in_email_is_not_an_escape():
     text = r"<foo\+@bar.example.com>"
     assert autolinks(text) == []
@@ -181,13 +168,11 @@ def test_example_615_backslash_in_email_is_not_an_escape():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_616_empty_brackets():
     text = "<>"
     assert autolinks(text) == []
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_617_spaces_around_uri_inside_brackets():
     """The spaces make this fail section 6.8. Under the section 6.9
     extension `http://foo.bar` follows whitespace, so it is an
@@ -200,19 +185,16 @@ def test_example_617_spaces_around_uri_inside_brackets():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_618_one_character_scheme_is_too_short():
     text = "<m:abc>"
     assert autolinks(text) == []
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_619_no_scheme_and_no_at_sign():
     text = "<foo.bar.baz>"
     assert autolinks(text) == []
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_620_bare_uri_is_not_an_autolink_but_is_extended():
     """Without brackets this is not a section 6.8 autolink. Under the
     section 6.9 extension it is an extended autolink (see 629)."""
@@ -513,7 +495,6 @@ def test_relative_paths_in_prose_are_not_extended_autolinks(text):
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_autolink_position_covers_the_brackets():
     from tiredize.markdown.types.link import Autolink
     text = "Ping <irc://foo.bar:2233/baz> for help"
@@ -548,7 +529,6 @@ def test_extended_autolink_base_offset_is_applied():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_autolink_sanitize_blanks_exactly_the_bracketed_span():
     from tiredize.markdown.types.link import Autolink
     text = "See <https://example.com> and <foo@bar.example.com> now"
@@ -560,7 +540,6 @@ def test_autolink_sanitize_blanks_exactly_the_bracketed_span():
     assert Autolink.sanitize(text) == expected
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_autolink_sanitize_leaves_non_autolinks_alone():
     from tiredize.markdown.types.link import Autolink
     text = "< http://foo.bar > and <foo.bar.baz> and <m:abc>"

@@ -252,7 +252,6 @@ def test_non_string_disallow_entry_still_raises_value_level_error():
 PENDING = "autolink-gfm-parity: awaiting implementation (step 3)"
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize(
     "markdown",
     ["<https://moonbase.example>", "<irc://foo.bar:2233/baz>",
