@@ -1483,3 +1483,179 @@ Author: software-engineer/software-engineering/code-review,python,testing
     character in the previous entry by mistake and reverted it in the
     same session before committing; the committed file carries the
     previous entries byte for byte.
+
+### 2026-09-18T15:46:40+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Acceptance verification of tip 0b48641. Verdict: PASS. The
+    Definition of Done holds when re-run independently, every
+    acceptance test from step 2 runs unskipped and passes, and the
+    Public Contract holds end to end through the CLI on the
+    specification's own examples and on the real-world corpus. No
+    finding. Nothing under `tiredize/` or `tests/` was touched; all
+    scratch scripts and outputs live outside the project tree.
+
+    Definition of Done, re-run: `python3 -m pytest -q` 1084 passed,
+    47 skipped in 8.5s; flake8 over `tiredize tests` clean; coverage
+    `link.py` 182/182, `links.py` 96/96, package 99%. The 47 skips
+    are the 46 pre-existing `gfm-parity` register skips plus the one
+    decided `links-exclude-malformed-url-crash` skip; no `PENDING`
+    marker remains anywhere under `tests/`.
+
+    Acceptance tests group, criterion by criterion:
+
+    1. 33 examples 603-635. All 33 `test_example_NNN_*` tests pass
+       unskipped. Independently of those tests I transcribed all 51
+       paragraphs of the 33 examples from the spec extract with
+       expected `(string, url)` sets derived from the rendered HTML,
+       and ran them through `Autolink.extract()` and
+       `ExtendedAutolink.extract()`: 51 of 51 agree on both
+       extractors, and every reported position slices back to its
+       `string`. 617, 620 and 621 give no `Autolink` and exactly one
+       `ExtendedAutolink`. The same 51 paragraphs were then written
+       to a markdown file and run through the real CLI: with
+       `elements: {disallow: [autolink, autolink_extended]}` the CLI
+       reports 42 findings, at exactly the expected line and column
+       for every paragraph and none elsewhere; with `links:
+       {validate: true}` and `check_url_valid` stubbed at the
+       `tiredize.cli.main` boundary, exactly the 20 http/https targets
+       (including `http://www.commonmark.org` normalised from `www.`)
+       are handed to validation, all 20 finding messages name the
+       element as "Autolink" or "Extended autolink" with the exact
+       `url`, and the 22 other recognised targets (irc, MAILTO,
+       a+b+c, made-up-scheme, localhost, and every mailto/xmpp/bare
+       email) are never checked.
+    2. Preceding character. `…_matches_after_delimiter` (4 x 2) and
+       `…_not_matched_after_letter_digit_or_quote` (3 x 2) pass.
+       Probed beyond: each of `*`, `_`, `~`, `(`, line start, newline
+       and tab admits all four extended forms; each of `x`, `7`, `"`,
+       `)`, `]`, `>`, `/`, `-`, `.`, `\`, `:`, `;`, `'` rejects
+       `www.`, `http://` and `mailto:`; the same set minus the
+       local-part characters rejects a bare address, and a local-part
+       character before an address extends the address instead
+       (`_x@a.b`, `xx@a.b`, `7x@a.b` link whole; `"ab_cd@e.f` does
+       not), which is the decided tie-break.
+    3. Escapes and prose paths. Both parametrised tests pass. Probed:
+       `./configure`, `../guide.md`, `\*.dll`, `\|`, `\_x\_.md`,
+       `\\server\share`, `C:\temp\x.md` at line start and after a
+       space all yield nothing, and a CLI run over a line holding all
+       of them with `links: {validate: true}` prints "no issues
+       found" with exit 0.
+    4. Relative path validation unchanged. The four guards pass on the
+       branch and, run against the main package, also on main.
+       Through the CLI with `check_url_valid` not stubbed and real
+       files: `[x](./exists.md)` and `[ref]: ./exists.md` are silent;
+       `./missing.md` and `./gone.md` report "relative file not
+       found"; `#real-section` is silent and `#nope` reports "anchor
+       not found in document".
+    5. `links` rule. The nine step-2 rule tests pass unskipped.
+       Through the CLI with the stub: inline `mailto:`/`ftp:`,
+       `<irc:>`/`<ftp:>`/`<mailto:>`, bare `xmpp:`/`mailto:`/email,
+       and reference `mailto:`/`ftp:`/`localhost:8080/x` are never
+       checked; `<HTTPS://…>` and bare `HTTP://…` are (the
+       case-insensitive gate); `www.www.example/3` is checked as
+       `http://www.www.example/3`; `exclude: ['*.skip.example']` drops
+       `www.skip.example/a` and `<http://www.skip.example/c>` and keeps
+       `https://keep.example/b`; trimmed tails (`.`, `)`, `&amp;`,
+       `?!.`) never reach validation; `validate: false` checks nothing
+       and exits 0.
+    6. Sanitize. The six step-2 sanitize tests pass. Fuzzed 3000
+       texts built from every link form, the blanked constructs, the
+       delimiters, escapes, non-ASCII and astral characters: for both
+       classes `sanitize(text)` equals `text` with exactly the
+       `extract()` spans replaced by spaces, length preserved, spans
+       ordered and non-overlapping, and `base_offset` shifts every
+       offset by exactly its value.
+    7. Element vocabulary. The `elements`, `line_length` and `unicode`
+       tests pass unskipped. Through the real CLI: `autolink` and
+       `autolink_extended` are accepted in `disallow` (labels
+       "Autolink is not allowed." / "Extended autolink is not
+       allowed." at the right columns) and in both `exclude` lists
+       (an over-long line holding only a link and a non-ASCII domain
+       are exempt with the exclusion and reported without it); each
+       of `link_bare` and `link_bracket` aborts with exit 1 and the
+       contract's `Unknown element name in disallow/exclude: '…'`.
+    8. Fail before, pass after. The five acceptance files run against
+       the main package (`--import-mode=importlib`, PYTHONPATH at the
+       main worktree): the GFM module fails 63 of 63 on ImportError,
+       the rule modules fail on assertions (`DID NOT RAISE` for the
+       old names, old labels, `www.` unchecked); the four relative
+       path guards pass on both, as step 2 recorded. At tip all pass.
+
+    Implementation group (eight criteria as listed):
+
+    1. Rename. `grep` for `BracketLink`, `BareLink`, `links_bracket`,
+       `links_bare`, `link_bracket`, `link_bare`, "Bracket link",
+       "Bare link" under `tiredize/` returns nothing; under `tests/`
+       only the six rejection-test lines. `Section` exposes
+       `autolinks` and `autolinks_extended` and has no `links_bare` or
+       `links_bracket`; the module exports `Autolink`,
+       `ExtendedAutolink`, `InlineLink`.
+    2. `Autolink` per 6.8: examples above, plus scheme length 2 and 32
+       accepted, 1 and 33 rejected, digit-first and `_` in scheme
+       rejected, `<http:>` accepted, tab / U+0001 / U+007F / `<`
+       inside rejected, non-ASCII inside accepted, backslash literal,
+       `<foo@bar>` accepted (HTML5 regex allows a dot-less domain),
+       63-char label accepted and 64 rejected, `<a@b@c.d>` rejected,
+       adjacent and mid-word autolinks matched, empty text and a lone
+       `<` or `>` yield nothing.
+    3. `ExtendedAutolink` per 6.9: examples and probes above, plus
+       each trailing punctuation character singly and as a run,
+       balanced vs unbalanced `)`, `&h1;` entity tail, `&;` and a bare
+       `;` kept, `<` immediately after the domain, `_` in the last
+       two segments rejected and in the third accepted,
+       `http://localhost/x` rejected (no period), `ftp://` and
+       `httpx://` not extended, `www.bücher.de` accepted, `jösé@a.b`
+       rejected, `+` after `@` rejected, `mailto:` with a `/` stops at
+       the address, `xmpp:` keeps one `/resource` of alphanumerics,
+       `@` and `.` and stops at a second `/`, `?`, `-` or `.`.
+    4. `./`, `../`, `\` gone: criterion 3 above and the corpus below.
+    5. `links` validates only http/https: criterion 5 above.
+    6. `test_autolink_ftp`, `test_autolink_email` and
+       `test_extended_autolink_trailing_punctuation_stripped` are
+       unskipped and pass; `test_bare_link_www` is gone, superseded by
+       examples 622/623.
+    7. `test_extended_autolink_backslash_path_is_not_a_link` asserts
+       `[]`; `test_extended_autolink_backslash_not_matched_mid_word`
+       carries the docstring "Asserts registry keys are not links".
+    8. Suite and flake8: above.
+
+    Documentation group: still pending (steps 6, 8 and closeout).
+    README still lists `link_bare` / `link_bracket` and describes
+    "bracket, and bare" links; not a failure of this step.
+
+    Corpus, 25 Technique Research Reports, real CLI, `links:
+    {validate: false}` plus the `elements` rule, no network. Main
+    worktree (bcc8f29) with `disallow: [link_bare, link_bracket]`: 12
+    bare-link findings, of which 10 are backslash false positives
+    (`\[MS-SFU\]` x5, `\[MS-ADTS\]` x2, `\[MS-FSRVP\]`, `\*`,
+    `\PIPE\eventlog`) and 2 are https URLs. Branch with `disallow:
+    [autolink_extended, autolink]`: 3 findings, 0 false positives, the
+    same 2 https URLs, and `support@company.org` at trr0019 696:36
+    (recognised, and not handed to validation). Wall clock 0.87s vs
+    0.82s. Both https hits sit on reference-definition lines whose
+    label contains `\]`, which `ReferenceDefinition` does not parse
+    (register skip "gfm-parity: ] in reference label breaks match");
+    identical on main and a real link either way, so not an autolink
+    defect and already tracked.
+
+    Observations, none a finding and none needing a new skip:
+
+    - CLI columns are 0-based (`:3:0:` for a link at column 1); same
+      on main, pre-existing `line_col` behaviour, outside this issue.
+    - `www.a` links (the `www` segment satisfies "at least one
+      period"), `x\u00a0www.a.b` links (Unicode whitespace),
+      `MAILTO:x@a.b` is neither a protocol autolink nor a bare email
+      (case-sensitive protocol, `:` is an invalid preceding
+      character), `x@a.bö` links `x@a.b`, `www.a_b@c.d` links as
+      `mailto:www.a_b@c.d` -- all as the reviews recorded for the
+      step-6 divergence list.
+    - `[x](example.com)` still reaches `check_url_valid` and reports
+      "No scheme supplied", as before.
+    - `<http://[::1>` with no `exclude` configured is handed to
+      validation without a crash; the crash with `exclude` is the
+      decided skip and was not re-opened.
+
+    pytest tail: `1084 passed, 47 skipped in 8.53s`. flake8: no
+    output, exit 0.
