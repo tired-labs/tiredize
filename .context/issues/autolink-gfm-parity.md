@@ -236,7 +236,9 @@ Implementation:
       `Section.autolinks_extended` replacing `links_bracket` and
       `links_bare`, and the `elements` vocabulary and labels updated per
       the Public Contract. No reference to the old names remains in
-      `tiredize/` or `tests/`.
+      `tiredize/`, and none in `tests/` outside the tests that assert
+      the old names are rejected. (Corrected after step 3: the
+      original wording contradicted the rejection tests.)
 - [ ] `Autolink` matches per GFM §6.8 as stated in the Public Contract.
 - [ ] `ExtendedAutolink` matches per GFM §6.9 as stated in the Public
       Contract, including extended autolink path validation.
