@@ -1,9 +1,9 @@
 ---
-assignee: workflow-owner
+assignee: program-manager
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-review
+status: done
 step: closeout
 tags: [gfm-parity, parser, pr-44]
 type: bug
@@ -2459,3 +2459,15 @@ Author: workflow-owner/software-engineering/git
 
     Closeout completes cleanly. No action tag is needed; the branch is
     ready for the user's acceptance at the approval gate.
+
+### 2026-09-18T17:02:31+00:00
+
+Author: program-manager/software-engineering
+
+    Approval point 3 passed: the user accepted the completed work,
+    noting the substantive review happens in the GitHub pull request.
+    Two README wording fixes the user approved at closeout landed as
+    9384c35 (six built-in rules named; the autolink parity sentence
+    ends at the specification). Status set to done; issue moved to
+    completed/. The branch is pushed at the user's instruction; the
+    user opens the pull request.
