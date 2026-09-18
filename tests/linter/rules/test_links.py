@@ -629,3 +629,240 @@ def test_bool_status_code_still_raises_value_level_error():
     doc.load(text="# Links\n[click](https://example.com)\n")
     with pytest.raises(ValueError, match="valid_status_codes"):
         validate(doc, {"validate": True, "valid_status_codes": [True]})
+
+
+# ===================================================================
+#  Acceptance tests: autolink-gfm-parity (step 2, before implementation)
+#
+#  The `links` rule validates only `http` and `https` targets. Every
+#  other scheme the parser now recognises (`mailto:`, `xmpp:`,
+#  `irc:`, `ftp:`, unregistered schemes) is a link for the parser but
+#  produces no finding and no HTTP request. `www.` extended autolinks
+#  are validated against `http://` + the matched text. Finding
+#  messages name the element as "Autolink" or "Extended autolink".
+#
+#  `Section.autolinks` and `Section.autolinks_extended` do not exist
+#  until step 3; the tests read them to prove the parser recognised
+#  the link before asserting the rule stayed silent.
+# ===================================================================
+
+
+PENDING = "autolink-gfm-parity: awaiting implementation (step 3)"
+
+
+def _autolinks(doc):
+    return [link for s in doc.sections for link in s.autolinks]
+
+
+def _autolinks_extended(doc):
+    return [link for s in doc.sections for link in s.autolinks_extended]
+
+
+@pytest.mark.skip(reason=PENDING)
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("<irc://foo.bar:2233/baz>", "irc://foo.bar:2233/baz"),
+        ("<ftp://files.example.com>", "ftp://files.example.com"),
+        ("<a+b+c:d>", "a+b+c:d"),
+        ("<localhost:5001/foo>", "localhost:5001/foo"),
+        ("<foo@bar.example.com>", "mailto:foo@bar.example.com"),
+        ("<MAILTO:FOO@BAR.BAZ>", "MAILTO:FOO@BAR.BAZ"),
+    ],
+    ids=["irc", "ftp", "unregistered", "localhost", "email", "MAILTO"],
+)
+def test_non_http_autolink_recognised_but_not_validated(markdown, url):
+    """The parser sees the autolink; the rule neither checks it nor
+    reports it."""
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    assert [link.url for link in _autolinks(doc)] == [url]
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+@pytest.mark.skip(reason=PENDING)
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("foo@bar.baz", "mailto:foo@bar.baz"),
+        ("mailto:foo@bar.baz", "mailto:foo@bar.baz"),
+        ("xmpp:foo@bar.baz/txt", "xmpp:foo@bar.baz/txt"),
+    ],
+    ids=["bare-email", "mailto", "xmpp"],
+)
+def test_non_http_extended_autolink_recognised_but_not_validated(
+    markdown, url,
+):
+    """The parser sees the extended autolink; the rule neither checks
+    it nor reports it."""
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    assert [link.url for link in _autolinks_extended(doc)] == [url]
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+@pytest.mark.skip(reason=PENDING)
+def test_www_extended_autolink_validated_over_http():
+    """A `www.` link is checked as `http://` + the matched text."""
+    doc = Document()
+    doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_called_once()
+    _, kwargs = mock.call_args
+    assert kwargs["url"] == "http://www.moonbase.example/dock"
+
+
+@pytest.mark.skip(reason=PENDING)
+def test_www_extended_autolink_finding_names_http_url():
+    doc = Document()
+    doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
+    with patch(MOCK_TARGET, return_value=(False, 404, "not found")):
+        results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Extended autolink" in results[0].message
+    assert "http://www.moonbase.example/dock" in results[0].message
+    assert "404" in results[0].message
+
+
+@pytest.mark.skip(reason=PENDING)
+def test_www_extended_autolink_excluded_by_hostname():
+    """`exclude` matches the hostname of the normalised target."""
+    doc = Document()
+    doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
+    assert [link.url for link in _autolinks_extended(doc)] == [
+        "http://www.moonbase.example/dock",
+    ]
+    with patch(MOCK_TARGET, return_value=(False, 404, "gone")) as mock:
+        results = validate(doc, {
+            "validate": True,
+            "exclude": ["www.moonbase.example"],
+        })
+    assert results == []
+    mock.assert_not_called()
+
+
+@pytest.mark.skip(reason=PENDING)
+def test_autolink_finding_names_element_autolink():
+    doc = Document()
+    doc.load(text="# Nav\n<https://dead.example>\n")
+    with patch(MOCK_TARGET, return_value=(False, 500, "server error")):
+        results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Autolink" in results[0].message
+    assert "Extended" not in results[0].message
+    assert "https://dead.example" in results[0].message
+
+
+@pytest.mark.skip(reason=PENDING)
+def test_extended_autolink_finding_names_element_extended_autolink():
+    doc = Document()
+    doc.load(text="# Nav\nhttps://gone.example\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "timeout")):
+        results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Extended autolink" in results[0].message
+    assert "https://gone.example" in results[0].message
+
+
+@pytest.mark.skip(reason=PENDING)
+def test_extended_autolink_validated_without_trailing_punctuation():
+    """The URL handed to check_url_valid is the trimmed match."""
+    doc = Document()
+    doc.load(text="# Nav\nRead https://moonbase.example/docs.\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock:
+        validate(doc, {"validate": True})
+    _, kwargs = mock.call_args
+    assert kwargs["url"] == "https://moonbase.example/docs"
+
+
+@pytest.mark.skip(reason=PENDING)
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Run ./configure before you summon make.",
+        "The ritual is described in ../guide.md and nowhere else.",
+        r"Delete every \*.dll in the goblin cache.",
+        r"Mount \\server\share before the raid.",
+    ],
+    ids=["dot-slash", "dot-dot-slash", "star-dll", "unc-path"],
+)
+def test_prose_paths_and_escapes_produce_no_finding(line):
+    """The false positives that opened the issue, end to end: prose
+    that GitHub renders as text must not be reported as a link."""
+    doc = Document()
+    doc.load(text=f"# Rituals\n{line}\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+# ===================================================================
+#  Relative path validation through inline links and reference
+#  definitions is unchanged. These pass today and stay unskipped:
+#  they guard the validation the issue keeps while removing `./`
+#  matching from extended autolinks. check_url_valid is not mocked
+#  because relative paths never reach HTTP.
+# ===================================================================
+
+
+def test_inline_link_relative_path_found(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\nSee [the map](./treasure-map.md) first.\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "treasure-map.md").write_text("# X marks", encoding="utf-8")
+    doc = Document()
+    doc.load(path=doc_file)
+    assert validate(doc, {"validate": True}) == []
+
+
+def test_inline_link_relative_path_missing(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\nSee [the map](./treasure-map.md) first.\n",
+        encoding="utf-8",
+    )
+    doc = Document()
+    doc.load(path=doc_file)
+    results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Inline link" in results[0].message
+    assert "./treasure-map.md" in results[0].message
+    assert "relative file not found" in results[0].message
+
+
+def test_reference_definition_relative_path_found(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\n[map]: ./treasure-map.md\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "treasure-map.md").write_text("# X marks", encoding="utf-8")
+    doc = Document()
+    doc.load(path=doc_file)
+    assert validate(doc, {"validate": True}) == []
+
+
+def test_reference_definition_relative_path_missing(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\n[map]: ./treasure-map.md\n",
+        encoding="utf-8",
+    )
+    doc = Document()
+    doc.load(path=doc_file)
+    results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Reference link" in results[0].message
+    assert "./treasure-map.md" in results[0].message
+    assert "relative file not found" in results[0].message

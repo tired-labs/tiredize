@@ -1,10 +1,10 @@
 ---
-assignee: program-manager
+assignee: qa-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-progress
-step: scoping
+step: acceptance-test-design
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -500,3 +500,124 @@ Author: program-manager/software-engineering
     Proceeding to step 2, acceptance test design. The qa-engineer is
     given the published specification (HTML, examples 603–635) and a
     verified plain-text extract of §6.8–§6.9.
+
+### 2026-09-18T13:10:41+00:00
+
+Author: qa-engineer/software-engineering/testing
+
+    Acceptance test design. 104 black-box tests written against the
+    Public Contract and the published specification extract
+    (examples numbered 603–635 as on the site). Nothing under
+    `tiredize/` was touched; no existing test was changed.
+
+    Files:
+
+    - `tests/markdown/types/test_link_gfm_autolinks.py` (new, 63
+      tests): the 33 spec examples, the preceding-character rule, the
+      escape and relative-path negatives, position, and sanitize.
+      A sibling of `test_link.py` rather than an addition to it,
+      because the examples are the in-repo record of the spec and
+      would otherwise double that module. `Autolink` and
+      `ExtendedAutolink` are imported inside two helpers so that
+      collection succeeds and each test fails on its own.
+    - `tests/linter/rules/test_links.py` (+23): `links` rule.
+    - `tests/linter/rules/test_elements.py` (+10): `disallow`.
+    - `tests/linter/rules/test_line_length.py` (+4) and
+      `tests/linter/rules/test_unicode.py` (+4): `exclude`.
+
+    Criteria to tests:
+
+    1. Examples 603–635 — `test_example_603_…` through
+       `test_example_635_…`, one test per example, every paragraph
+       of 624, 625, 627, 629, 632, 633, 634 asserted. 620 and 621
+       assert `autolinks(text) == []` and exactly one extended
+       autolink. Assertions compare the full list of `(string, url)`
+       pairs, so extra matches fail as surely as missing ones.
+    2. Preceding character — `test_extended_autolink_matches_after_
+       delimiter` (4 delimiters × www/https) and
+       `…_not_matched_after_letter_digit_or_quote` (3 × 2).
+    3. Escapes and prose paths —
+       `test_escape_sequences_are_not_extended_autolinks` (five
+       cases incl. `\_dragon\_hoard.json`) and
+       `test_relative_paths_in_prose_are_not_extended_autolinks`;
+       end to end through the rule in
+       `test_prose_paths_and_escapes_produce_no_finding`.
+    4. Relative path validation unchanged —
+       `test_inline_link_relative_path_{found,missing}` and
+       `test_reference_definition_relative_path_{found,missing}`,
+       real files under `tmp_path`, `check_url_valid` not mocked.
+    5. `links` rule — `test_non_http_autolink_recognised_but_not_
+       validated` (irc, ftp, unregistered, localhost, email, MAILTO)
+       and `…_extended_autolink_…` (bare email, mailto, xmpp) read
+       `Section.autolinks` / `Section.autolinks_extended` first so
+       the silence is not vacuous; `test_www_extended_autolink_
+       validated_over_http`, `…_finding_names_http_url`,
+       `…_excluded_by_hostname`; `test_autolink_finding_names_
+       element_autolink`, `test_extended_autolink_finding_names_
+       element_extended_autolink`; `…_validated_without_trailing_
+       punctuation`.
+    6. Sanitize — `test_autolink_sanitize_blanks_exactly_the_
+       bracketed_span`, `…_leaves_non_autolinks_alone`,
+       `test_extended_autolink_sanitize_stops_before_trailing_
+       punctuation`, `…_keeps_unmatched_closing_paren`,
+       `…_matches_extract_spans` (expected text derived from
+       `extract()` positions), `…_leaves_plain_text_alone`.
+    7. `elements` vocabulary — `test_disallow_autolink_flags_each_
+       scheme` (https, irc, email), `test_disallow_autolink_
+       extended_flags_each_form` (https, www, email, mailto),
+       `…_does_not_flag_extended_autolink`, `test_disallow_rejects_
+       old_link_names`; and for `exclude`, `test_exclude_autolink_
+       …`, `test_exclude_autolink_extended_…`, `test_exclude_
+       rejects_old_link_names` in both `test_line_length.py` and
+       `test_unicode.py`.
+
+    Interpretation recorded for the gate: the `elements` rule has no
+    `exclude` key. `exclude` element lists live on `line_length` and
+    `unicode`, and the README documents one vocabulary "valid in
+    `exclude` and `disallow` lists". Criterion 7's `exclude` is
+    tested there. The old-name rejection asserts the full message
+    `Unknown element name in disallow: '…'` (or `exclude`) that the
+    contract names.
+
+    Pre-skip evidence (markers stripped, `python3 -m pytest` on the
+    five files): 100 failed, 4 passed. Full suite: 100 failed, 848
+    passed, 50 skipped. By reason:
+
+    - 63 ImportError `cannot import name 'Autolink'` (22) /
+      `'ExtendedAutolink'` (41) — every test in the new module;
+      name does not exist yet.
+    - 9 AttributeError `'Section' object has no attribute
+      'autolinks'` (6) / `'autolinks_extended'` (3) — name does not
+      exist yet.
+    - 12 ValueError `Unknown element name in disallow/exclude:
+      'autolink'` / `'autolink_extended'` — config-load rejection of
+      the new vocabulary.
+    - 16 assertion failures against the contract: 6 `DID NOT RAISE`
+      for `link_bare` / `link_bracket` still accepted; 4 findings
+      for `./configure`, `../guide.md`, `\*.dll`, `\\server\share`;
+      finding messages still say "Bracket link" / "Bare link";
+      `www.` never checked (call count 0, finding count 0);
+      trailing `.` handed to `check_url_valid`.
+    - 4 pass today and stay unskipped: the relative-path guards.
+
+    To show the new module would fail on assertions and not only on
+    import, it was also run once with the new names aliased in
+    memory to today's `BracketLink` / `BareLink` (a scratch script,
+    nothing committed): 43 of 63 failed on assertions, 20 passed
+    where today's behaviour already agrees with GFM (603, 604, 609,
+    611, 612, 615–620, and the https halves of the preceding-
+    character tests). Every failure was an assertion.
+
+    Skip marker step 3 must remove, present on the 100 failing
+    tests: `@pytest.mark.skip(reason=PENDING)` with module constant
+    `PENDING = "autolink-gfm-parity: awaiting implementation
+    (step 3)"` in each of the five files. With markers in place:
+    flake8 clean; 848 passed, 150 skipped; the pre-commit hook
+    passes.
+
+    Not asserted, deliberately: whether `< http://foo.bar >` (617)
+    yields an extended autolink. The §6.8 examples are rendered
+    without the extension, so their HTML is silent on §6.9; the
+    contract's rules say it does, and the criteria mandate the
+    dual assertion only for 620 and 621. Step 3 may add it as an
+    edge test if the user wants it pinned.
