@@ -633,6 +633,108 @@ def test_bool_status_code_still_raises_value_level_error():
 
 
 # ===================================================================
+#  Scheme gating (white-box)
+#
+#  The rule hands a URL to check_url_valid only when it has no
+#  scheme (anchors, relative paths, and anything else the helper
+#  already reports on) or its scheme is http or https. The gate is
+#  the same for every link kind, so an inline link or reference
+#  definition with a mailto: target is skipped just like an autolink.
+#  The acceptance tests further down cover the autolink forms.
+# ===================================================================
+
+
+@pytest.mark.parametrize(
+    "markdown",
+    [
+        "[mail](mailto:crew@moonbase.example)",
+        "[files](ftp://files.moonbase.example)",
+        "[chat](irc://chat.moonbase.example/dock)",
+        "[mail]: mailto:crew@moonbase.example",
+        "[files]: ftp://files.moonbase.example",
+    ],
+    ids=["inline-mailto", "inline-ftp", "inline-irc", "ref-mailto", "ref-ftp"],
+)
+def test_non_http_scheme_skipped_for_inline_and_reference_links(markdown):
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("[top](#nav)", "#nav"),
+        ("[map](./treasure-map.md)", "./treasure-map.md"),
+        ("[up](../index.md)", "../index.md"),
+        ("[bare](moonbase.example/dock)", "moonbase.example/dock"),
+        ("[nav]: #nav", "#nav"),
+        ("[map]: ./treasure-map.md", "./treasure-map.md"),
+    ],
+    ids=["anchor", "dot-relative", "dot-dot-relative", "no-scheme",
+         "ref-anchor", "ref-relative"],
+)
+def test_scheme_less_targets_still_reach_check_url_valid(markdown, url):
+    """Anchors, relative paths and scheme-less URLs carry no scheme,
+    so they are handed to check_url_valid exactly as before."""
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    with patch(MOCK_TARGET, return_value=(True, None, None)) as mock:
+        validate(doc, {"validate": True})
+    mock.assert_called_once()
+    assert mock.call_args.kwargs["url"] == url
+
+
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("<HTTPS://moonbase.example>", "HTTPS://moonbase.example"),
+        ("Http://moonbase.example", "Http://moonbase.example"),
+        ("[x](HTTP://moonbase.example)", "HTTP://moonbase.example"),
+    ],
+    ids=["autolink", "extended", "inline"],
+)
+def test_upper_case_http_scheme_is_still_checked(markdown, url):
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock:
+        validate(doc, {"validate": True})
+    mock.assert_called_once()
+    assert mock.call_args.kwargs["url"] == url
+
+
+def test_scheme_gate_does_not_raise_on_malformed_url():
+    """A URL urllib cannot parse (an unclosed IPv6 bracket) still goes
+    to check_url_valid, which reports the failure as a tuple."""
+    doc = Document()
+    doc.load(text="# Nav\n<http://[::1>\n")
+    with patch(
+        MOCK_TARGET, return_value=(False, None, "invalid url")
+    ) as mock:
+        results = validate(doc, {"validate": True})
+    mock.assert_called_once()
+    assert len(results) == 1
+    assert "http://[::1" in results[0].message
+
+
+def test_scheme_gate_runs_before_exclusion():
+    """A skipped scheme never reaches the hostname exclusion, whose
+    urlparse would otherwise see the address as a path."""
+    doc = Document()
+    doc.load(text="# Nav\n<mailto:crew@moonbase.example>\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {
+            "validate": True,
+            "exclude": ["*.moonbase.example"],
+        })
+    assert results == []
+    mock.assert_not_called()
+
+
+# ===================================================================
 #  Acceptance tests: autolink-gfm-parity (step 2, before implementation)
 #
 #  The `links` rule validates only `http` and `https` targets. Every
@@ -648,9 +750,6 @@ def test_bool_status_code_still_raises_value_level_error():
 # ===================================================================
 
 
-PENDING = "autolink-gfm-parity: awaiting implementation (step 3)"
-
-
 def _autolinks(doc):
     return [link for s in doc.sections for link in s.autolinks]
 
@@ -659,7 +758,6 @@ def _autolinks_extended(doc):
     return [link for s in doc.sections for link in s.autolinks_extended]
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize(
     ("markdown", "url"),
     [
@@ -684,7 +782,6 @@ def test_non_http_autolink_recognised_but_not_validated(markdown, url):
     mock.assert_not_called()
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize(
     ("markdown", "url"),
     [
