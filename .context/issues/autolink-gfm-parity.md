@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-progress
-step: implementation
+status: in-review
+step: code-and-test-review
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -1351,3 +1351,135 @@ Author: software-engineer/software-engineering/git,python,testing
     still in place); flake8 clean; `link.py` 182 statements, 100%;
     `links.py` 96, 100%; package 99%. The issue file is committed
     separately.
+
+### 2026-09-18T15:31:53+00:00
+
+Author: software-engineer/software-engineering/code-review,python,testing
+
+    Code and test review, iteration 3, of 64a07ba..a1aa0a7 (`tiredize/`
+    and `tests/`), with the revision 80f5244..a1aa0a7 read closely.
+    Verdict: clean. The revision corrects the iteration-2 finding
+    fully and introduces no defect; no actionable finding anywhere in
+    the diff. Suite at tip 1084 passed / 47 skipped, flake8 clean, no
+    `PENDING` marker, no old name under `tiredize/`, and under `tests/`
+    only the six rejection-test hits the corrected criterion allows.
+
+    The revision, checked point by point:
+
+    - `LOCAL_PART_CHARACTERS` is exactly the `local` group of
+      `RE_CANDIDATE`: the constant and `[A-Za-z0-9._+-]` accept the
+      same 66 code points and no others, with no duplicate.
+    - The walk-back reads `match.string` (the sanitized copy) and
+      stops at position 0, at a newline, at whitespace and at a
+      blanked construct; `_valid_preceding` then reads the source
+      character there (`)`, `` ` ``, `>`, `"`, `:`), so
+      `[x](u)ab_c@d.e`, `` `c`a_b@c.d `` and the quoted forms all
+      yield nothing while `(a_b@c.d)` and `a_b@c.d\nx_y@e.f` link.
+    - Interaction with the accepted-link resume: the walk-back can
+      move `start` before `pos`, into an accepted link's span
+      (`a@b.c+x_y@d.e`, `xmpp:a@b.c/txt+x_y@d.e`,
+      `a+b@c.d+e_f@g.h`). In every such case the walk lands on the
+      accepted link's `@` or `/`, because every domain and resource
+      character is a local-part character and the address always
+      holds one of those two; both are invalid preceding characters,
+      so the candidate is rejected and no overlapping or duplicate
+      link can be produced. A `www.`/`http` span cannot be entered:
+      its candidate consumes the whole whitespace-free token, and the
+      trimmed tail (punctuation, `)`, `&name;`) ends at whitespace,
+      `<` or the end, all of which stop the walk.
+    - Interaction with the `start + 1` rescan: rejection resumes at
+      `match.start() + 1`, never at the walked-back `start`, so no
+      position is searched twice and a `www.` candidate that begins
+      after a later `_` in the same run is still found
+      (`"a_www.b.c"` links `www.b.c`).
+    - Fuzz, 6000 texts built from the delimiters, blanked constructs
+      and address fragments: spans ordered and non-overlapping,
+      `string == text[offset:offset + length]`, the source-text
+      preceding rule holds at every accepted `start`, every bare
+      address begins at the maximal backward run of local-part
+      characters (the decided tie-break) and `url` derives from
+      `string` as the contract states; `sanitize()` equals the text
+      blanked at `extract()` spans for every input.
+    - The nine new tests fail on a copy of 80f5244 (7 failed: the
+      five parametrisations, the glued case, the sanitize case; the
+      positive control and the position test pass either way, as they
+      should) and pass at tip. They pin decided behaviour -- the
+      preceding rule on all forms and cmark-gfm's address start --
+      and carry positive controls, position and sanitize checks.
+    - Docstrings match: the class docstring, `_scan` (both the new
+      paragraph and "skipped by one character"), `_start`,
+      `_validate`, `_validate_email` and the `LOCAL_PART_CHARACTERS`
+      comment all describe what the code does.
+
+    Findings by category:
+
+    - Unused parameters or dead code: none found. `start` is threaded
+      through `_validate` only to reach `_validate_email`;
+      `_validate_url` correctly ignores it, since `_start` returns
+      `match.start()` for those forms.
+    - Duplicate or redundant logic: none found.
+    - Missing input validation: none found.
+    - Inconsistencies between parallel code paths: none found.
+    - Silent acceptance of invalid input: none found.
+    - Reachable bugs or error-handling gaps: none found. Neither
+      extractor raised on the fuzz corpus or the 10k-character lines
+      below.
+    - Contract violations: none found.
+    - Spec fidelity gaps: none found.
+
+    Regex timing, 10k-character lines (Python 3.13, scratch script).
+    Every prose-like shape is under 7 ms, including 1250 `_`-bearing
+    addresses one per line, 1250 glued `a_b@c.d_` repeats, 1666
+    `+`-joined addresses, a 10k local part behind `"`, and 9990 local
+    characters behind inline code. The revision adds one quadratic
+    shape to the two already on record: a long `_`-laden run behind
+    an invalid preceding character *and* ending in `@domain`, where
+    every candidate after each `_` walks back the whole run in
+    Python and is rejected. `"` + `a_` x 5000 + `@a.b`: 2.4 s
+    (10k / 20k / 40k: 2.4 / 10.1 / 37.4 s); `"` + `_` x 10000 +
+    `@a.b`: 4.8 s; `x_` x 5000 + `@ab` (no period): 2.5 s, up from
+    81 ms at 80f5244 where the regex alone paid the quadratic cost
+    in C. Same complexity class as the recorded shapes, ~30x the
+    constant; it needs a multi-kilobyte whitespace-free token that
+    is not markdown prose, so not a finding. Should the PM want it
+    cheaper, the fix is local to `_scan`: once a bare-address
+    candidate is rejected at `_valid_preceding`, every later email
+    candidate inside the same maximal local-part run walks back to
+    the same `start` and fails the same test, so the run's end (the
+    `@`) can be remembered and those candidates skipped without a
+    walk.
+
+    Observations, not findings (the iteration-1 and -2 lists are
+    carried by the PM and not repeated):
+
+    - `ExtendedAutolink.sanitize()` is not idempotent on one shape:
+      blanking an accepted link turns the character before whatever
+      was glued to it into whitespace, so a second pass can accept a
+      candidate the first pass rejected. `a@b.c+d@f.g` extracts
+      `a@b.c` (the `+` follows `c`), sanitizes to `     +d@f.g`, and a
+      second `sanitize()` blanks `+d@f.g` too. No `_` is needed, so
+      this predates the revision (it is inherent in a context-
+      sensitive matcher blanked with spaces), each single pass obeys
+      the contract ("blank exactly the spans `extract()` would
+      match"), and nothing in `tiredize/` calls
+      `ExtendedAutolink.sanitize()` at all, let alone on its own
+      output. Worth knowing before any future rule chains it, and
+      `test_extended_autolink_sanitize_idempotent` in `test_link.py`
+      pins a property that holds for its input but not in general;
+      its docstring or name could say so. Not a change request.
+    - `a@b.c@d.e` and `a@b.c-x_y@d.e` link `a@b.c` and `a@b.c-x_y`
+      here: the leftmost candidate's domain is valid under the
+      contract's grammar and the scan resumes after it. cmark-gfm's
+      domain scan counts `@` and rejects a run holding two, then
+      links from the second `@`'s local part, so GitHub would show a
+      different (or no) link on a double-`@` token. The contract is
+      concrete on the grammar and silent on a second `@`, so the
+      behaviour here is defensible under "the specification is
+      followed concretely"; one more candidate line for the step-6
+      divergence list, since a double-`@` token is the only way to
+      see it.
+
+    Process note: while appending this Comment I briefly changed one
+    character in the previous entry by mistake and reverted it in the
+    same session before committing; the committed file carries the
+    previous entries byte for byte.
