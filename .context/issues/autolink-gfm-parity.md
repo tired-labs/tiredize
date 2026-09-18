@@ -1,10 +1,10 @@
 ---
-assignee: proofreader
+assignee: workflow-owner
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-review
-step: documentation-review
+step: closeout
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
