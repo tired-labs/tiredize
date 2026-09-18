@@ -325,21 +325,25 @@ def test_extended_autolink_http():
     assert results[0].url == "http://example.com"
 
 
-def test_extended_autolink_relative_dot_slash():
+def test_extended_autolink_relative_dot_slash_is_not_a_link():
+    """GitHub renders `./path` in prose as text; relative paths are
+    links only inside `[text](./path)` and `[ref]: ./path`."""
     text = "See ./docs/readme.md for details."
     results = ExtendedAutolink.extract(text)
-    assert len(results) == 1
-    assert results[0].url == "./docs/readme.md"
+    assert results == []
 
 
-def test_extended_autolink_backslash():
+def test_extended_autolink_backslash_path_is_not_a_link():
+    """A backslash is an escape character in GFM, never the start of
+    a Windows path, so `\\docs\\readme.md` is plain text."""
     text = r"See \docs\readme.md for details."
     results = ExtendedAutolink.extract(text)
-    assert len(results) == 1
-    assert results[0].url == r"\docs\readme.md"
+    assert results == []
 
 
 def test_extended_autolink_backslash_not_matched_mid_word():
+    """Asserts registry keys are not links: the backslashes inside a
+    quoted `HKLM\\...` path never start an extended autolink."""
     text = r'Registry key: "HKLM\SYSTEM\CurrentControlSet\Control"'
     results = ExtendedAutolink.extract(text)
     assert results == []
@@ -414,6 +418,390 @@ def test_extended_autolink_not_inside_code_inline():
     text = "Run `https://example.com` as a test."
     results = ExtendedAutolink.extract(text)
     assert len(results) == 0
+
+
+def test_extended_autolink_not_inside_inline_image():
+    text = "![map](https://example.com/map.png)"
+    assert ExtendedAutolink.extract(text) == []
+
+
+def test_extended_autolink_not_inside_reference_definition():
+    text = "[map]: https://example.com/map.html"
+    assert ExtendedAutolink.extract(text) == []
+
+
+def test_extended_autolink_not_inside_failed_autolink_brackets():
+    """`<www.a.b>` is not an autolink (no scheme), but the `<` is not
+    a valid preceding character either, so nothing is extracted."""
+    assert ExtendedAutolink.extract("<www.example.com>") == []
+
+
+# ===================================================================
+#  ExtendedAutolink -- GFM 6.9 boundaries (white-box)
+#
+#  The specification examples live in test_link_gfm_autolinks.py.
+#  These pin the edges of the rules those examples illustrate: the
+#  valid-domain rule, each step of extended autolink path validation
+#  in isolation and in combination, the email and protocol forms,
+#  and how scanning resumes around a rejected candidate.
+# ===================================================================
+
+
+def _extended(text: str) -> list[tuple[str, str]]:
+    return [
+        (link.string, link.url)
+        for link in ExtendedAutolink.extract(text)
+    ]
+
+
+# -- valid domain -----------------------------------------------------
+
+
+def test_extended_autolink_domain_needs_at_least_one_period():
+    assert _extended("www.") == []
+    assert _extended("www.a") == [("www.a", "http://www.a")]
+    assert _extended("http://localhost") == []
+    assert _extended("http://localhost/x") == []
+    assert _extended("http://a.b") == [("http://a.b", "http://a.b")]
+
+
+def test_extended_autolink_url_needs_something_domain_shaped():
+    """The text after `://` must start with a domain character."""
+    assert _extended("http://") == []
+    assert _extended("http://.a.b") == []
+    assert _extended("https:///x.y") == []
+
+
+def test_extended_autolink_domain_underscore_in_last_two_segments():
+    assert _extended("www.a_b.example.com") == [
+        ("www.a_b.example.com", "http://www.a_b.example.com"),
+    ]
+    assert _extended("www.a_b.com") == []
+    assert _extended("www.example.c_m") == []
+    assert _extended("https://a_b.c.d") == [
+        ("https://a_b.c.d", "https://a_b.c.d"),
+    ]
+    assert _extended("https://a.b_c.d") == []
+
+
+def test_extended_autolink_domain_check_stops_where_the_path_starts():
+    """An underscore in the path is fine; only the domain segments
+    are inspected."""
+    assert _extended("www.example.com/x_y") == [
+        ("www.example.com/x_y", "http://www.example.com/x_y"),
+    ]
+    assert _extended("www.a_b.example.com/x") == [
+        ("www.a_b.example.com/x", "http://www.a_b.example.com/x"),
+    ]
+
+
+def test_extended_autolink_domain_hyphen_and_digits_allowed():
+    assert _extended("www.a-1.b2") == [("www.a-1.b2", "http://www.a-1.b2")]
+
+
+def test_extended_autolink_domain_may_be_non_ascii():
+    """Alphanumeric is read as Unicode alphanumeric, so an
+    internationalised domain name links."""
+    assert _extended("www.bücher.example") == [
+        ("www.bücher.example", "http://www.bücher.example"),
+    ]
+
+
+def test_extended_autolink_url_scheme_is_case_insensitive():
+    """`HTTP://` and `Https://` link on GitHub; the scheme is kept
+    as written in both `string` and `url`."""
+    assert _extended("HTTP://a.b") == [("HTTP://a.b", "HTTP://a.b")]
+    assert _extended("Https://a.b/x") == [("Https://a.b/x", "Https://a.b/x")]
+
+
+def test_extended_autolink_ftp_is_not_an_extended_autolink():
+    assert _extended("ftp://files.example.com") == []
+
+
+def test_extended_autolink_www_prefix_must_be_exact():
+    assert _extended("ww.example.com") == []
+    assert _extended("wwww.example.com") == []
+    assert _extended("WWW.example.com") == []
+
+
+# -- path validation: trailing punctuation ----------------------------
+
+
+@pytest.mark.parametrize("punct", ["?", "!", ".", ",", ":", "*", "_", "~"])
+def test_extended_autolink_each_trailing_punctuation_is_excluded(punct):
+    assert _extended(f"www.a.b/x{punct}") == [
+        ("www.a.b/x", "http://www.a.b/x"),
+    ]
+
+
+def test_extended_autolink_trailing_punctuation_stripped_repeatedly():
+    assert _extended("www.a.b/x?!.,") == [("www.a.b/x", "http://www.a.b/x")]
+
+
+def test_extended_autolink_interior_punctuation_kept():
+    assert _extended("www.a.b/x?y=1,2:3") == [
+        ("www.a.b/x?y=1,2:3", "http://www.a.b/x?y=1,2:3"),
+    ]
+
+
+def test_extended_autolink_other_trailing_characters_kept():
+    """Only the eight characters the specification lists are trailing
+    punctuation. cmark-gfm also strips `'`, `"` and a lone `;`; the
+    contract follows the specification text."""
+    assert _extended("www.a.b/x-") == [("www.a.b/x-", "http://www.a.b/x-")]
+    assert _extended("www.a.b/x;") == [("www.a.b/x;", "http://www.a.b/x;")]
+    assert _extended("www.a.b/x'") == [("www.a.b/x'", "http://www.a.b/x'")]
+
+
+# -- path validation: parentheses -------------------------------------
+
+
+def test_extended_autolink_balanced_trailing_paren_kept():
+    assert _extended("www.a.b/(x)") == [("www.a.b/(x)", "http://www.a.b/(x)")]
+    assert _extended("www.a.b/((x))") == [
+        ("www.a.b/((x))", "http://www.a.b/((x))"),
+    ]
+
+
+def test_extended_autolink_only_unmatched_trailing_parens_excluded():
+    assert _extended("www.a.b/(x))") == [("www.a.b/(x)", "http://www.a.b/(x)")]
+    assert _extended("www.a.b/x)))") == [("www.a.b/x", "http://www.a.b/x")]
+    assert _extended("www.a.b/((x)))") == [
+        ("www.a.b/((x))", "http://www.a.b/((x))"),
+    ]
+
+
+def test_extended_autolink_more_opening_than_closing_parens_kept():
+    assert _extended("www.a.b/((x)") == [
+        ("www.a.b/((x)", "http://www.a.b/((x)"),
+    ]
+
+
+def test_extended_autolink_trailing_open_paren_is_not_punctuation():
+    assert _extended("www.a.b/x(") == [("www.a.b/x(", "http://www.a.b/x(")]
+
+
+def test_extended_autolink_paren_and_punctuation_trimmed_together():
+    assert _extended("(see www.a.b/x.)") == [("www.a.b/x", "http://www.a.b/x")]
+    assert _extended("(see www.a.b/x).") == [("www.a.b/x", "http://www.a.b/x")]
+
+
+# -- path validation: entity-like tail --------------------------------
+
+
+def test_extended_autolink_entity_like_tail_with_digits_excluded():
+    assert _extended("www.a.b/x&hl2;") == [("www.a.b/x", "http://www.a.b/x")]
+
+
+def test_extended_autolink_semicolon_without_entity_kept():
+    assert _extended("www.a.b/x&;") == [("www.a.b/x&;", "http://www.a.b/x&;")]
+    assert _extended("www.a.b/x&h-l;") == [
+        ("www.a.b/x&h-l;", "http://www.a.b/x&h-l;"),
+    ]
+
+
+def test_extended_autolink_entity_then_punctuation_both_excluded():
+    assert _extended("www.a.b/x&amp;.") == [("www.a.b/x", "http://www.a.b/x")]
+
+
+def test_extended_autolink_entity_only_checked_at_the_end():
+    assert _extended("www.a.b/x&amp;y") == [
+        ("www.a.b/x&amp;y", "http://www.a.b/x&amp;y"),
+    ]
+
+
+# -- path validation: < ends the link ---------------------------------
+
+
+def test_extended_autolink_less_than_ends_url_and_www_forms():
+    assert _extended("https://a.b/x<y") == [("https://a.b/x", "https://a.b/x")]
+    assert _extended("www.a.b<") == [("www.a.b", "http://www.a.b")]
+
+
+# -- email form -------------------------------------------------------
+
+
+def test_extended_autolink_email_domain_needs_a_period():
+    assert _extended("a@b") == []
+    assert _extended("a@b.c") == [("a@b.c", "mailto:a@b.c")]
+
+
+def test_extended_autolink_email_needs_a_local_part():
+    assert _extended("@b.c") == []
+    assert _extended("a@@b.c") == []
+
+
+def test_extended_autolink_email_local_part_characters():
+    assert _extended("a.b-c_d+e@f.g") == [
+        ("a.b-c_d+e@f.g", "mailto:a.b-c_d+e@f.g"),
+    ]
+    assert _extended("a!b@f.g") == []
+    assert _extended("a!b@f.g and b@f.g") == [("b@f.g", "mailto:b@f.g")]
+
+
+def test_extended_autolink_email_domain_characters():
+    assert _extended("a@b-c_d.e") == [("a@b-c_d.e", "mailto:a@b-c_d.e")]
+    assert _extended("a@b.c/d") == [("a@b.c", "mailto:a@b.c")]
+    assert _extended("a@b.c?d") == [("a@b.c", "mailto:a@b.c")]
+
+
+def test_extended_autolink_email_several_trailing_periods_excluded():
+    assert _extended("a@b.c..") == [("a@b.c", "mailto:a@b.c")]
+
+
+def test_extended_autolink_email_empty_domain_segment_ends_the_domain():
+    assert _extended("a@b..c") == []
+    assert _extended("a@b.c..d") == [("a@b.c", "mailto:a@b.c")]
+
+
+def test_extended_autolink_email_may_be_non_ascii():
+    assert _extended("josé@b.c") == [("josé@b.c", "mailto:josé@b.c")]
+
+
+def test_extended_autolink_email_trailing_period_and_paren():
+    assert _extended("(mail a@b.c.)") == [("a@b.c", "mailto:a@b.c")]
+
+
+# -- protocol form ----------------------------------------------------
+
+
+def test_extended_autolink_protocol_is_case_sensitive():
+    """The specification names `mailto:` and `xmpp:` in lower case
+    and cmark-gfm compares them byte for byte."""
+    assert _extended("MAILTO:a@b.c") == []
+    assert _extended("Xmpp:a@b.c") == []
+
+
+def test_extended_autolink_xmpp_resource_characters():
+    assert _extended("xmpp:a@b.c/r1@d.e") == [
+        ("xmpp:a@b.c/r1@d.e", "xmpp:a@b.c/r1@d.e"),
+    ]
+    assert _extended("xmpp:a@b.c/r_s") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
+    assert _extended("xmpp:a@b.c/r-s") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
+
+
+def test_extended_autolink_xmpp_empty_resource_is_not_part_of_link():
+    assert _extended("xmpp:a@b.c/") == [("xmpp:a@b.c", "xmpp:a@b.c")]
+
+
+def test_extended_autolink_xmpp_resource_trailing_period_excluded():
+    assert _extended("xmpp:a@b.c/r.") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
+    assert _extended("xmpp:a@b.c/r..s") == [("xmpp:a@b.c/r", "xmpp:a@b.c/r")]
+
+
+def test_extended_autolink_mailto_takes_no_resource():
+    assert _extended("mailto:a@b.c/r") == [("mailto:a@b.c", "mailto:a@b.c")]
+
+
+def test_extended_autolink_protocol_address_rejected_as_a_whole():
+    """A bad address after a protocol does not fall back to a shorter
+    link: the `:` before the address is not a valid preceding
+    character."""
+    assert _extended("mailto:a@b") == []
+    assert _extended("xmpp:a@b.c_") == []
+
+
+# -- preceding character and scanning ---------------------------------
+
+
+@pytest.mark.parametrize("before", ["", "\n", "\t", " ", "*", "_", "~", "("])
+def test_extended_autolink_valid_preceding_characters(before):
+    assert _extended(f"{before}www.a.b") == [("www.a.b", "http://www.a.b")]
+    assert _extended(f"{before}mailto:a@b.c") == [
+        ("mailto:a@b.c", "mailto:a@b.c"),
+    ]
+    if before != "_":
+        # `_` before a bare address is absorbed into the local part;
+        # see test_extended_autolink_email_local_part_absorbs_...
+        assert _extended(f"{before}a@b.c") == [("a@b.c", "mailto:a@b.c")]
+
+
+@pytest.mark.parametrize("before", ["x", "9", '"', "/", ":", "<", "[", "-"])
+def test_extended_autolink_invalid_preceding_characters(before):
+    assert _extended(f"{before}www.a.b") == []
+    assert _extended(f"{before}https://a.b") == []
+    assert _extended(f"{before}mailto:a@b.c") == []
+
+
+def test_extended_autolink_email_local_part_absorbs_leading_delimiters():
+    """`_` and `.` are local-part characters, so a leading one is part
+    of the address rather than a delimiter before it -- the leftmost
+    candidate wins, as in cmark-gfm."""
+    assert _extended("_a@b.c") == [("_a@b.c", "mailto:_a@b.c")]
+
+
+def test_extended_autolink_scanning_resumes_after_rejected_candidate():
+    """A rejected candidate does not hide a valid link that starts
+    inside it after a delimiter."""
+    assert _extended("http://nodot(www.a.b)") == [
+        ("www.a.b", "http://www.a.b"),
+    ]
+    assert _extended("a@b-(c@d.e)") == [("c@d.e", "mailto:c@d.e")]
+
+
+def test_extended_autolink_several_forms_on_one_line():
+    text = "www.a.b, https://c.d/e, f@g.h, mailto:i@j.k, and xmpp:l@m.n/o."
+    assert _extended(text) == [
+        ("www.a.b", "http://www.a.b"),
+        ("https://c.d/e", "https://c.d/e"),
+        ("f@g.h", "mailto:f@g.h"),
+        ("mailto:i@j.k", "mailto:i@j.k"),
+        ("xmpp:l@m.n/o", "xmpp:l@m.n/o"),
+    ]
+
+
+def test_extended_autolink_email_inside_url_path_is_part_of_the_url():
+    assert _extended("https://a.b/?to=c@d.e") == [
+        ("https://a.b/?to=c@d.e", "https://a.b/?to=c@d.e"),
+    ]
+
+
+def test_extended_autolink_www_inside_email_domain_is_the_email():
+    assert _extended("a@www.b.c") == [("a@www.b.c", "mailto:a@www.b.c")]
+
+
+# -- position and sanitize --------------------------------------------
+
+
+def test_extended_autolink_position_after_non_ascii_prefix():
+    text = "café www.a.b."
+    results = ExtendedAutolink.extract(text)
+    assert len(results) == 1
+    assert results[0].position == Position(offset=5, length=len("www.a.b"))
+    assert results[0].string == "www.a.b"
+
+
+def test_extended_autolink_position_length_matches_trimmed_string():
+    text = "see www.a.b/(x))) now"
+    results = ExtendedAutolink.extract(text)
+    assert len(results) == 1
+    assert results[0].position.length == len(results[0].string)
+    assert text[4:4 + results[0].position.length] == results[0].string
+
+
+def test_extended_autolink_sanitize_blanks_every_form_across_lines():
+    text = "www.a.b\nf@g.h. and xmpp:l@m.n/o/p"
+    expected = (
+        " " * len("www.a.b") + "\n"
+        + " " * len("f@g.h") + ". and "
+        + " " * len("xmpp:l@m.n/o") + "/p"
+    )
+    assert ExtendedAutolink.sanitize(text) == expected
+
+
+def test_extended_autolink_sanitize_blanks_only_what_extract_reports():
+    """sanitize() blanks exactly the spans extract() reports, so a URL
+    that extract() ignores because it sits inside an inline link or
+    inline code is left alone too."""
+    text = "[x](https://a.b) and `www.c.d` here"
+    assert ExtendedAutolink.extract(text) == []
+    assert ExtendedAutolink.sanitize(text) == text
+
+
+def test_autolink_sanitize_blanks_only_what_extract_reports():
+    text = "`<https://a.b>` here"
+    assert Autolink.extract(text) == []
+    assert Autolink.sanitize(text) == text
 
 
 # ===================================================================
@@ -529,18 +917,6 @@ def test_autolink_email():
     assert len(results) == 1
 
 
-@pytest.mark.skip(reason="gfm-parity: www. autolinks not supported")
-def test_extended_autolink_www():
-    """GFM extended autolinks recognize www. prefix without scheme."""
-    text = "Visit www.example.com for details."
-    results = ExtendedAutolink.extract(text)
-    assert len(results) == 1
-    assert results[0].url == "www.example.com"
-
-
-@pytest.mark.skip(
-    reason="gfm-parity: trailing punctuation not stripped from URLs"
-)
 def test_extended_autolink_trailing_punctuation_stripped():
     """GFM strips trailing punctuation from extended autolinks."""
     text = "Visit https://example.com."
@@ -550,12 +926,11 @@ def test_extended_autolink_trailing_punctuation_stripped():
 
 
 def test_extended_autolink_parent_dir_not_partial_match():
-    """Relative paths with ../ should match the full path, not a
-    false partial match of ./sibling/ from position 1."""
+    """`../sibling/` in prose is not a link, and neither is the
+    `./sibling/` that starts one character in."""
     text = "See ../sibling/readme.md for details."
     results = ExtendedAutolink.extract(text)
-    assert len(results) == 1
-    assert results[0].url == "../sibling/readme.md"
+    assert results == []
 
 
 # ===================================================================

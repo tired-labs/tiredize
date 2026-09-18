@@ -708,7 +708,6 @@ def test_non_http_extended_autolink_recognised_but_not_validated(
     mock.assert_not_called()
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_www_extended_autolink_validated_over_http():
     """A `www.` link is checked as `http://` + the matched text."""
     doc = Document()
@@ -721,7 +720,6 @@ def test_www_extended_autolink_validated_over_http():
     assert kwargs["url"] == "http://www.moonbase.example/dock"
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_www_extended_autolink_finding_names_http_url():
     doc = Document()
     doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
@@ -733,7 +731,6 @@ def test_www_extended_autolink_finding_names_http_url():
     assert "404" in results[0].message
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_www_extended_autolink_excluded_by_hostname():
     """`exclude` matches the hostname of the normalised target."""
     doc = Document()
@@ -771,7 +768,6 @@ def test_extended_autolink_finding_names_element_extended_autolink():
     assert "https://gone.example" in results[0].message
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_validated_without_trailing_punctuation():
     """The URL handed to check_url_valid is the trimmed match."""
     doc = Document()
@@ -782,7 +778,6 @@ def test_extended_autolink_validated_without_trailing_punctuation():
     assert kwargs["url"] == "https://moonbase.example/docs"
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize(
     "line",
     [

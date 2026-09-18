@@ -33,9 +33,6 @@ import pytest
 from tiredize.core_types import Position
 
 
-PENDING = "autolink-gfm-parity: awaiting implementation (step 3)"
-
-
 # ===================================================================
 #  Helpers
 #
@@ -205,7 +202,6 @@ def test_example_620_bare_uri_is_not_an_autolink_but_is_extended():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_621_bare_email_is_not_an_autolink_but_is_extended():
     """Without brackets this is not a section 6.8 autolink. Under the
     section 6.9 extension it is an extended autolink (see 630)."""
@@ -221,7 +217,6 @@ def test_example_621_bare_email_is_not_an_autolink_but_is_extended():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_622_www_autolink_gets_http_inserted():
     text = "www.commonmark.org"
     assert extended_autolinks(text) == [
@@ -229,7 +224,6 @@ def test_example_622_www_autolink_gets_http_inserted():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_623_www_autolink_with_path_in_prose():
     text = "Visit www.commonmark.org/help for more information."
     assert extended_autolinks(text) == [
@@ -237,7 +231,6 @@ def test_example_623_www_autolink_with_path_in_prose():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_624_trailing_period_excluded():
     """Trailing punctuation is not part of the link, though the same
     characters may appear inside it (`a.b`)."""
@@ -249,7 +242,6 @@ def test_example_624_trailing_period_excluded():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_625_unmatched_trailing_parentheses_excluded():
     link = "www.google.com/search?q=Markup+(business)"
     href = "http://" + link
@@ -267,7 +259,6 @@ def test_example_625_unmatched_trailing_parentheses_excluded():
     ) == [(link, href)]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_626_parenthesis_check_only_when_link_ends_in_paren():
     text = "www.google.com/search?q=(business))+ok"
     assert extended_autolinks(text) == [
@@ -278,7 +269,6 @@ def test_example_626_parenthesis_check_only_when_link_ends_in_paren():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_627_entity_like_tail_excluded():
     assert extended_autolinks(
         "www.google.com/search?q=commonmark&hl=en"
@@ -298,7 +288,6 @@ def test_example_627_entity_like_tail_excluded():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_628_less_than_ends_the_link():
     text = "www.commonmark.org/he<lp"
     assert extended_autolinks(text) == [
@@ -311,7 +300,6 @@ def test_example_628_less_than_ends_the_link():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_629_http_and_https_url_autolinks():
     assert extended_autolinks("http://commonmark.org") == [
         ("http://commonmark.org", "http://commonmark.org"),
@@ -331,7 +319,6 @@ def test_example_629_http_and_https_url_autolinks():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_630_email_autolink_gets_mailto_inserted():
     text = "foo@bar.baz"
     assert extended_autolinks(text) == [
@@ -339,7 +326,6 @@ def test_example_630_email_autolink_gets_mailto_inserted():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_631_plus_allowed_before_at_sign_but_not_after():
     text = (
         "hello@mail+xyz.example isn't valid, "
@@ -350,7 +336,6 @@ def test_example_631_plus_allowed_before_at_sign_but_not_after():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_632_email_trailing_characters():
     """A trailing `.` is excluded from the address; a trailing `-` or
     `_` means the whole thing is not an email address."""
@@ -369,7 +354,6 @@ def test_example_632_email_trailing_characters():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_633_mailto_and_xmpp_protocol_autolinks():
     """The scheme is part of the matched text, so `string` and `url`
     are identical for protocol autolinks."""
@@ -395,7 +379,6 @@ def test_example_633_mailto_and_xmpp_protocol_autolinks():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_634_xmpp_resource_after_slash():
     assert extended_autolinks("xmpp:foo@bar.baz/txt") == [
         ("xmpp:foo@bar.baz/txt", "xmpp:foo@bar.baz/txt"),
@@ -408,7 +391,6 @@ def test_example_634_xmpp_resource_after_slash():
     ]
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_example_635_second_slash_ends_xmpp_resource():
     text = "xmpp:foo@bar.baz/txt/bin"
     assert extended_autolinks(text) == [
@@ -425,7 +407,6 @@ def test_example_635_second_slash_ends_xmpp_resource():
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize("delimiter", ["*", "_", "~", "("])
 @pytest.mark.parametrize(
     ("link", "href"),
@@ -439,7 +420,6 @@ def test_extended_autolink_matches_after_delimiter(delimiter, link, href):
     assert extended_autolinks(text) == [(link, href)]
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize("preceding", ["x", "7", '"'])
 @pytest.mark.parametrize(
     "link",
@@ -461,7 +441,6 @@ def test_extended_autolink_not_matched_after_letter_digit_or_quote(
 # ===================================================================
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize(
     "text",
     [
@@ -477,7 +456,6 @@ def test_escape_sequences_are_not_extended_autolinks(text):
     assert extended_autolinks(text) == []
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize(
     "text",
     [
@@ -505,7 +483,6 @@ def test_autolink_position_covers_the_brackets():
     )
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_position_excludes_trailing_punctuation():
     from tiredize.markdown.types.link import ExtendedAutolink
     text = "(see www.commonmark.org/a.b)."
@@ -516,7 +493,6 @@ def test_extended_autolink_position_excludes_trailing_punctuation():
     )
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_base_offset_is_applied():
     from tiredize.markdown.types.link import ExtendedAutolink
     results = ExtendedAutolink.extract("foo@bar.baz", base_offset=300)
@@ -546,7 +522,6 @@ def test_autolink_sanitize_leaves_non_autolinks_alone():
     assert Autolink.sanitize(text) == text
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_sanitize_stops_before_trailing_punctuation():
     from tiredize.markdown.types.link import ExtendedAutolink
     text = "Visit www.commonmark.org."
@@ -554,7 +529,6 @@ def test_extended_autolink_sanitize_stops_before_trailing_punctuation():
     assert ExtendedAutolink.sanitize(text) == expected
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_sanitize_keeps_unmatched_closing_paren():
     from tiredize.markdown.types.link import ExtendedAutolink
     text = "(www.google.com/search?q=Markup+(business))"
@@ -564,7 +538,6 @@ def test_extended_autolink_sanitize_keeps_unmatched_closing_paren():
     assert ExtendedAutolink.sanitize(text) == expected
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_sanitize_matches_extract_spans():
     """Every character extract() reports is blanked; every other
     character survives. Derived from position, not from a regex."""
@@ -582,7 +555,6 @@ def test_extended_autolink_sanitize_matches_extract_spans():
     assert ExtendedAutolink.sanitize(text) != text
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_sanitize_leaves_plain_text_alone():
     from tiredize.markdown.types.link import ExtendedAutolink
     text = r"Run ./configure, then \_x\_.md, then a.b-c_d@a.b-"
