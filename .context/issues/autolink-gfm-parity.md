@@ -1809,3 +1809,181 @@ Author: technical-architect/software-engineering/specifications
     over `.context/issues/*.md`) result is recorded in the commit that
     carries this Comment. No action tag is needed: the step completed
     cleanly.
+
+### 2026-09-18T16:09:17+00:00
+
+Author: technical-architect/software-engineering/specifications
+
+    Architecture review of 64a07ba..e7e3fca (`tiredize/`) and of the
+    step-6 reference 6b3a820..91a6162, at tip de59ede. Verdict: clean.
+    No finding routes to implementation or to step 6. The
+    documentation track (steps 8-9) runs; the passages are listed
+    below. Nothing under `tiredize/`, `tests/`, `README.md` or
+    `.context/specifications/` was touched; every probe ran from the
+    scratchpad.
+
+    System-design impact. Contracts: the only broken contract is the
+    decided one -- the element vocabulary and the `Section` field
+    names -- and every consumer in the package follows it
+    (`_elements.py`, the four `links` loops, `Section._extract`);
+    `grep` finds the old names nowhere under `tiredize/`, in no other
+    specification, and in no YAML in the repository. The CLI and both
+    validators are untouched and do not name elements. Coupling: two
+    dependencies now cross the parser/linter boundary and both are
+    stated in the references -- the `links` rule relies on the parser
+    normalising `url` (`www.` arrives as `http://`, a bare address as
+    `mailto:`), and `ExtendedAutolink` relies on every sanitizer
+    preserving length, since it indexes the source and the blanked
+    copy by the same offset (already the stated invariant of
+    `sanitize_text`; `_blank_spans` keeps it). Patterns: `Section`
+    fields and the `_extract` keyword arguments stay alphabetised;
+    the new methods sit in the `# Static methods` group in order;
+    `RE_*` constants remain `re.VERBOSE` strings compiled at use, as
+    elsewhere in the parser.
+
+    The procedural matcher's shape is sound. `RE_CANDIDATE` narrows,
+    and each helper maps to one sentence of section 6.9: `_start` to
+    where an address begins, `_valid_preceding` to the preceding-
+    character rule, `_valid_domain` / `_valid_email_domain` to the
+    domain rules, `_trim` to path validation, `_scan` to the resume
+    rule. All are static and stateless; the one cross-cutting
+    concern, the (`text`, `text_sanitized`) pair, is explained at
+    `_scan`. I checked the property the split depends on: blanking
+    only turns characters into spaces, so the regex lookbehind on the
+    blanked copy admits a superset of the positions `_valid_preceding`
+    admits on the source, and no valid link can be lost between the
+    two checks. The delimiter set is spelled twice (`[\s*_~(]` in the
+    pattern, `PRECEDING_DELIMITERS` in the function); a future edit
+    to one without the other would only ever drop candidates, never
+    admit a wrong one.
+
+    The scheme gate belongs in the rule, not in `check_url_valid()`,
+    as implemented. The helper's contract is a three-way tuple that
+    never raises; a skip would be a fourth outcome that either
+    conflates "not checked" with "valid" or changes the signature for
+    every caller. Which links are worth checking is policy, and it
+    sits beside the other policy gate (`exclude`) at the same layer.
+    The helper stays usable by a future rule that can check other
+    schemes, and the pre-parse that avoids `urlparse` raising stays
+    out of a function whose promise is "never raises". `_RE_SCHEME`
+    splits the same token `urlsplit` does on every scheme-bearing
+    string I generated (20 000 random strings; the only differences
+    were leading-whitespace inputs, which no parser pattern can
+    produce).
+
+    Observations, not findings, none routed: (1) the four `links`
+    loops are now four copies of the same gate-gate-check-report
+    block; a single loop over `(field, label)` pairs would make "both
+    gates apply identically" structural, but the quadruplication
+    predates this issue. (2) `_has_checkable_scheme` returns True for
+    a URL with no scheme, which the name does not suggest; the
+    docstring is exact. (3) `_blank_spans` is the span-based twin of
+    `sanitize_text` and lives in `link.py` rather than
+    `markdown/utils.py`; when `InlineLink` gets a procedural matcher
+    of its own it will want the same helper. (4) The quadratic
+    shapes, the non-idempotent `sanitize()` and the four remaining
+    non-GFM names are recorded and carry no design consequence here.
+
+    Technical reference, checked against tip with a scratch probe
+    (102 assertions, all passing) rather than against the step-6
+    Comment. `markdown-parser.md`: both dataclass signatures, field
+    lists and the static-method shape match; `Section` exposes
+    `autolinks` / `autolinks_extended` and no old field; the
+    `RE_AUTOLINK` and `RE_CANDIDATE` blocks equal the class constants
+    line for line after whitespace normalisation, and `RE_DOMAIN` /
+    `RE_ENTITY_TAIL` are shown as written; every constant the passes
+    name (`TRAILING_PUNCTUATION`, `PRECEDING_DELIMITERS`,
+    `LOCAL_PART_CHARACTERS`) exists with the stated value; the six
+    extraction passes are what `_scan` does, in that order; each of
+    the five decided readings and the tiredize half of each of the
+    eight divergences reproduces exactly as written; the
+    sanitize-chain rows for both classes equal the blanking order in
+    `extract()`; `str.isspace()` equals the set `\s` matches over
+    every code point. `linter.md`: the `check_url_valid` signature now
+    matches the code; the twelve vocabulary rows each name the
+    `Section` field the lambda reads and the label `_ELEMENT_LABELS`
+    carries; the three unknown-name messages are as quoted;
+    `_RE_SCHEME` is as shown; every gate outcome listed (`#anchor`,
+    `./f.md`, `example.com`, `HTTPS://`, `mailto:`, `a+b+c:`,
+    `localhost:8080`, `example.com:8080/x`, `C:\path`, `http://[::1`)
+    behaves as written; `example.com` is reported with "No scheme
+    supplied"; the four finding messages exist; and an end-to-end run
+    with `check_url_valid` stubbed hands over exactly the http/https
+    targets. Both files keep the template's skeleton (Overview with a
+    boundary statement, Contracts and Interfaces, File Layout, domain
+    sections, Design Decisions); the migrated decisions are the ones
+    that would move behaviour if reversed, the issue-only ones (test
+    oracle, scoping boundary, skip convention) were rightly left out,
+    and nothing in either file is history or planned work. The one
+    thing nobody can verify from this repository is the cmark-gfm
+    half of each divergence; the PM verified item 2 against
+    `extensions/autolink.c`, and the rest stand as the step-3 and
+    step-4 readings recorded in this issue.
+
+    Two imprecisions, neither worth a step-6 pass on its own; both
+    can ride with the next edit to the file: (a) `linter.md` still
+    lists the second `check_url_valid` URL type as "`./relative`",
+    whereas the code branches on any `.`-prefixed target, so `../x.md`
+    resolves the same way -- pre-existing wording outside the passage
+    step 6 edited; (b) the same file says the exclusion glob is
+    "case-insensitive on the pattern", while `urlparse().hostname`
+    also lower-cases the host, so the comparison is case-insensitive
+    on both sides.
+
+    Scoping seeds. Step 6, "yes": confirmed -- two contracts, one
+    data format and one processing order changed, both files
+    described the old behaviour, and this review could not have been
+    done without the reference. Step 7, "yes": confirmed, below.
+
+    User-documentation decision: the documentation track runs.
+    `README.md` is the only user-facing document; it is wrong in
+    three places and silent in two. What the ghostwriter must change:
+
+    1. Features, lines 33-36: "links (inline, reference-style,
+       bracket, and bare)" must name the new forms -- inline links,
+       reference-style links, and GFM autolinks: `<url>` / `<email>`,
+       and the bare URLs, `www.` addresses and email addresses GitHub
+       links -- and may say link recognition matches GitHub's.
+    2. The `links` rule, lines 336-339: "Checks inline links,
+       angle-bracket links, bare URLs, and reference definitions"
+       must become the four kinds by their new names (inline links,
+       autolinks, extended autolinks, reference definitions) and must
+       add, for every kind: only `http` and `https` targets are
+       checked; any other scheme (`mailto:`, `ftp:`, `irc:`, `xmpp:`,
+       or an unregistered one) is recognised as a link but never
+       produces a finding; a `www.` link is checked as
+       `http://www.…`; `./path` and `\path` in prose are no longer
+       links at all. It must also warn that a target whose first
+       token looks like a scheme -- `localhost:8080`,
+       `example.com:8080/x`, `C:\path` -- is now skipped silently for
+       every link kind, and that writing it as `http://localhost:8080`
+       gets it checked. The anchor and relative-path sentences stay.
+    3. The `elements` example, lines 368-372: `link_bare` becomes
+       `autolink_extended`.
+    4. "Recognized markdown element names", lines 385-386: the rows
+       `link_bare` | Bare URL and `link_bracket` | Bracket link
+       (`<url>`) are replaced by `autolink` | Autolink (`<url>` or
+       `<email>`) and `autolink_extended` | Extended autolink (bare
+       URL, `www.`, email, `mailto:`/`xmpp:`), in alphabetical
+       position at the top of the table.
+    5. A breaking-change note beside that table or the `elements`
+       rule, since the project has no changelog: `link_bare` and
+       `link_bracket` are no longer accepted; a rules file naming
+       either fails at load with `Unknown element name in disallow:
+       'link_bare'` (or `… in exclude: …`); the fix is to rename.
+
+    Reasons: the rename is a load-time failure for every existing
+    rules file that uses the old names; the scheme gate changes what
+    a user sees for `mailto:`/`ftp:` targets and, less obviously, for
+    host:port targets that used to fail loudly; and the README's
+    description of what counts as a link is the sentence a user will
+    consult when `./configure` in prose stops being reported.
+
+    Process improvement: when a Design Decision adopts an external
+    implementation as tie-break (here `cmark-gfm`
+    `extensions/autolink.c`), the decision should record the commit
+    or read date consulted, as it does for the specification text.
+    The reference inherits claims about that implementation that no
+    later reviewer can check without knowing which version was read.
+
+    Action: @workflow-owner — process improvement
