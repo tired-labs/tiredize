@@ -1987,3 +1987,80 @@ Author: technical-architect/software-engineering/specifications
     later reviewer can check without knowing which version was read.
 
     Action: @workflow-owner — process improvement
+
+### 2026-09-18T16:17:08+00:00
+
+Author: ghostwriter/software-engineering/ai-prose-hygiene,markdown-style
+
+    User documentation. `README.md` is the only user-facing document
+    and the five changes the architecture review named are made, in
+    one commit (cf2b4ee). Nothing else in the repository was touched.
+    Facts were taken from `linter.md` (Element Vocabulary, Link
+    Validation) and `markdown-parser.md` (Autolinks), then confirmed
+    against tip: the CLI with a rules file naming `link_bare` prints
+    `error: Unknown element name in disallow: 'link_bare'` and exits
+    `1`; `_has_checkable_scheme` returns False for `localhost:8080`,
+    `example.com:8080/x` and `C:\path` and True for
+    `http://localhost:8080`; `ExtendedAutolink.extract` links
+    `www.example.com/x` as `http://www.example.com/x` and yields
+    nothing for `./configure` or `\*.dll` in prose.
+
+    Change by change, against the review's numbered list:
+
+    1. Features, parser paragraph. "links (inline, reference-style,
+       bracket, and bare)" is gone. The paragraph now says links
+       include the inline and reference-style forms as well as GFM
+       autolinks, defines an autolink (`<url>` or `<email>`) and an
+       extended autolink (bare URL, `www.` address, email address in
+       prose), states that recognition follows the GFM specification
+       so tiredize links what GitHub links and leaves alone what
+       GitHub renders as plain text, and points to the parser
+       specification in one sentence. That pointer needed a new
+       reference definition, `[spec-parser]`, added at the foot of the
+       file beside the three existing `[spec-*]` entries. cmark-gfm
+       divergences are not mentioned.
+    2. `links` rule. The first sentence names the four kinds as inline
+       links, autolinks, extended autolinks, and reference definitions;
+       the anchor and relative-path sentences are unchanged. Two new
+       paragraphs follow: only `http`/`https` targets are checked for
+       every kind; any other scheme (`mailto:`, `xmpp:`, `ftp:`,
+       `irc:`, unregistered) is recognized but never a finding; a
+       `www.` link is checked with `http://` prepended, with
+       `www.example.com` as the worked example; `./path` and `\path`
+       in prose are no longer links, while relative paths inside an
+       inline link or reference definition are still checked. The
+       second paragraph is the warning: the scheme check goes by
+       shape, so `localhost:8080`, `example.com:8080/x` and `C:\path`
+       are now skipped silently for every link kind, and writing
+       `http://localhost:8080` gets the target checked.
+    3. `elements` example: `link_bare` is now `autolink_extended`.
+    4. Element-name table: the `link_bare` and `link_bracket` rows are
+       replaced by `autolink` (Autolink (`<url>` or `<email>`)) and
+       `autolink_extended` (Extended autolink (bare URL, `www.`, email,
+       `mailto:`/`xmpp:`)), at the top, keeping the table alphabetical.
+    5. Breaking-change note, directly under that table: earlier
+       versions named these `link_bracket` and `link_bare`; neither is
+       accepted; a rules file using one fails at load with
+       `error: Unknown element name in disallow: 'link_bare'` (or the
+       `exclude` form for `line_length`/`unicode`) and exit status
+       `1`; the fix is to rename.
+
+    Left as is, deliberately: the Features "Linter rules" paragraph
+    still lists four built-in rules (line length, tabs, trailing
+    whitespace, links) where there are six (`elements` and `unicode`
+    are missing). It is a separate paragraph from the parser line and
+    was not rewritten, so under the orchestrator's instruction it is
+    reported here rather than changed. The same paragraph's "A
+    regex-based parser" was also left, although `ExtendedAutolink` is
+    now partly procedural; the README does not describe parser
+    internals and the phrase is still broadly true.
+
+    Style: the new prose keeps the file's American spelling
+    ("recognized"), its `--` paragraph leads, its heading levels and
+    table format, and wraps under 80 columns. Linting `README.md` with
+    a scratch rules file (trailing_whitespace, tabs, line_length 80
+    excluding tables, code blocks and reference definitions) reports
+    exactly one finding, the pre-existing 336-character badge line 3,
+    identical on `main`; the edit introduces nothing. The old names
+    appear in the README only inside the breaking-change note. No
+    action tag is needed: the step completed cleanly.
