@@ -24,11 +24,12 @@ incorrectly leveled sections. Supports both ordered and unordered
 validation modes.
 
 **Linter rules** -- A pluggable rule engine for style and formatting
-checks. Built-in rules cover line length, tab usage, trailing
-whitespace, and link validation (including HTTP checks, anchor
-resolution, and relative file path verification). Advanced users can
-add custom rules by modifying the built-in rules package (for example,
-via an editable install or project fork).
+checks. Built-in rules cover markdown element restrictions, line
+length, tab usage, trailing whitespace, unicode characters, and link
+validation (including HTTP checks, anchor resolution, and relative
+file path verification). Advanced users can add custom rules by
+modifying the built-in rules package (for example, via an editable
+install or project fork).
 
 **Markdown parser** -- A regex-based parser that extracts headers,
 sections, code blocks (fenced and inline), links, images, tables, block
@@ -37,10 +38,9 @@ position tracking. Links include the inline and reference-style forms
 as well as GFM autolinks. An autolink is a `<url>` or `<email>` in angle
 brackets. An extended autolink is a bare URL, a `www.` address, or an
 email address written in plain prose. Autolink recognition follows the
-GFM specification, so tiredize links what GitHub links and leaves alone
-what GitHub renders as plain text. The exact recognition rules are in
-the [markdown parser specification][spec-parser]. List extraction is
-planned but not yet implemented.
+GFM specification. The exact recognition rules are in the [markdown
+parser specification][spec-parser]. List extraction is planned but not
+yet implemented.
 
 **Frontmatter schema validation** -- Validate YAML frontmatter fields
 against a user-defined schema. Declare which fields must exist, their
