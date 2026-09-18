@@ -187,7 +187,7 @@ autolink". The `exclude` option continues to match on hostname.
 
 Acceptance tests (written at step 2, before implementation):
 
-- [ ] Every one of the 33 specification examples 603–635 has an
+- [x] Every one of the 33 specification examples 603–635 has an
       acceptance test that feeds the example's markdown to
       `Autolink.extract()` or `ExtendedAutolink.extract()` as
       appropriate and asserts the exact set of links extracted —
@@ -199,27 +199,27 @@ Acceptance tests (written at step 2, before implementation):
       `Autolink` is extracted and that one `ExtendedAutolink` is — for
       617, `http://foo.bar` follows whitespace and so qualifies under
       §6.9 even though `< http://foo.bar >` fails §6.8.
-- [ ] The preceding-character rule is tested beyond the spec examples:
+- [x] The preceding-character rule is tested beyond the spec examples:
       an extended autolink after each of `*`, `_`, `~`, `(` is matched;
       the same URL immediately after a letter, digit, or `"` is not.
-- [ ] The escape cases that opened this issue are tested as producing
+- [x] The escape cases that opened this issue are tested as producing
       no extended autolink: `\*.dll`, `\|`, `\_x\_.md`,
       `\\server\share`, and an escaped sequence ending in a file
       extension. `./configure` and `../guide.md` in running prose are
       tested as producing no extended autolink.
-- [ ] Relative path validation through inline links
+- [x] Relative path validation through inline links
       (`[text](./file.md)`) and reference definitions
       (`[ref]: ./file.md`) is tested as unchanged.
-- [ ] The `links` rule is tested to produce no finding for autolinks
+- [x] The `links` rule is tested to produce no finding for autolinks
       and extended autolinks whose scheme is not `http` or `https`, to
       validate a `www.` extended autolink against `http://` + the
       matched text, and to name the element as "Autolink" or "Extended
       autolink" in finding messages.
-- [ ] `Autolink.sanitize()` and `ExtendedAutolink.sanitize()` are
+- [x] `Autolink.sanitize()` and `ExtendedAutolink.sanitize()` are
       tested to blank exactly the spans `extract()` matches, including
       a trailing-punctuation case where the blanked span must stop
       before the punctuation.
-- [ ] The `elements` rule is tested to accept `autolink` and
+- [x] The `elements` rule is tested to accept `autolink` and
       `autolink_extended` in `disallow`, to label findings "Autolink"
       and "Extended autolink", and to reject `link_bare` and
       `link_bracket` as unknown names. The `line_length` and `unicode`
@@ -227,11 +227,11 @@ Acceptance tests (written at step 2, before implementation):
       lists, are tested the same way. (Corrected at the step-2 gate:
       the criterion originally placed `exclude` on `elements`, which
       has no such option.)
-- [ ] All of the above fail before implementation and pass after.
+- [x] All of the above fail before implementation and pass after.
 
 Implementation:
 
-- [ ] `BracketLink` is renamed `Autolink` and `BareLink` is renamed
+- [x] `BracketLink` is renamed `Autolink` and `BareLink` is renamed
       `ExtendedAutolink`, with `Section.autolinks` and
       `Section.autolinks_extended` replacing `links_bracket` and
       `links_bare`, and the `elements` vocabulary and labels updated per
@@ -239,41 +239,41 @@ Implementation:
       `tiredize/`, and none in `tests/` outside the tests that assert
       the old names are rejected. (Corrected after step 3: the
       original wording contradicted the rejection tests.)
-- [ ] `Autolink` matches per GFM §6.8 as stated in the Public Contract.
-- [ ] `ExtendedAutolink` matches per GFM §6.9 as stated in the Public
+- [x] `Autolink` matches per GFM §6.8 as stated in the Public Contract.
+- [x] `ExtendedAutolink` matches per GFM §6.9 as stated in the Public
       Contract, including extended autolink path validation.
-- [ ] The `./`, `../`, and `\` alternatives are gone from the extended
+- [x] The `./`, `../`, and `\` alternatives are gone from the extended
       autolink pattern.
-- [ ] The `links` rule validates only `http` and `https` targets and
+- [x] The `links` rule validates only `http` and `https` targets and
       emits no finding for other schemes.
-- [ ] The four skipped tests `test_bare_link_www`,
+- [x] The four skipped tests `test_bare_link_www`,
       `test_bare_link_trailing_punctuation_stripped`,
       `test_bracket_link_ftp`, and `test_bracket_link_email` are
       unskipped and pass, or are superseded by the example-numbered
       tests and removed.
-- [ ] `test_bare_link_backslash` is inverted to assert no match and
+- [x] `test_bare_link_backslash` is inverted to assert no match and
       renamed to reflect that backslash paths are not autolinks;
       `test_bare_link_backslash_not_matched_mid_word` is retained,
       renamed to the new vocabulary, and given a docstring stating that
       it asserts registry keys are not links.
-- [ ] The full test suite passes and flake8 reports nothing.
+- [x] The full test suite passes and flake8 reports nothing.
 
 Documentation:
 
-- [ ] `.context/specifications/markdown-parser.md` — the element
+- [x] `.context/specifications/markdown-parser.md` — the element
       descriptions, the Relative Path Matching section, the Pattern
       Reference entries, and every mention of the two elements use the
       new names and reflect the new behaviour. The sentence "Backslash
       paths (`\`) are also supported for Windows-style paths" is gone.
       The Pattern Reference block for the extended autolink pattern is
       already stale (it shows a superseded form with `\S+`).
-- [ ] `README.md` — the `links` rule section states which link forms
+- [x] `README.md` — the `links` rule section states which link forms
       are recognised and that only `http` and `https` targets are
       checked; the Recognized markdown element names table lists
       `autolink` and `autolink_extended` in place of `link_bare` and
       `link_bracket`; the parser feature description no longer says
       "bracket" or "bare".
-- [ ] `.context/issues/gfm-parity.md` — the BareLink and BracketLink
+- [x] `.context/issues/gfm-parity.md` — the BareLink and BracketLink
       register entries are checked off and their Findings entries
       updated, since this issue delivers those two elements.
 
@@ -2175,3 +2175,14 @@ Author: proofreader/software-engineering/ai-prose-hygiene,markdown-style
     proofreaders apply one reading.
 
     Action: @workflow-owner — process improvement
+
+### 2026-09-18T16:35:00+00:00
+
+Author: program-manager/software-engineering
+
+    Steps 1–9 complete. Every acceptance criterion checked off against
+    the verified step outputs: acceptance tests (steps 2 and 5),
+    implementation (steps 3–5), parser and linter specifications (steps
+    6–7), README (steps 8–9), and the `gfm-parity` register (updated by
+    the PM in this commit: BareLink and BracketLink checked off, skip
+    count 50 → 46). Routing to step 10, closeout.

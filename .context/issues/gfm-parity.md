@@ -20,8 +20,10 @@ syntax variant audit (`test-coverage-markdown-types`) and are
 currently documented as skipped spec tests. This issue tracks adding
 support for them to achieve closer GFM parity.
 
-50 skipped spec tests across twelve element types document the gaps,
-verified by `pytest -rs` on 2026-09-14. The whole set is too large to
+46 skipped spec tests across ten element types document the gaps,
+verified by `pytest -rs` on 2026-09-18 (50 across twelve on
+2026-09-14, before `autolink-gfm-parity` closed the two autolink
+elements). The whole set is too large to
 carry as one unit of work, so it is delivered one element type at a
 time.
 
@@ -30,7 +32,7 @@ time.
 Each element type below is its own unit of work, taken up as a separate
 issue tagged `gfm-parity` when it is scheduled. This issue is the
 register: it closes when every element below is closed. The skip counts
-are authoritative as of 2026-09-14 and each element's gaps are detailed
+are authoritative as of 2026-09-18 and each element's gaps are detailed
 under Findings.
 
 - [ ] **InlineLink** (7 skips) — titles, empty URLs, escaped and
@@ -48,8 +50,10 @@ under Findings.
 - [ ] **CodeInline** (4 skips) — multi-backtick delimiters, multiline
 - [ ] **QuoteBlock** (3 skips) — lazy continuation, spaced nesting,
       indentation
-- [ ] **BareLink** (2 skips) — `www.` autolinks, trailing punctuation
-- [ ] **BracketLink** (2 skips) — non-HTTP schemes, email autolinks
+- [x] **BareLink** (2 skips) — `www.` autolinks, trailing punctuation —
+      delivered by `autolink-gfm-parity` as `ExtendedAutolink`
+- [x] **BracketLink** (2 skips) — non-HTTP schemes, email autolinks —
+      delivered by `autolink-gfm-parity` as `Autolink`
 - [ ] **LinkReference** (2 skips) — collapsed references, `]` in label
 - [ ] **ImageReference** (2 skips) — collapsed references, `]` in label
 - [ ] **Table** (2 skips) — escaped pipes, CRLF
@@ -169,24 +173,18 @@ together, or a single owner.
   Same `[^]]` issue.
 - Escaped quote in title (`"title \" here"`) truncated.
 
-#### BracketLink (2 skips)
+#### BracketLink and BareLink (0 skips — closed)
 
-- Non-HTTP schemes (`<ftp://example.com>`, `<mailto:user@host>`)
-  not matched. Pattern requires `https?://`.
-- Email autolinks (`<user@example.com>`) not matched.
-
-#### BareLink (2 skips)
-
-- `www.` prefix without scheme not matched. Pattern requires
-  `http[s]?://` or `./` or `\`.
-- Trailing punctuation (`https://example.com.`) captured as part of
-  URL. GFM strips trailing punctuation from extended autolinks.
-
-Note that the backslash false-positive class is *not* tracked here.
-`BareLink` is a deliberate superset of GFM — GFM never autolinks
-relative or Windows paths — so that bug lives in tiredize-specific
-territory this issue does not reach. See
-`bare-link-backslash-collision`.
+Both elements were delivered by `autolink-gfm-parity` (2026-09-18),
+which renamed them `Autolink` and `ExtendedAutolink` and implemented
+GFM 0.29-gfm §6.8 and §6.9 in full, with one test per specification
+example 603–635. The four skips listed here on 2026-09-14 (non-HTTP
+schemes, email autolinks, `www.` prefix, trailing punctuation) are
+resolved: three tests unskipped and passing, `test_bare_link_www`
+removed as superseded by the example-numbered tests. The backslash
+false-positive class, previously noted as outside this register, was
+absorbed into the same issue. Known divergences from `cmark-gfm` are
+documented in `.context/specifications/markdown-parser.md`.
 
 #### InlineImage (5 skips)
 
@@ -292,3 +290,15 @@ Author: program-manager
 
     The first Open Question — split or single issue — is resolved and
     moved to Design Decisions.
+
+### 2026-09-18T16:30:00+00:00
+
+Author: program-manager
+
+    BareLink and BracketLink checked off: delivered by
+    `autolink-gfm-parity`, which expanded from
+    `bare-link-backslash-collision` to full autolink parity and renamed
+    the elements `Autolink` and `ExtendedAutolink`. Register skip count
+    50 → 46 across ten remaining element types, verified by
+    `pytest -rs` at the delivering branch's tip. Remaining elements are
+    unchanged and await the gfm-compliance audit.
