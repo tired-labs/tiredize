@@ -150,7 +150,8 @@ def check_url_valid(
     timeout: float | None = None,
     headers: dict[str, Any] | None = None,
     allow_redirects: bool | None = None,
-    verify_ssl: bool | None = None
+    verify_ssl: bool | None = None,
+    valid_status_codes: list[int | str] | None = None,
 ) -> tuple[bool, int | None, str | None]:
 ```
 
@@ -161,7 +162,45 @@ types:
 - `#anchor` -- checks against `document.sections[*].header.slug`.
 - `./relative` -- resolves relative to the document's directory
   (`document.path.parent`) and checks file existence.
-- `http(s)://` -- makes an HTTP request with the given options.
+- anything else -- makes an HTTP request with the given options.
+  `valid_status_codes` lists the codes (integers, or class wildcards
+  such as `'2xx'`) treated as valid; `None` means every 2xx and 3xx.
+
+The function itself does not filter by scheme: a `mailto:` or a
+scheme-less `example.com` handed to it is attempted as an HTTP request
+and reported as a failure. The `links` rule gates what it hands over
+(see "Link Validation").
+
+### Element Vocabulary
+
+```python
+# tiredize/linter/rules/_elements.py
+_ELEMENT_LABELS: dict[str, str]   # name -> label used in findings
+_ELEMENT_MAP: dict[str, Callable[[Section], list]]  # name -> elements
+```
+
+The names accepted in `elements.disallow`, `line_length.exclude` and
+`unicode.exclude`, the `Section` field each reads, and the label a
+finding uses:
+
+| Name                   | `Section` field         | Label                   |
+|------------------------|-------------------------|-------------------------|
+| `autolink`             | `autolinks`             | Autolink                |
+| `autolink_extended`    | `autolinks_extended`    | Extended autolink       |
+| `code_block`           | `code_block`            | Fenced code block       |
+| `code_inline`          | `code_inline`           | Inline code             |
+| `header`               | `header`                | Header                  |
+| `image_inline`         | `images_inline`         | Inline image            |
+| `image_reference`      | `images_reference`      | Reference-style image   |
+| `link_inline`          | `links_inline`          | Inline link             |
+| `link_reference`       | `links_reference`       | Reference-style link    |
+| `quoteblock`           | `quoteblocks`           | Blockquote              |
+| `reference_definition` | `reference_definitions` | Reference definition    |
+| `table`                | `tables`                | Table                   |
+
+Any other name -- including the former `link_bare` and `link_bracket`
+-- raises `ValueError` (`Unknown element name in disallow: '…'` or
+`… in exclude: '…'`) at configuration load. There are no aliases.
 
 ## File Layout
 
@@ -272,6 +311,58 @@ Value-level checks a rule already performs — element names in
 afterwards, on values already confirmed to be of the right shape, and
 raise `ValueError` from the rule itself.
 
+## Link Validation
+
+The `links` rule (`tiredize/linter/rules/links.py`) reads four
+`Section` fields -- `links_inline`, `autolinks`, `autolinks_extended`
+and `reference_definitions` -- and hands each element's `url` to
+`check_url_valid()` unless one of two gates skips it. Both gates apply
+identically to all four kinds.
+
+### Scheme gate
+
+Only `http` and `https` targets are checked. `_has_checkable_scheme()`
+parses the leading scheme with `_RE_SCHEME`
+(`[A-Za-z][A-Za-z0-9+.-]*:`, the token urllib would split off) rather
+than `urlparse`, so a malformed URL such as `http://[::1` cannot raise
+before `check_url_valid()` reports it. The outcome:
+
+- no scheme (`#anchor`, `./file.md`, `example.com`) -- handed over, so
+  anchors and relative paths are resolved locally as `check_url_valid`
+  describes and `example.com` is reported as "No scheme supplied";
+- `http`/`https` in any letter case -- handed over;
+- any other scheme -- skipped silently, with no finding.
+
+"Any other scheme" is judged by shape, not by a list: `mailto:`,
+`xmpp:`, `irc:`, `ftp:` and unregistered schemes such as `a+b+c:` are
+skipped, and so is any target whose leading token merely parses as a
+scheme, such as `localhost:8080`, `example.com:8080/x` or `C:\path`.
+Those last are recognised as links by the parser and never checked.
+
+The gate exists because `check_url_valid()` reaches a target with an
+HTTP request, so a non-HTTP target could only ever be reported
+unreachable. The parser recognises every scheme GFM does (see
+`specifications/markdown-parser.md`, "Autolinks"); the rule checks the
+subset it can check. The parser has already normalised `url`, so a
+`www.` extended autolink arrives as `http://www.…` and is checked over
+`http`, and a bare email arrives as `mailto:…` and is skipped.
+
+### Exclusion gate
+
+`exclude` holds hostname glob patterns (`fnmatch`, case-insensitive on
+the pattern). `_is_excluded()` compares `urlparse(url).hostname`
+against each pattern; a URL with no hostname is never excluded.
+Exclusion is judged after the scheme gate.
+
+### Findings
+
+A failed check yields one `RuleResult` at the element's position,
+naming the element kind and the `url` checked: `Inline link '…' is not
+reachable.`, `Autolink '…' is not reachable.`, `Extended autolink '…'
+is not reachable.`, `Reference link '…' is not reachable.`, each
+followed by `Status code: …, Error: …`. With `validate: false` the rule
+returns no results.
+
 ## Design Decisions
 
 - **One shared validator, not a hand-written check per rule.** The
@@ -304,3 +395,16 @@ raise `ValueError` from the rule itself.
   distinction the rules need is drawn once, up front, by
   `validate_config()`; pushing it into five accessors would duplicate
   it and still leave each rule to decide what to do about it.
+
+- **The `links` rule checks only what it can check, uniformly across
+  link kinds.** GFM parity makes the parser recognise `<irc://…>`,
+  `<a+b+c:d>`, bare email addresses and `mailto:`/`xmpp:` links; none
+  can be validated with an HTTP request, and handing them to
+  `requests` would report every one unreachable -- a larger false-
+  positive class than the one parity removed. The rule therefore
+  validates `http` and `https` targets only. The gate is applied to
+  inline links and reference definitions as well as to both autolink
+  kinds, so `[text](mailto:…)` and `[ref]: ftp://…` produce no
+  guaranteed false positive either. Other schemes remain links for the
+  `elements` rule and for any future rule; they simply produce no
+  `links` finding. See issue `autolink-gfm-parity.md`.
