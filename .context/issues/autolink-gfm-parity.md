@@ -2064,3 +2064,114 @@ Author: ghostwriter/software-engineering/ai-prose-hygiene,markdown-style
     identical on `main`; the edit introduces nothing. The old names
     appear in the README only inside the breaking-change note. No
     action tag is needed: the step completed cleanly.
+
+### 2026-09-18T16:24:48+00:00
+
+Author: proofreader/software-engineering/ai-prose-hygiene,markdown-style
+
+    Documentation review of `README.md` as changed in cf2b4ee, read in
+    the context of the whole file, at tip e677e66. Verdict: clean. No
+    edit is requested. The no-change confirmation is commit 1765847.
+    Nothing outside this Comment was changed.
+
+    Accuracy, against the architect's five-item brief and against the
+    specification passages the README now describes (`linter.md`
+    Element Vocabulary and Link Validation; `markdown-parser.md`
+    Autolink Elements and Autolinks), not against the code:
+
+    1. Features, lines 36-42. The autolink and extended autolink
+       definitions match section 6.8 and 6.9 as the parser
+       specification states them; the pointer sentence names the
+       parser specification and the new `[spec-parser]` definition
+       resolves. As the brief asked.
+    2. `links` rule, lines 342-360. The four kinds are the four
+       `Section` fields Link Validation reads; the http/https gate,
+       the "recognized but never a finding" consequence with its
+       scheme list, the `www.` normalisation to `http://`, the
+       `./path` and `\path` sentence, the surviving relative-path
+       check, and the by-shape warning with `localhost:8080`,
+       `example.com:8080/x` and `C:\path` each match the Scheme gate
+       text. The anchor and relative-path sentences are unchanged.
+    3. `elements` example, line 392: `autolink_extended`.
+    4. Element table, lines 401-402: the two rows match the Element
+       Vocabulary names and labels and sit in alphabetical position.
+    5. Breaking-change note, lines 414-420: matches the vocabulary
+       section's "no aliases" statement and the quoted error.
+
+    Machine checks. (1) `python3 -m tiredize` over `README.md` with a
+    scratch rules file (trailing_whitespace, tabs, line_length 80
+    excluding table, code_block and reference_definition, links
+    validate false) reports exactly the known badge line 3, identical
+    on `main`; the only 80-column line is table row 133, and lines 111
+    and 256 are inside code blocks. (2) All four `[spec-*]` reference
+    definitions at the foot of the file point at paths that exist
+    under `.context/specifications/`. (3) A rules file naming
+    `link_bare` under `elements.disallow` prints exactly
+    `error: Unknown element name in disallow: 'link_bare'` on stderr,
+    nothing on stdout, and exits `1`; with two files given, neither
+    file's result line is printed, so "before any document is checked"
+    holds. `link_bracket` under `line_length.exclude` prints the
+    `… in exclude: …` form the note describes. (4) No old name or old
+    wording (`link_bare`, `link_bracket`, "bracket link", "bare link",
+    "angle-bracket") survives outside the breaking-change note.
+
+    Prose, against markdown-style and ai-prose-hygiene, whole file: no
+    finding in the changed passages. No dash, colon or semicolon breaks
+    a new sentence; no blacklisted word; sentence starts and lengths
+    vary; every new line is under 80 columns and the file's `--`
+    paragraph leads, American spelling and table format are kept.
+
+    Observations for closeout, none routed as an edit:
+
+    - Features, lines 39-41: "so tiredize links what GitHub links and
+      leaves alone what GitHub renders as plain text" is absolute,
+      while the parser specification's Overview says the text is
+      implemented rather than GitHub's renderer and lists eight
+      divergences from `cmark-gfm` (for one, `"https://x.org"` links
+      on GitHub and not here). The brief allowed "link recognition
+      matches GitHub's" and the decided form is one pointer sentence
+      with no divergences in the README, which the next sentence
+      provides, so the wording is within the decision. The PM may
+      still prefer to end the sentence at "GFM specification".
+    - Features, line 38: the extended autolink definition names three
+      forms (bare URL, `www.`, email) where the table row and section
+      6.9 have four (`mailto:`/`xmpp:` as well). It matches the
+      brief's own wording and reads as a summary; the table is the
+      complete list.
+    - `links`, line 347: "only `http` and `https` targets are checked"
+      is not literally complete, since a scheme-less non-relative
+      target such as `[x](example.com)` still reaches validation and
+      is reported "No scheme supplied", as the Scheme gate text says.
+      Pre-existing behaviour; the surrounding anchor and relative-path
+      sentences give the reader the right picture.
+    - `links`, lines 352 and 357: "no longer" and "now" describe a
+      change relative to an unstated earlier version, in a file with
+      no changelog. The breaking-change note under the element table
+      anchors its own "earlier versions"; these two do not. The brief
+      prescribed the wording.
+    - Pre-existing and outside the brief, as the ghostwriter recorded:
+      the Features "Linter rules" paragraph (lines 26-31) lists four
+      built-in rules where six exist, and "A regex-based parser" (line
+      33) stands. Also pre-existing and outside the diff: em dashes
+      break sentences at lines 85, 142, 248, 259, 315 and 484, which
+      ai-prose-hygiene forbids.
+    - Comma count. ai-prose-hygiene caps a sentence at two commas. The
+      Features list (lines 33-36, seven commas, pre-existing content
+      rewrapped by the diff) and the four-kind list at lines 342-343
+      (three commas, pre-existing structure with the names replaced)
+      both exceed it. Neither mixes list commas with clause commas,
+      and a four-item serial list cannot be written with fewer than
+      three, so I have not routed either as an edit; the same
+      structures predate this issue and the ghostwriter read them the
+      same way. Flagged rather than judged, per the proofreader
+      function.
+
+    Process improvement: ai-prose-hygiene's two-comma limit and its
+    "one serial list per sentence" rule together leave a plain list of
+    four or more items undefined, and this README has two such lists
+    in its most-read passages. The knowledge file should say whether
+    a single serial list is exempt from the count, or whether lists of
+    four or more items must be bulleted, so that ghostwriters and
+    proofreaders apply one reading.
+
+    Action: @workflow-owner — process improvement
