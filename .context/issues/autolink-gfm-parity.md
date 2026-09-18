@@ -1,5 +1,5 @@
 ---
-assignee: qa-engineer
+assignee: program-manager
 created: 2026-09-14
 knowledge: []
 priority: medium
@@ -195,8 +195,10 @@ Acceptance tests (written at step 2, before implementation):
       cases. Each test names the example number as published at
       `https://github.github.com/gfm/`. Examples containing several
       input paragraphs assert every paragraph; none is partially
-      covered. Examples 620 and 621 assert both that no `Autolink` is
-      extracted and that one `ExtendedAutolink` is.
+      covered. Examples 617, 620, and 621 assert both that no
+      `Autolink` is extracted and that one `ExtendedAutolink` is — for
+      617, `http://foo.bar` follows whitespace and so qualifies under
+      §6.9 even though `< http://foo.bar >` fails §6.8.
 - [ ] The preceding-character rule is tested beyond the spec examples:
       an extended autolink after each of `*`, `_`, `~`, `(` is matched;
       the same URL immediately after a letter, digit, or `"` is not.
@@ -218,9 +220,13 @@ Acceptance tests (written at step 2, before implementation):
       a trailing-punctuation case where the blanked span must stop
       before the punctuation.
 - [ ] The `elements` rule is tested to accept `autolink` and
-      `autolink_extended` in `disallow` and `exclude`, to label findings
-      "Autolink" and "Extended autolink", and to reject `link_bare` and
-      `link_bracket` as unknown names.
+      `autolink_extended` in `disallow`, to label findings "Autolink"
+      and "Extended autolink", and to reject `link_bare` and
+      `link_bracket` as unknown names. The `line_length` and `unicode`
+      rules, which share the element vocabulary in their `exclude`
+      lists, are tested the same way. (Corrected at the step-2 gate:
+      the criterion originally placed `exclude` on `elements`, which
+      has no such option.)
 - [ ] All of the above fail before implementation and pass after.
 
 Implementation:
@@ -621,3 +627,17 @@ Author: qa-engineer/software-engineering/testing
     contract's rules say it does, and the criteria mandate the
     dual assertion only for 620 and 621. Step 3 may add it as an
     edge test if the user wants it pinned.
+
+### 2026-09-18T14:30:00+00:00
+
+Author: program-manager/software-engineering
+
+    Step-2 gate, first pass. The user reviewed the 104-test suite and
+    ruled on the two flags: (1) criterion 7's `exclude` on `elements`
+    was a scoping error — corrected to `disallow` on `elements` and
+    `exclude` on `line_length`/`unicode`, matching what the
+    qa-engineer tested; no new `exclude` option is added. (2) Example
+    617 must also assert its §6.9 half explicitly — the user wants
+    every specification example pinned by a unit test, both halves
+    where both apply. Criterion 1 amended. Routing back to the
+    qa-engineer for that one addition before approval is recorded.
