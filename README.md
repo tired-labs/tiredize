@@ -24,17 +24,23 @@ incorrectly leveled sections. Supports both ordered and unordered
 validation modes.
 
 **Linter rules** -- A pluggable rule engine for style and formatting
-checks. Built-in rules cover line length, tab usage, trailing
-whitespace, and link validation (including HTTP checks, anchor
-resolution, and relative file path verification). Advanced users can
-add custom rules by modifying the built-in rules package (for example,
-via an editable install or project fork).
+checks. Built-in rules cover markdown element restrictions, line
+length, tab usage, trailing whitespace, unicode characters, and link
+validation (including HTTP checks, anchor resolution, and relative
+file path verification). Advanced users can add custom rules by
+modifying the built-in rules package (for example, via an editable
+install or project fork).
 
 **Markdown parser** -- A regex-based parser that extracts headers,
-sections, code blocks (fenced and inline), links (inline,
-reference-style, bracket, and bare), images, tables, block quotes,
-and frontmatter into typed dataclass elements with accurate position
-tracking. List extraction is planned but not yet implemented.
+sections, code blocks (fenced and inline), links, images, tables, block
+quotes, and frontmatter into typed dataclass elements with accurate
+position tracking. Links include the inline and reference-style forms
+as well as GFM autolinks. An autolink is a `<url>` or `<email>` in angle
+brackets. An extended autolink is a bare URL, a `www.` address, or an
+email address written in plain prose. Autolink recognition follows the
+GFM specification. The exact recognition rules are in the [markdown
+parser specification][spec-parser]. List extraction is planned but not
+yet implemented.
 
 **Frontmatter schema validation** -- Validate YAML frontmatter fields
 against a user-defined schema. Declare which fields must exist, their
@@ -334,9 +340,24 @@ unicode:
 #### links
 
 Validates that URLs in the document are reachable. Checks inline links,
-angle-bracket links, bare URLs, and reference definitions. Anchors
+autolinks, extended autolinks, and reference definitions. Anchors
 (`#slug`) are resolved against section headings in the document. Relative
 paths are checked for file existence on disk.
+
+For every one of those link kinds, only `http` and `https` targets are
+checked. A link with any other scheme is recognized as a link but never
+produces a finding. That holds for `mailto:` and `xmpp:` addresses, for
+`ftp:` and `irc:` URLs, and for any unregistered scheme. A `www.` link
+is checked with `http://` prepended, so `www.example.com` is requested
+as `http://www.example.com`. A `./path` or `\path` written in prose is
+no longer treated as a link at all. Relative paths are still checked
+when they appear in an inline link or a reference definition.
+
+The scheme check goes by shape rather than by a list of known schemes,
+so a target whose first token looks like a scheme is now skipped
+silently for every link kind. That includes `localhost:8080`,
+`example.com:8080/x`, and `C:\path`. Write `http://localhost:8080` to
+have such a target checked.
 
 | Option | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -368,7 +389,7 @@ Each occurrence of a disallowed type is reported as a separate violation.
 elements:
   disallow:
     - link_inline
-    - link_bare
+    - autolink_extended
 ```
 
 #### Recognized markdown element names
@@ -377,18 +398,26 @@ The following names are valid in `exclude` and `disallow` lists:
 
 | Name | Description |
 | --- | --- |
+| `autolink` | Autolink (`<url>` or `<email>`) |
+| `autolink_extended` | Extended autolink (bare URL, `www.`, email, `mailto:`/`xmpp:`) |
 | `code_block` | Fenced code block |
 | `code_inline` | Inline code |
 | `header` | Section header |
 | `image_inline` | Inline image |
 | `image_reference` | Reference-style image |
-| `link_bare` | Bare URL |
-| `link_bracket` | Bracket link (`<url>`) |
 | `link_inline` | Inline link |
 | `link_reference` | Reference-style link |
 | `quoteblock` | Block quote |
 | `reference_definition` | Reference link definition |
 | `table` | Pipe-delimited table |
+
+Earlier versions named the two autolink types `link_bracket` and
+`link_bare`. Neither name is accepted any more. A rules file that still
+uses one fails at load, before any document is checked, with
+`error: Unknown element name in disallow: 'link_bare'` on stderr (or
+`… in exclude: …` for a `line_length` or `unicode` list) and exit status
+`1`. The fix is to rename `link_bracket` to `autolink` and `link_bare`
+to `autolink_extended`.
 
 ## Custom Rules
 
@@ -471,3 +500,4 @@ and available configuration helpers.
 [spec-validator]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/markdown-schema-validator.md
 [spec-frontmatter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/frontmatter-schema-validator.md
 [spec-linter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/linter.md
+[spec-parser]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/markdown-parser.md

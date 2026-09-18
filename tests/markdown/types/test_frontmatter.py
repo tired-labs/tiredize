@@ -290,10 +290,10 @@ def test_header_not_extracted_from_frontmatter():
 def test_link_not_extracted_from_frontmatter():
     """Links inside YAML frontmatter should not be extracted when
     frontmatter is sanitized first."""
-    from tiredize.markdown.types.link import BareLink
+    from tiredize.markdown.types.link import ExtendedAutolink
     text = "---\nurl: https://example.com\n---\nSome text."
     sanitized = FrontMatter.sanitize(text)
-    results = BareLink.extract(sanitized)
+    results = ExtendedAutolink.extract(sanitized)
     assert len(results) == 0
 
 

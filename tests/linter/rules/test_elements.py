@@ -120,13 +120,13 @@ def test_disallow_code_block():
     assert "Fenced code block" in results[0].message
 
 
-def test_disallow_link_bare():
-    """Disallowing 'link_bare' flags bare URLs."""
+def test_disallow_autolink_extended():
+    """Disallowing 'autolink_extended' flags bare URLs."""
     doc = Document()
     doc.load(text="# H\nhttps://example.com\n")
-    results = validate(doc, {"disallow": ["link_bare"]})
+    results = validate(doc, {"disallow": ["autolink_extended"]})
     assert len(results) == 1
-    assert "Bare link" in results[0].message
+    assert "Extended autolink" in results[0].message
 
 
 def test_disallow_quoteblock():
@@ -235,3 +235,64 @@ def test_non_string_disallow_entry_still_raises_value_level_error():
     doc.load(text="# H\n")
     with pytest.raises(ValueError, match="entries must be strings"):
         validate(doc, {"disallow": [42]})
+
+
+# ===================================================================
+#  Acceptance tests: autolink-gfm-parity (step 2, before implementation)
+#
+#  The element vocabulary takes the specification's names: `autolink`
+#  (was `link_bracket`) and `autolink_extended` (was `link_bare`).
+#  Findings are labelled "Autolink" and "Extended autolink". The old
+#  names are rejected with the existing unknown-element error; no
+#  alias is kept. Autolinks of any scheme count as elements, even
+#  though the `links` rule validates only http and https.
+# ===================================================================
+
+
+@pytest.mark.parametrize(
+    "markdown",
+    ["<https://moonbase.example>", "<irc://foo.bar:2233/baz>",
+     "<foo@bar.example.com>"],
+    ids=["https", "irc", "email"],
+)
+def test_disallow_autolink_flags_each_scheme(markdown):
+    doc = Document()
+    doc.load(text=f"# H\n{markdown}\n")
+    results = validate(doc, {"disallow": ["autolink"]})
+    assert len(results) == 1
+    assert "Autolink" in results[0].message
+    assert "Extended" not in results[0].message
+
+
+@pytest.mark.parametrize(
+    "markdown",
+    ["https://moonbase.example", "www.moonbase.example",
+     "foo@bar.baz", "mailto:foo@bar.baz"],
+    ids=["https", "www", "email", "mailto"],
+)
+def test_disallow_autolink_extended_flags_each_form(markdown):
+    doc = Document()
+    doc.load(text=f"# H\nContact {markdown} for details.\n")
+    results = validate(doc, {"disallow": ["autolink_extended"]})
+    assert len(results) == 1
+    assert "Extended autolink" in results[0].message
+
+
+def test_disallow_autolink_does_not_flag_extended_autolink():
+    """The two vocabularies are distinct: a bare URL is not an
+    `autolink`, and a bracketed one is not an `autolink_extended`."""
+    doc = Document()
+    doc.load(text="# H\nhttps://moonbase.example\n<https://x.example>\n")
+    assert len(validate(doc, {"disallow": ["autolink"]})) == 1
+    assert len(validate(doc, {"disallow": ["autolink_extended"]})) == 1
+
+
+@pytest.mark.parametrize("old_name", ["link_bare", "link_bracket"])
+def test_disallow_rejects_old_link_names(old_name):
+    doc = Document()
+    doc.load(text="# H\nhttps://moonbase.example\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"disallow": [old_name]})
+    assert str(excinfo.value) == (
+        f"Unknown element name in disallow: '{old_name}'"
+    )

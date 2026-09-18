@@ -8,8 +8,8 @@ from tiredize.markdown.types.code import CodeBlock
 from tiredize.markdown.types.code import CodeInline
 from tiredize.markdown.types.header import Header
 from tiredize.markdown.types.image import InlineImage
-from tiredize.markdown.types.link import BareLink
-from tiredize.markdown.types.link import BracketLink
+from tiredize.markdown.types.link import Autolink
+from tiredize.markdown.types.link import ExtendedAutolink
 from tiredize.markdown.types.link import InlineLink
 from tiredize.markdown.types.list import List
 from tiredize.markdown.types.quoteblock import QuoteBlock
@@ -21,13 +21,13 @@ from tiredize.markdown.types.table import Table
 
 @dataclass(frozen=False)
 class Section:
+    autolinks: list[Autolink]
+    autolinks_extended: list[ExtendedAutolink]
     code_block: list[CodeBlock]
     code_inline: list[CodeInline]
     header: Header
     images_inline: list[InlineImage]
     images_reference: list[ImageReference]
-    links_bare: list[BareLink]
-    links_bracket: list[BracketLink]
     links_inline: list[InlineLink]
     links_reference: list[LinkReference]
     lists: list[List]
@@ -101,6 +101,14 @@ class Section:
         code_block_safe = CodeBlock.sanitize(string)
 
         section = Section(
+            autolinks=Autolink.extract(
+                text=string,
+                base_offset=base_offset
+            ),
+            autolinks_extended=ExtendedAutolink.extract(
+                text=string,
+                base_offset=base_offset
+            ),
             code_block=CodeBlock.extract(
                 text=string,
                 base_offset=base_offset
@@ -115,14 +123,6 @@ class Section:
                 base_offset=base_offset
             ),
             images_reference=ImageReference.extract(
-                text=string,
-                base_offset=base_offset
-            ),
-            links_bare=BareLink.extract(
-                text=string,
-                base_offset=base_offset
-            ),
-            links_bracket=BracketLink.extract(
                 text=string,
                 base_offset=base_offset
             ),

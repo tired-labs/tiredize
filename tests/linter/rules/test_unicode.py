@@ -283,3 +283,39 @@ def test_rule_is_discovered_by_engine():
     results = run_linter(doc, {"unicode": {"allowed": False}})
     assert len(results) == 1
     assert results[0].rule_id == "unicode"
+
+
+# ===================================================================
+#  Acceptance tests: autolink-gfm-parity (step 2, before implementation)
+#
+#  `exclude` shares the element vocabulary with `elements.disallow`:
+#  `autolink` and `autolink_extended` are accepted and the old
+#  `link_bracket` / `link_bare` names are rejected.
+# ===================================================================
+
+
+def test_allowed_false_exclude_autolink_permits_unicode_in_autolink():
+    doc = Document()
+    doc.load(text="# Hello\n\n<https://moonbase.example/café>\n")
+    results = validate(doc, {"allowed": False, "exclude": ["autolink"]})
+    assert results == []
+
+
+def test_allowed_false_exclude_autolink_extended_permits_unicode():
+    doc = Document()
+    doc.load(text="# Hello\n\nhttps://moonbase.example/café\n")
+    results = validate(
+        doc, {"allowed": False, "exclude": ["autolink_extended"]}
+    )
+    assert results == []
+
+
+@pytest.mark.parametrize("old_name", ["link_bare", "link_bracket"])
+def test_exclude_rejects_old_link_names(old_name):
+    doc = Document()
+    doc.load(text="# Hello\n\ntext\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"allowed": False, "exclude": [old_name]})
+    assert str(excinfo.value) == (
+        f"Unknown element name in exclude: '{old_name}'"
+    )

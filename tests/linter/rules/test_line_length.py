@@ -293,3 +293,45 @@ def test_non_string_exclude_entry_still_raises_value_level_error():
     doc.load(text="# H\n")
     with pytest.raises(ValueError, match="entries must be strings"):
         validate(doc, {"maximum_length": 80, "exclude": [42]})
+
+
+# ===================================================================
+#  Acceptance tests: autolink-gfm-parity (step 2, before implementation)
+#
+#  `exclude` shares the element vocabulary with `elements.disallow`:
+#  `autolink` and `autolink_extended` are accepted and the old
+#  `link_bracket` / `link_bare` names are rejected.
+# ===================================================================
+
+
+def test_exclude_autolink_skips_line_containing_autolink():
+    doc = Document()
+    doc.load(text=(
+        "# H\n"
+        "Docs at <https://moonbase.example/a/very/long/path/indeed>\n"
+    ))
+    results = validate(doc, {"maximum_length": 20, "exclude": ["autolink"]})
+    assert results == []
+
+
+def test_exclude_autolink_extended_skips_line_containing_www_link():
+    doc = Document()
+    doc.load(text=(
+        "# H\n"
+        "Docs at www.moonbase.example/a/very/long/path/indeed today\n"
+    ))
+    results = validate(
+        doc, {"maximum_length": 20, "exclude": ["autolink_extended"]}
+    )
+    assert results == []
+
+
+@pytest.mark.parametrize("old_name", ["link_bare", "link_bracket"])
+def test_exclude_rejects_old_link_names(old_name):
+    doc = Document()
+    doc.load(text="# H\n")
+    with pytest.raises(ValueError) as excinfo:
+        validate(doc, {"maximum_length": 80, "exclude": [old_name]})
+    assert str(excinfo.value) == (
+        f"Unknown element name in exclude: '{old_name}'"
+    )

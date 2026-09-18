@@ -1,6 +1,7 @@
 # Standard library
 from __future__ import annotations
 import fnmatch
+import re
 from typing import Any
 from urllib.parse import urlparse
 
@@ -29,6 +30,34 @@ _ALLOWED_KEYS = {
 }
 _REQUIRED_KEYS = ("validate",)
 
+# The only schemes the rule can check: check_url_valid reaches a
+# target with an HTTP request, so a mailto:, xmpp:, irc:, ftp: or
+# unregistered-scheme link -- all of which the parser recognises as
+# autolinks -- could only ever be reported unreachable. Such links
+# are skipped without a finding.
+_CHECKED_SCHEMES = ("http", "https")
+
+# A URI scheme as urllib would split it: an ASCII letter, then
+# letters, digits, + . -, up to the first colon. Parsed here rather
+# than with urlparse so a malformed URL cannot raise before
+# check_url_valid gets to report it.
+_RE_SCHEME = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:")
+
+
+def _has_checkable_scheme(url: str) -> bool:
+    """
+    Report whether the rule should hand `url` to check_url_valid.
+
+    True for a URL with no scheme -- anchors, `.`-relative paths and
+    anything else check_url_valid already reports on -- and for an
+    http or https scheme in any letter case. False for every other
+    scheme.
+    """
+    match = _RE_SCHEME.match(url)
+    if match is None:
+        return True
+    return match.group()[:-1].lower() in _CHECKED_SCHEMES
+
 
 def _is_excluded(url: str, exclusions: list[str]) -> bool:
     if not exclusions:
@@ -48,6 +77,13 @@ def validate(
 ) -> list[RuleResult]:
     """
     Validate document meets link requirements.
+
+    Every inline link, autolink, extended autolink and reference
+    definition is checked with check_url_valid, except links whose
+    scheme is neither http nor https (see _has_checkable_scheme) and
+    links whose hostname matches an `exclude` pattern. Anchors and
+    relative paths have no scheme and are resolved locally by
+    check_url_valid as before.
 
     Configuration:
         validate: bool - Enable link validation. Required; set it to
@@ -106,6 +142,8 @@ def validate(
     results: list[RuleResult] = []
     for section in document.sections:
         for link in section.links_inline:
+            if not _has_checkable_scheme(link.url):
+                continue
             if _is_excluded(link.url, cfg_exclusions):
                 continue
             is_valid, status_code, error_message = check_url_valid(
@@ -127,7 +165,9 @@ def validate(
                 )
                 results.append(result)
 
-        for link in section.links_bracket:
+        for link in section.autolinks:
+            if not _has_checkable_scheme(link.url):
+                continue
             if _is_excluded(link.url, cfg_exclusions):
                 continue
             is_valid, status_code, error_message = check_url_valid(
@@ -141,7 +181,7 @@ def validate(
                 position = link.position
                 result = RuleResult(
                     message=(
-                        f"Bracket link '{link.url}' is not reachable. "
+                        f"Autolink '{link.url}' is not reachable. "
                         f"Status code: {status_code}, Error: {error_message}"
                     ),
                     position=position,
@@ -149,7 +189,9 @@ def validate(
                 )
                 results.append(result)
 
-        for link in section.links_bare:
+        for link in section.autolinks_extended:
+            if not _has_checkable_scheme(link.url):
+                continue
             if _is_excluded(link.url, cfg_exclusions):
                 continue
             is_valid, status_code, error_message = check_url_valid(
@@ -163,7 +205,7 @@ def validate(
                 position = link.position
                 result = RuleResult(
                     message=(
-                        f"Bare link '{link.url}' is not reachable. "
+                        f"Extended autolink '{link.url}' is not reachable. "
                         f"Status code: {status_code}, Error: {error_message}"
                     ),
                     position=position,
@@ -172,6 +214,8 @@ def validate(
                 results.append(result)
 
         for link in section.reference_definitions:
+            if not _has_checkable_scheme(link.url):
+                continue
             if _is_excluded(link.url, cfg_exclusions):
                 continue
             is_valid, status_code, error_message = check_url_valid(

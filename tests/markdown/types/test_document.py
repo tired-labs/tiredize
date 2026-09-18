@@ -130,13 +130,13 @@ def test_document_load_from_path():
     ]
     expected_code_inline[17] = [Position(offset=3242, length=20)]
 
-    expected_link_bare: list[list[Position]]
-    expected_link_bare = [[] for _ in range(18)]
-    expected_link_bare[0] = [Position(offset=659, length=33)]
+    expected_autolink_extended: list[list[Position]]
+    expected_autolink_extended = [[] for _ in range(18)]
+    expected_autolink_extended[0] = [Position(offset=659, length=33)]
 
-    expected_link_bracket: list[list[Position]]
-    expected_link_bracket = [[] for _ in range(18)]
-    expected_link_bracket[0] = [Position(offset=726, length=32)]
+    expected_autolink: list[list[Position]]
+    expected_autolink = [[] for _ in range(18)]
+    expected_autolink[0] = [Position(offset=726, length=32)]
 
     expected_link_inline: list[list[Position]]
     expected_link_inline = [[] for _ in range(18)]
@@ -201,13 +201,14 @@ def test_document_load_from_path():
         for j, image in enumerate(section.images_reference):
             assert image.position == expected_image_reference[i][j]
 
-        assert len(section.links_bare) == len(expected_link_bare[i])
-        for j, link in enumerate(section.links_bare):
-            assert link.position == expected_link_bare[i][j]
+        assert len(section.autolinks_extended) == len(
+            expected_autolink_extended[i])
+        for j, link in enumerate(section.autolinks_extended):
+            assert link.position == expected_autolink_extended[i][j]
 
-        assert len(section.links_bracket) == len(expected_link_bracket[i])
-        for j, link in enumerate(section.links_bracket):
-            assert link.position == expected_link_bracket[i][j]
+        assert len(section.autolinks) == len(expected_autolink[i])
+        for j, link in enumerate(section.autolinks):
+            assert link.position == expected_autolink[i][j]
 
         assert len(section.links_inline) == len(expected_link_inline[i])
         for j, link in enumerate(section.links_inline):

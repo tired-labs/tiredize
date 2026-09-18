@@ -132,12 +132,12 @@ def test_inline_link_invalid():
 
 
 # ===================================================================
-#  Bracket link -- valid and invalid
+#  Autolink -- valid and invalid
 # ===================================================================
 
 
-def test_bracket_link_valid():
-    """Valid bracket link produces no violation."""
+def test_autolink_valid():
+    """Valid autolink produces no violation."""
     doc = Document()
     doc.load(text="# Nav\n<https://example.com>\n")
     with patch(MOCK_TARGET, return_value=(True, 200, None)):
@@ -145,24 +145,24 @@ def test_bracket_link_valid():
     assert results == []
 
 
-def test_bracket_link_invalid():
-    """Invalid bracket link produces a violation."""
+def test_autolink_invalid():
+    """Invalid autolink produces a violation."""
     doc = Document()
     doc.load(text="# Nav\n<https://dead.example>\n")
     with patch(MOCK_TARGET, return_value=(False, 500, "server error")):
         results = validate(doc, {"validate": True})
     assert len(results) == 1
-    assert "Bracket link" in results[0].message
+    assert "Autolink" in results[0].message
     assert "https://dead.example" in results[0].message
 
 
 # ===================================================================
-#  Bare link -- valid and invalid
+#  Extended autolink -- valid and invalid
 # ===================================================================
 
 
-def test_bare_link_valid():
-    """Valid bare link produces no violation."""
+def test_extended_autolink_valid():
+    """Valid extended autolink produces no violation."""
     doc = Document()
     doc.load(text="# Nav\nhttps://example.com\n")
     with patch(MOCK_TARGET, return_value=(True, 200, None)):
@@ -170,14 +170,14 @@ def test_bare_link_valid():
     assert results == []
 
 
-def test_bare_link_invalid():
-    """Invalid bare link produces a violation."""
+def test_extended_autolink_invalid():
+    """Invalid extended autolink produces a violation."""
     doc = Document()
     doc.load(text="# Nav\nhttps://gone.example\n")
     with patch(MOCK_TARGET, return_value=(False, None, "timeout")):
         results = validate(doc, {"validate": True})
     assert len(results) == 1
-    assert "Bare link" in results[0].message
+    assert "Extended autolink" in results[0].message
     assert "https://gone.example" in results[0].message
 
 
@@ -341,8 +341,9 @@ def test_valid_status_codes_non_integer_raises():
 # ===================================================================
 
 
-def test_same_url_inline_and_bare_both_checked():
-    """Same URL as InlineLink and BareLink are both checked independently."""
+def test_same_url_inline_and_extended_autolink_both_checked():
+    """Same URL as InlineLink and ExtendedAutolink are both checked
+    independently."""
     md = (
         "# Dupes\n"
         "[click](https://example.com/path.html)\n"
@@ -578,8 +579,8 @@ def test_multiple_exclude_patterns():
 
 
 def test_exclude_applies_to_all_link_types():
-    """Domain exclusions apply to inline, bracket, bare, and reference
-    links."""
+    """Domain exclusions apply to inline links, autolinks, extended
+    autolinks, and reference definitions."""
     md = (
         "# Links\n"
         "[inline](https://internal.mycompany.com/a)\n"
@@ -615,6 +616,33 @@ def test_relative_url_not_affected_by_domain_exclusion():
     mock_check.assert_called_once()
 
 
+@pytest.mark.skip(
+    reason="links-exclude-malformed-url-crash: _is_excluded raises on "
+    "URLs urlparse cannot parse"
+)
+def test_malformed_url_with_exclude_configured_is_a_finding_not_a_crash():
+    """A URL urlparse cannot parse (an unclosed IPv6 bracket) must be
+    reported as a finding even when `exclude` is configured. Today
+    `_is_excluded` calls `urlparse(url).hostname`, which raises
+    `ValueError: Invalid IPv6 URL` before check_url_valid can report
+    the failure as a tuple; without `exclude` the helper returns early
+    and the same document is fine (see
+    test_scheme_gate_does_not_raise_on_malformed_url). Verified to
+    fail on 2026-09-18; unskip when the named issue lands."""
+    doc = Document()
+    doc.load(text="# Nav\n<http://[::1>\n")
+    with patch(
+        MOCK_TARGET, return_value=(False, None, "invalid url")
+    ) as mock_check:
+        results = validate(doc, {
+            "validate": True,
+            "exclude": ["*.example.com"],
+        })
+    mock_check.assert_called_once()
+    assert len(results) == 1
+    assert "http://[::1" in results[0].message
+
+
 def test_non_string_exclude_entry_still_raises_value_level_error():
     """Key-level validation does not swallow the value-level check."""
     doc = Document()
@@ -629,3 +657,330 @@ def test_bool_status_code_still_raises_value_level_error():
     doc.load(text="# Links\n[click](https://example.com)\n")
     with pytest.raises(ValueError, match="valid_status_codes"):
         validate(doc, {"validate": True, "valid_status_codes": [True]})
+
+
+# ===================================================================
+#  Scheme gating (white-box)
+#
+#  The rule hands a URL to check_url_valid only when it has no
+#  scheme (anchors, relative paths, and anything else the helper
+#  already reports on) or its scheme is http or https. The gate is
+#  the same for every link kind, so an inline link or reference
+#  definition with a mailto: target is skipped just like an autolink.
+#  The acceptance tests further down cover the autolink forms.
+# ===================================================================
+
+
+@pytest.mark.parametrize(
+    "markdown",
+    [
+        "[mail](mailto:crew@moonbase.example)",
+        "[files](ftp://files.moonbase.example)",
+        "[chat](irc://chat.moonbase.example/dock)",
+        "[mail]: mailto:crew@moonbase.example",
+        "[files]: ftp://files.moonbase.example",
+    ],
+    ids=["inline-mailto", "inline-ftp", "inline-irc", "ref-mailto", "ref-ftp"],
+)
+def test_non_http_scheme_skipped_for_inline_and_reference_links(markdown):
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("[top](#nav)", "#nav"),
+        ("[map](./treasure-map.md)", "./treasure-map.md"),
+        ("[up](../index.md)", "../index.md"),
+        ("[bare](moonbase.example/dock)", "moonbase.example/dock"),
+        ("[nav]: #nav", "#nav"),
+        ("[map]: ./treasure-map.md", "./treasure-map.md"),
+    ],
+    ids=["anchor", "dot-relative", "dot-dot-relative", "no-scheme",
+         "ref-anchor", "ref-relative"],
+)
+def test_scheme_less_targets_still_reach_check_url_valid(markdown, url):
+    """Anchors, relative paths and scheme-less URLs carry no scheme,
+    so they are handed to check_url_valid exactly as before."""
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    with patch(MOCK_TARGET, return_value=(True, None, None)) as mock:
+        validate(doc, {"validate": True})
+    mock.assert_called_once()
+    assert mock.call_args.kwargs["url"] == url
+
+
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("<HTTPS://moonbase.example>", "HTTPS://moonbase.example"),
+        ("Http://moonbase.example", "Http://moonbase.example"),
+        ("[x](HTTP://moonbase.example)", "HTTP://moonbase.example"),
+    ],
+    ids=["autolink", "extended", "inline"],
+)
+def test_upper_case_http_scheme_is_still_checked(markdown, url):
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock:
+        validate(doc, {"validate": True})
+    mock.assert_called_once()
+    assert mock.call_args.kwargs["url"] == url
+
+
+def test_scheme_gate_does_not_raise_on_malformed_url():
+    """A URL urllib cannot parse (an unclosed IPv6 bracket) still goes
+    to check_url_valid, which reports the failure as a tuple."""
+    doc = Document()
+    doc.load(text="# Nav\n<http://[::1>\n")
+    with patch(
+        MOCK_TARGET, return_value=(False, None, "invalid url")
+    ) as mock:
+        results = validate(doc, {"validate": True})
+    mock.assert_called_once()
+    assert len(results) == 1
+    assert "http://[::1" in results[0].message
+
+
+def test_scheme_gate_runs_before_exclusion():
+    """A skipped scheme never reaches the hostname exclusion, whose
+    urlparse would otherwise see the address as a path."""
+    doc = Document()
+    doc.load(text="# Nav\n<mailto:crew@moonbase.example>\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {
+            "validate": True,
+            "exclude": ["*.moonbase.example"],
+        })
+    assert results == []
+    mock.assert_not_called()
+
+
+# ===================================================================
+#  Acceptance tests: autolink-gfm-parity (step 2, before implementation)
+#
+#  The `links` rule validates only `http` and `https` targets. Every
+#  other scheme the parser now recognises (`mailto:`, `xmpp:`,
+#  `irc:`, `ftp:`, unregistered schemes) is a link for the parser but
+#  produces no finding and no HTTP request. `www.` extended autolinks
+#  are validated against `http://` + the matched text. Finding
+#  messages name the element as "Autolink" or "Extended autolink".
+#
+#  `Section.autolinks` and `Section.autolinks_extended` do not exist
+#  until step 3; the tests read them to prove the parser recognised
+#  the link before asserting the rule stayed silent.
+# ===================================================================
+
+
+def _autolinks(doc):
+    return [link for s in doc.sections for link in s.autolinks]
+
+
+def _autolinks_extended(doc):
+    return [link for s in doc.sections for link in s.autolinks_extended]
+
+
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("<irc://foo.bar:2233/baz>", "irc://foo.bar:2233/baz"),
+        ("<ftp://files.example.com>", "ftp://files.example.com"),
+        ("<a+b+c:d>", "a+b+c:d"),
+        ("<localhost:5001/foo>", "localhost:5001/foo"),
+        ("<foo@bar.example.com>", "mailto:foo@bar.example.com"),
+        ("<MAILTO:FOO@BAR.BAZ>", "MAILTO:FOO@BAR.BAZ"),
+    ],
+    ids=["irc", "ftp", "unregistered", "localhost", "email", "MAILTO"],
+)
+def test_non_http_autolink_recognised_but_not_validated(markdown, url):
+    """The parser sees the autolink; the rule neither checks it nor
+    reports it."""
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    assert [link.url for link in _autolinks(doc)] == [url]
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("markdown", "url"),
+    [
+        ("foo@bar.baz", "mailto:foo@bar.baz"),
+        ("mailto:foo@bar.baz", "mailto:foo@bar.baz"),
+        ("xmpp:foo@bar.baz/txt", "xmpp:foo@bar.baz/txt"),
+    ],
+    ids=["bare-email", "mailto", "xmpp"],
+)
+def test_non_http_extended_autolink_recognised_but_not_validated(
+    markdown, url,
+):
+    """The parser sees the extended autolink; the rule neither checks
+    it nor reports it."""
+    doc = Document()
+    doc.load(text=f"# Nav\n{markdown}\n")
+    assert [link.url for link in _autolinks_extended(doc)] == [url]
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+def test_www_extended_autolink_validated_over_http():
+    """A `www.` link is checked as `http://` + the matched text."""
+    doc = Document()
+    doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_called_once()
+    _, kwargs = mock.call_args
+    assert kwargs["url"] == "http://www.moonbase.example/dock"
+
+
+def test_www_extended_autolink_finding_names_http_url():
+    doc = Document()
+    doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
+    with patch(MOCK_TARGET, return_value=(False, 404, "not found")):
+        results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Extended autolink" in results[0].message
+    assert "http://www.moonbase.example/dock" in results[0].message
+    assert "404" in results[0].message
+
+
+def test_www_extended_autolink_excluded_by_hostname():
+    """`exclude` matches the hostname of the normalised target."""
+    doc = Document()
+    doc.load(text="# Nav\nVisit www.moonbase.example/dock today.\n")
+    assert [link.url for link in _autolinks_extended(doc)] == [
+        "http://www.moonbase.example/dock",
+    ]
+    with patch(MOCK_TARGET, return_value=(False, 404, "gone")) as mock:
+        results = validate(doc, {
+            "validate": True,
+            "exclude": ["www.moonbase.example"],
+        })
+    assert results == []
+    mock.assert_not_called()
+
+
+def test_autolink_finding_names_element_autolink():
+    doc = Document()
+    doc.load(text="# Nav\n<https://dead.example>\n")
+    with patch(MOCK_TARGET, return_value=(False, 500, "server error")):
+        results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Autolink" in results[0].message
+    assert "Extended" not in results[0].message
+    assert "https://dead.example" in results[0].message
+
+
+def test_extended_autolink_finding_names_element_extended_autolink():
+    doc = Document()
+    doc.load(text="# Nav\nhttps://gone.example\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "timeout")):
+        results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Extended autolink" in results[0].message
+    assert "https://gone.example" in results[0].message
+
+
+def test_extended_autolink_validated_without_trailing_punctuation():
+    """The URL handed to check_url_valid is the trimmed match."""
+    doc = Document()
+    doc.load(text="# Nav\nRead https://moonbase.example/docs.\n")
+    with patch(MOCK_TARGET, return_value=(True, 200, None)) as mock:
+        validate(doc, {"validate": True})
+    _, kwargs = mock.call_args
+    assert kwargs["url"] == "https://moonbase.example/docs"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Run ./configure before you summon make.",
+        "The ritual is described in ../guide.md and nowhere else.",
+        r"Delete every \*.dll in the goblin cache.",
+        r"Mount \\server\share before the raid.",
+    ],
+    ids=["dot-slash", "dot-dot-slash", "star-dll", "unc-path"],
+)
+def test_prose_paths_and_escapes_produce_no_finding(line):
+    """The false positives that opened the issue, end to end: prose
+    that GitHub renders as text must not be reported as a link."""
+    doc = Document()
+    doc.load(text=f"# Rituals\n{line}\n")
+    with patch(MOCK_TARGET, return_value=(False, None, "nope")) as mock:
+        results = validate(doc, {"validate": True})
+    assert results == []
+    mock.assert_not_called()
+
+
+# ===================================================================
+#  Relative path validation through inline links and reference
+#  definitions is unchanged. These pass today and stay unskipped:
+#  they guard the validation the issue keeps while removing `./`
+#  matching from extended autolinks. check_url_valid is not mocked
+#  because relative paths never reach HTTP.
+# ===================================================================
+
+
+def test_inline_link_relative_path_found(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\nSee [the map](./treasure-map.md) first.\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "treasure-map.md").write_text("# X marks", encoding="utf-8")
+    doc = Document()
+    doc.load(path=doc_file)
+    assert validate(doc, {"validate": True}) == []
+
+
+def test_inline_link_relative_path_missing(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\nSee [the map](./treasure-map.md) first.\n",
+        encoding="utf-8",
+    )
+    doc = Document()
+    doc.load(path=doc_file)
+    results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Inline link" in results[0].message
+    assert "./treasure-map.md" in results[0].message
+    assert "relative file not found" in results[0].message
+
+
+def test_reference_definition_relative_path_found(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\n[map]: ./treasure-map.md\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "treasure-map.md").write_text("# X marks", encoding="utf-8")
+    doc = Document()
+    doc.load(path=doc_file)
+    assert validate(doc, {"validate": True}) == []
+
+
+def test_reference_definition_relative_path_missing(tmp_path):
+    doc_file = tmp_path / "grimoire.md"
+    doc_file.write_text(
+        "# Rituals\n[map]: ./treasure-map.md\n",
+        encoding="utf-8",
+    )
+    doc = Document()
+    doc.load(path=doc_file)
+    results = validate(doc, {"validate": True})
+    assert len(results) == 1
+    assert "Reference link" in results[0].message
+    assert "./treasure-map.md" in results[0].message
+    assert "relative file not found" in results[0].message
