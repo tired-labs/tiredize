@@ -430,7 +430,7 @@ def test_extended_autolink_not_inside_reference_definition():
     assert ExtendedAutolink.extract(text) == []
 
 
-def test_extended_autolink_not_inside_failed_autolink_brackets():
+def test_extended_autolink_not_after_an_unmatched_angle_bracket():
     """`<www.a.b>` is not an autolink (no scheme), but the `<` is not
     a valid preceding character either, so nothing is extracted."""
     assert ExtendedAutolink.extract("<www.example.com>") == []

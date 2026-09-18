@@ -1,10 +1,10 @@
 ---
-assignee: program-manager
+assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-progress
-step: acceptance-test-design
+step: implementation
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -678,3 +678,133 @@ Author: program-manager/software-engineering
     suite as the definition of correct: 104 tests, every specification
     example 603–635 pinned, both halves where both apply. Routing to
     step 3, implementation.
+
+### 2026-09-18T13:57:33+00:00
+
+Author: software-engineer/software-engineering/git,python,testing
+
+    Implementation. Four code commits, one per criterion group, each
+    green under the local flake8 + pytest hook:
+
+    - d3ffc90 rename (criterion 1): classes, `Section` fields,
+      elements vocabulary and labels, `links` rule messages; every
+      existing test moved to the new names; the rename-only
+      acceptance tests unskipped.
+    - 137e4ee `Autolink` per 6.8 (criterion 2): examples 603-620
+      and the Autolink position/sanitize tests unskipped;
+      `test_autolink_ftp` / `test_autolink_email` lose their
+      gfm-parity skips.
+    - d8d6baf `ExtendedAutolink` per 6.9 (criteria 3, 4, 7 and the
+      rest of 6): every remaining parser-side acceptance test
+      unskipped; `test_extended_autolink_backslash_path_is_not_a_link`
+      (inverted, renamed) and the mid-word registry-key test (renamed
+      vocabulary, docstring added); `./` and `../` tests inverted;
+      `test_extended_autolink_trailing_punctuation_stripped` unskipped;
+      `test_extended_autolink_www` removed as superseded by examples
+      622/623 -- its `url == "www.example.com"` assertion predates
+      the `http://` normalisation, so it could not be unskipped.
+    - 42c7234 `links` rule scheme gate (criterion 5): last nine
+      acceptance tests unskipped.
+
+    Final state: `python3 -m pytest -q` 1063 passed, 46 skipped
+    (the 46 are the pre-existing gfm-parity register skips, down from
+    50); flake8 clean; zero `PENDING` markers or constants. Coverage
+    of changed source: `tiredize/markdown/types/link.py` 162
+    statements, 100%; `tiredize/linter/rules/links.py` 96, 100%;
+    `_elements.py` and `section.py` unchanged in coverage (section.py
+    line 167 was uncovered before this issue and is untouched).
+    Whole package 99%.
+
+    How it is built. `Autolink` is one VERBOSE regex with a URI
+    branch (2-32 char scheme, `[^\x00-\x20\x7F<>]*`) tried before
+    the HTML5 email branch. `ExtendedAutolink` is a candidate regex
+    plus a Python pass: `RE_CANDIDATE` anchors on the preceding-
+    character rule and captures the longest run each of the four
+    forms allows; `_validate_url` checks the domain (`RE_DOMAIN`
+    prefix, at least one `.`, no `_` in the last two segments) and
+    hands the run to `_trim`, which loops from the end applying the
+    three path-validation rules exactly as the contract lists them;
+    `_validate_email` rejects a domain ending in `-`/`_` outright and
+    keeps a `/resource` only for `xmpp:`. Email domains and xmpp
+    resources are written as non-empty `.`-joined segments, so a
+    trailing `.` falls outside the match by construction rather than
+    by trimming. `_scan` resumes one character after a rejected
+    candidate (so `http://nodot(www.a.b)` still yields `www.a.b`)
+    and at the trimmed end of an accepted one. Both `sanitize()`
+    methods blank the spans `extract()` reports, via a module-level
+    `_blank_spans`. The `links` rule gains `_has_checkable_scheme`:
+    a regex scheme parse (not urlparse, which raises on `http://[::1`)
+    returning True for no scheme or http/https in any case.
+
+    Contract interpretations -- please read these, reviewers:
+
+    1. "No reference to the old names remains in tiredize/ or
+       tests/" cannot be literally true: the approved acceptance
+       tests quote `link_bare` / `link_bracket` to assert they are
+       rejected (`test_*_rejects_old_link_names` in three files, and
+       two header comments). Those are the only residual grep hits;
+       nothing else in either tree names the old identifiers.
+    2. `sanitize()` is implemented as "blank the spans extract()
+       reports", the contract's literal words. Consequence: a
+       bracketed URI inside inline code is no longer blanked by
+       `Autolink.sanitize()`. No caller can observe this -- the only
+       in-package caller is `ExtendedAutolink.extract`, which has
+       already blanked code -- and it makes the two methods
+       consistent with each other and the acceptance test that
+       derives the expected text from `extract()` positions.
+    3. "Alphanumeric" is read as Unicode alphanumeric (`\w`) in
+       domains, local parts and resources, so `www.bücher.example`
+       and `josé@b.c` link. cmark-gfm is Unicode-aware for www/url
+       domains and ASCII-only for emails; one reading was chosen for
+       both and pinned in white-box tests.
+    4. The `http://`/`https://` prefix of an extended url autolink is
+       matched case-insensitively, as cmark-gfm does (`HTTP://a.b`
+       links on GitHub); `mailto:`/`xmpp:` are case-sensitive, as
+       the spec writes them and cmark-gfm compares them. `string`
+       and `url` keep the scheme as written; the `links` rule lowers
+       it when gating.
+    5. The preceding-character rule is applied to all four extended
+       forms, as the contract states. cmark-gfm applies it only to
+       `www.`; a bare email after `"` or `/` links on GitHub but not
+       here. The acceptance tests pin the contract's version.
+    6. The `links` rule gate applies to every link kind, not only
+       autolinks: an inline link or reference definition with a
+       `mailto:`/`ftp:` target now produces no finding either (it was
+       a guaranteed false positive before). Scheme-less targets --
+       anchors, `./` paths, and `[x](example.com)` -- still go to
+       `check_url_valid` exactly as before, so its anchor and
+       relative branches are unchanged in behaviour and in code.
+    7. Contract-vs-cmark-gfm divergences implemented per the
+       contract and pinned in `test_link.py` with a comment, for the
+       PM to weigh (each is a one-line change if the contract is
+       amended): (a) a lone trailing `;`, `'` or `"` is kept -- the
+       contract's punctuation list is closed and omits them, cmark-gfm
+       strips all three, so `see www.a.b/x;` validates `.../x;` here
+       but links `.../x` on GitHub; (b) `http://localhost/x` is not a
+       link because the contract requires a period in the domain,
+       while cmark-gfm's url matcher allows a dot-less domain; (c) an
+       email whose domain ends in a digit links here per the
+       contract's "last character must not be `-` or `_`", while
+       cmark-gfm requires a letter or `.`; (d) `xmpp:a@b.c/` links as
+       `xmpp:a@b.c` here; cmark-gfm produces no link at all for a
+       trailing empty resource, which reads as a bug there.
+
+    Out of scope, noted for the PM: `_is_excluded` in the `links`
+    rule calls `urlparse().hostname`, which raises ValueError on a
+    malformed URL such as `http://[::1` when `exclude` is configured
+    (pre-existing; the new gate deliberately avoids urlparse for that
+    reason). A smoke run of both extractors over README.md and this
+    issue file found one extended autolink: `http://foo.bar` inside a
+    backtick span that crosses a line break, which `CodeInline` does
+    not recognise -- a `CodeInline` register item, not an autolink
+    false positive. The acceptance-test header comment in
+    `tests/linter/rules/test_links.py` still says the `Section`
+    fields "do not exist until step 3"; left untouched under the
+    step boundary.
+
+    Notes for later steps: the parser specification's Pattern
+    Reference should show `RE_AUTOLINK` and `RE_CANDIDATE` +
+    `_trim`, not a single extended pattern -- the extended rules are
+    procedural by design. The README `links` section should say that
+    only http/https targets are checked for every link kind, and
+    that `www.` links are checked over `http://`.
