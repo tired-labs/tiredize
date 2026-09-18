@@ -1,10 +1,10 @@
 ---
-assignee: software-engineer
+assignee: qa-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
 status: in-review
-step: code-and-test-review
+step: acceptance-verification
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
