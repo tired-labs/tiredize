@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-review
-step: code-and-test-review
+status: in-progress
+step: implementation
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -1274,3 +1274,80 @@ Author: software-engineer/software-engineering/code-review,python,testing
       covers host:port targets too.
 
     Action: @program-manager — request for edit
+
+### 2026-09-18T15:18:33+00:00
+
+Author: software-engineer/software-engineering/git,python,testing
+
+    Step-3 revision per the 15:12 review (iteration 2), Finding 1
+    only. One code commit, a01c97c, green under the local flake8 +
+    pytest hook; no step-2 acceptance test changed; the observations
+    lists of both reviews were not acted on.
+
+    What changed, in `tiredize/markdown/types/link.py`, exactly as
+    the review prescribed:
+
+    - New `ExtendedAutolink._start(match)`: for a candidate whose
+      `local` group matched and whose `protocol` group did not (a
+      bare address), walks `match.start()` back over the local-part
+      characters in `match.string` -- the sanitized text, so a
+      blanked construct stops the walk -- and returns where the
+      address begins. For `www.`, `http(s)` and `mailto:`/`xmpp:`
+      candidates it returns `match.start()` unchanged. The character
+      set is a new `LOCAL_PART_CHARACTERS` constant beside
+      `PRECEDING_DELIMITERS`, spelling out the `local` group of
+      `RE_CANDIDATE`.
+    - `_scan` calls `_start` first and judges `_valid_preceding(text,
+      start)` there; an accepted link is recorded from that `start`.
+      On rejection the resume is still `pos = match.start() + 1`.
+    - `_validate` and `_validate_email` take `start`, so `url` is
+      `mailto:` + the whole address; `extract()` already slices
+      `string` from `text[start:end]`, so `string` and `position`
+      follow without change.
+    - `_scan`'s docstring keeps "skipped by one character" and adds
+      that a bare address is judged from the start of its local part,
+      with the `"first_last@x.y"` example; `_start`, `_validate` and
+      `_validate_email` document the `start` argument.
+
+    Tests added to `tests/markdown/types/test_link.py`, in the
+    "preceding character and scanning" subsection directly after the
+    `_a@b.c` pin, nine cases:
+
+    - `test_extended_autolink_email_with_underscore_after_invalid_
+      char`, parametrised over `"first_last@example.com"`,
+      `user:first_last@example.com`, `:mailto:first_last@x.y`,
+      `"-_a@b.c"` and `"a_b_c@d.e"`: `[]`.
+    - `…_glued_to_construct`: `[x](u)ab_c@d.e` and `<x@y.z>a_b@c.d`
+      yield `[]`.
+    - `…_after_valid_char` (positive control): `see a_b@c.d.` yields
+      `a_b@c.d` / `mailto:a_b@c.d`; `(first_last@example.com)` and
+      `[x](u) ab_c@d.e` yield the whole address.
+    - `…_position`: offset 4, length 7, `string == "a_b@c.d"` for
+      `see a_b@c.d.`.
+    - `test_extended_autolink_sanitize_email_with_underscore`: the
+      quoted address sanitizes to itself; `see a_b@c.d.` blanks
+      exactly the seven address characters.
+
+    Pre-fix evidence (tests written first, run against 80f5244): 7
+    failed, 2 passed. The five parametrisations extracted
+    `last@example.com`, `last@example.com`, `last@x.y`, `a@b.c` and
+    `b_c@d.e`; the glued test extracted `c@d.e`; the sanitize test
+    got `"first_                "`. The positive control and the
+    position test passed before and after, as they should. After the
+    fix: 9 passed.
+
+    Sanitize check the routing asked for: a scratch probe over the
+    six reproductions, `"a_b_c@d.e"`, the three positive controls,
+    `www.a_b@c.d`, the two pins that must not move, `x_www.a.b`, the
+    `.`/`-` shapes, a backtick-split local part and a two-line text
+    compared `sanitize()` with the text blanked at `extract()`'s
+    reported spans, idempotently: every one agrees. Outputs match the
+    review's prediction to the case -- the fragments become no link,
+    `www.a_b@c.d` becomes `mailto:www.a_b@c.d`, `_a@b.c` and
+    `a@b-(c@d.e)` keep their pins, `x_www.a.b` still links `www.a.b`.
+
+    Final state: `python3 -m pytest -q` 1084 passed, 47 skipped (the
+    nine new tests; the `links-exclude-malformed-url-crash` skip is
+    still in place); flake8 clean; `link.py` 182 statements, 100%;
+    `links.py` 96, 100%; package 99%. The issue file is committed
+    separately.
