@@ -220,6 +220,13 @@ class ExtendedAutolink:
     # Non-whitespace characters an extended autolink may follow.
     PRECEDING_DELIMITERS = "*_~("
 
+    # The characters of an email local part -- the `local` group of
+    # RE_CANDIDATE, spelled out for the backward walk in `_start`.
+    LOCAL_PART_CHARACTERS = (
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        "0123456789._+-"
+    )
+
     # Static methods
     @staticmethod
     def _scan(
@@ -238,6 +245,13 @@ class ExtendedAutolink:
         character before it is `)`, `>` or a backtick. The two
         strings have the same length, so offsets line up.
 
+        A bare email address is judged from the start of its local
+        part, not from where the candidate matched (see `_start`):
+        `_` is both a local-part character and a preceding delimiter,
+        so `"first_last@x.y"` holds a candidate `last@x.y` that reads
+        as following `_`, although the address as a whole follows
+        `"`. The link, when accepted, starts at the local part too.
+
         Candidates are validated in order of position. A rejected
         candidate is skipped by one character rather than by its
         whole length, so a valid link that starts inside it after a
@@ -252,17 +266,41 @@ class ExtendedAutolink:
             match = pattern.search(text_sanitized, pos)
             if match is None:
                 break
-            if not ExtendedAutolink._valid_preceding(text, match.start()):
+            start = ExtendedAutolink._start(match)
+            if not ExtendedAutolink._valid_preceding(text, start):
                 pos = match.start() + 1
                 continue
-            found = ExtendedAutolink._validate(match)
+            found = ExtendedAutolink._validate(match, start)
             if found is None:
                 pos = match.start() + 1
                 continue
             end, url = found
-            result.append((match.start(), end, url))
+            result.append((start, end, url))
             pos = end
         return result
+
+    @staticmethod
+    def _start(match: re.Match[str]) -> int:
+        """
+        Where the link of a candidate begins.
+
+        For a bare email address it is the start of the local part:
+        the match is walked back over local-part characters in the
+        sanitized text, so a blanked construct stops the walk. For
+        every other form it is the start of the match -- the
+        character before `www.`, `http://`, `mailto:` or `xmpp:` is
+        the one the preceding-character rule must judge.
+        """
+        start = match.start()
+        if match.group("local") is None or match.group("protocol") is not None:
+            return start
+        while (
+            start > 0
+            and match.string[start - 1]
+            in ExtendedAutolink.LOCAL_PART_CHARACTERS
+        ):
+            start -= 1
+        return start
 
     @staticmethod
     def _trim(candidate: str) -> int:
@@ -343,29 +381,39 @@ class ExtendedAutolink:
         )
 
     @staticmethod
-    def _validate(match: re.Match[str]) -> tuple[int, str] | None:
+    def _validate(
+        match: re.Match[str],
+        start: int
+    ) -> tuple[int, str] | None:
         """
         Turn a candidate match into (end, url), or None to reject it.
+        `start` is where the link begins (see `_start`).
         """
         if match.group("www") is not None or match.group("url") is not None:
             return ExtendedAutolink._validate_url(match)
-        return ExtendedAutolink._validate_email(match)
+        return ExtendedAutolink._validate_email(match, start)
 
     @staticmethod
-    def _validate_email(match: re.Match[str]) -> tuple[int, str] | None:
+    def _validate_email(
+        match: re.Match[str],
+        start: int
+    ) -> tuple[int, str] | None:
         """
         Validate an email or protocol candidate.
 
         The domain must be valid as a whole; a bad one (ending in `-`
         or `_`, spec example 632) rejects the candidate outright
         rather than shortening it. Only `xmpp:` keeps a `/resource`.
+        The link runs from `start` -- the start of the local part for
+        a bare address, of the protocol otherwise -- to the end of the
+        domain or resource.
         """
         if not ExtendedAutolink._valid_email_domain(match.group("domain")):
             return None
         end = match.end("domain")
         if match.group("protocol") == "xmpp:" and match.group("resource"):
             end = match.end("resource")
-        string = match.string[match.start():end]
+        string = match.string[start:end]
         if match.group("protocol") is None:
             return end, "mailto:" + string
         return end, string

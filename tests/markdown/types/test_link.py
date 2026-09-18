@@ -770,6 +770,58 @@ def test_extended_autolink_email_local_part_absorbs_leading_delimiters():
     assert _extended("_a@b.c") == [("_a@b.c", "mailto:_a@b.c")]
 
 
+# `_` is both a local-part character and a preceding delimiter, so a
+# bare address containing one holds a shorter candidate that starts
+# right after it. The preceding-character rule is judged where the
+# local part begins, not where the candidate does, so a rejected
+# address does not leave a fragment behind.
+
+
+@pytest.mark.parametrize("text", [
+    '"first_last@example.com"',
+    "user:first_last@example.com",
+    ":mailto:first_last@x.y",
+    '"-_a@b.c"',
+    '"a_b_c@d.e"',
+])
+def test_extended_autolink_email_with_underscore_after_invalid_char(text):
+    assert _extended(text) == []
+
+
+def test_extended_autolink_email_with_underscore_glued_to_construct():
+    assert _extended("[x](u)ab_c@d.e") == []
+    assert _extended("<x@y.z>a_b@c.d") == []
+
+
+def test_extended_autolink_email_with_underscore_after_valid_char():
+    """Positive control: the same addresses link whole when the
+    character before the local part is allowed."""
+    assert _extended("see a_b@c.d.") == [("a_b@c.d", "mailto:a_b@c.d")]
+    assert _extended("(first_last@example.com)") == [
+        ("first_last@example.com", "mailto:first_last@example.com"),
+    ]
+    assert _extended("[x](u) ab_c@d.e") == [("ab_c@d.e", "mailto:ab_c@d.e")]
+
+
+def test_extended_autolink_email_with_underscore_position():
+    """`position` and `string` cover the whole address, from the
+    start of the local part."""
+    results = ExtendedAutolink.extract("see a_b@c.d.")
+    assert len(results) == 1
+    assert results[0].position.offset == 4
+    assert results[0].position.length == len("a_b@c.d")
+    assert results[0].string == "a_b@c.d"
+
+
+def test_extended_autolink_sanitize_email_with_underscore():
+    """sanitize() follows extract(): nothing blanked for a rejected
+    address, the whole address blanked for an accepted one."""
+    rejected = '"first_last@example.com"'
+    assert ExtendedAutolink.sanitize(rejected) == rejected
+    accepted = "see a_b@c.d."
+    assert ExtendedAutolink.sanitize(accepted) == "see " + " " * 7 + "."
+
+
 # The constructs blanked before scanning (inline link, inline code,
 # autolink, image) become spaces in the sanitized copy. The preceding
 # character rule is about the source text, so `)`, `` ` `` and `>`
