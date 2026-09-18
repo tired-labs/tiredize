@@ -307,7 +307,6 @@ def test_non_string_exclude_entry_still_raises_value_level_error():
 PENDING = "autolink-gfm-parity: awaiting implementation (step 3)"
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_exclude_autolink_skips_line_containing_autolink():
     doc = Document()
     doc.load(text=(
@@ -331,7 +330,6 @@ def test_exclude_autolink_extended_skips_line_containing_www_link():
     assert results == []
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize("old_name", ["link_bare", "link_bracket"])
 def test_exclude_rejects_old_link_names(old_name):
     doc = Document()

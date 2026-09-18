@@ -294,10 +294,6 @@ def test_rule_is_discovered_by_engine():
 # ===================================================================
 
 
-PENDING = "autolink-gfm-parity: awaiting implementation (step 3)"
-
-
-@pytest.mark.skip(reason=PENDING)
 def test_allowed_false_exclude_autolink_permits_unicode_in_autolink():
     doc = Document()
     doc.load(text="# Hello\n\n<https://moonbase.example/café>\n")
@@ -305,7 +301,6 @@ def test_allowed_false_exclude_autolink_permits_unicode_in_autolink():
     assert results == []
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_allowed_false_exclude_autolink_extended_permits_unicode():
     doc = Document()
     doc.load(text="# Hello\n\nhttps://moonbase.example/café\n")
@@ -315,7 +310,6 @@ def test_allowed_false_exclude_autolink_extended_permits_unicode():
     assert results == []
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize("old_name", ["link_bare", "link_bracket"])
 def test_exclude_rejects_old_link_names(old_name):
     doc = Document()

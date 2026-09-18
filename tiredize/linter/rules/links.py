@@ -127,7 +127,7 @@ def validate(
                 )
                 results.append(result)
 
-        for link in section.links_bracket:
+        for link in section.autolinks:
             if _is_excluded(link.url, cfg_exclusions):
                 continue
             is_valid, status_code, error_message = check_url_valid(
@@ -141,7 +141,7 @@ def validate(
                 position = link.position
                 result = RuleResult(
                     message=(
-                        f"Bracket link '{link.url}' is not reachable. "
+                        f"Autolink '{link.url}' is not reachable. "
                         f"Status code: {status_code}, Error: {error_message}"
                     ),
                     position=position,
@@ -149,7 +149,7 @@ def validate(
                 )
                 results.append(result)
 
-        for link in section.links_bare:
+        for link in section.autolinks_extended:
             if _is_excluded(link.url, cfg_exclusions):
                 continue
             is_valid, status_code, error_message = check_url_valid(
@@ -163,7 +163,7 @@ def validate(
                 position = link.position
                 result = RuleResult(
                     message=(
-                        f"Bare link '{link.url}' is not reachable. "
+                        f"Extended autolink '{link.url}' is not reachable. "
                         f"Status code: {status_code}, Error: {error_message}"
                     ),
                     position=position,

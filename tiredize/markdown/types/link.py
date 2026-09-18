@@ -13,7 +13,52 @@ from tiredize.markdown.utils import search_all_re
 
 
 @dataclass(frozen=False)
-class BareLink:
+class Autolink:
+    position: Position
+    string: str
+    url: str
+
+    RE_AUTOLINK = r"""
+        <                            # Opening angle bracket
+        (?P<url>https?:\/\/\S+)      # Capture the URL
+        >                            # Closing angle bracket
+    """
+
+    @staticmethod
+    def extract(text: str, base_offset: int = 0) -> list[Autolink]:
+        text_sanitized = CodeBlock.sanitize(text)
+        text_sanitized = CodeInline.sanitize(text_sanitized)
+        matches = search_all_re(
+            Autolink.RE_AUTOLINK,
+            text_sanitized
+        )
+
+        result: list[Autolink] = []
+        for match in matches:
+            position = Position(
+                offset=base_offset + match.start(),
+                length=match.end() - match.start()
+            )
+
+            result.append(
+                Autolink(
+                    position=position,
+                    string=match.group(),
+                    url=match.group("url")
+                )
+            )
+        return result
+
+    @staticmethod
+    def sanitize(text: str) -> str:
+        """
+        Replace any Autolinks with whitespace
+        """
+        return sanitize_text(Autolink.RE_AUTOLINK, text)
+
+
+@dataclass(frozen=False)
+class ExtendedAutolink:
     position: Position
     string: str
     url: str
@@ -23,19 +68,19 @@ class BareLink:
     """
 
     @staticmethod
-    def extract(text: str, base_offset: int = 0) -> list[BareLink]:
+    def extract(text: str, base_offset: int = 0) -> list[ExtendedAutolink]:
         text_sanitized = CodeBlock.sanitize(text)
         text_sanitized = CodeInline.sanitize(text_sanitized)
         text_sanitized = InlineImage.sanitize(text_sanitized)
-        text_sanitized = BracketLink.sanitize(text_sanitized)
+        text_sanitized = Autolink.sanitize(text_sanitized)
         text_sanitized = InlineLink.sanitize(text_sanitized)
         text_sanitized = ReferenceDefinition.sanitize(text_sanitized)
         matches = search_all_re(
-            BareLink.RE_URL,
+            ExtendedAutolink.RE_URL,
             text_sanitized
         )
 
-        result: list[BareLink] = []
+        result: list[ExtendedAutolink] = []
         for match in matches:
             position = Position(
                 offset=base_offset + match.start(),
@@ -43,7 +88,7 @@ class BareLink:
             )
 
             result.append(
-                BareLink(
+                ExtendedAutolink(
                     position=position,
                     string=match.group(),
                     url=match.group("url")
@@ -54,54 +99,9 @@ class BareLink:
     @staticmethod
     def sanitize(text: str) -> str:
         """
-        Replace any Bare Links with whitespace
+        Replace any Extended Autolinks with whitespace
         """
-        return sanitize_text(BareLink.RE_URL, text)
-
-
-@dataclass(frozen=False)
-class BracketLink:
-    position: Position
-    string: str
-    url: str
-
-    RE_LINK_BRACKET = r"""
-        <                            # Opening angle bracket
-        (?P<url>https?:\/\/\S+)      # Capture the URL
-        >                            # Closing angle bracket
-    """
-
-    @staticmethod
-    def extract(text: str, base_offset: int = 0) -> list[BracketLink]:
-        text_sanitized = CodeBlock.sanitize(text)
-        text_sanitized = CodeInline.sanitize(text_sanitized)
-        matches = search_all_re(
-            BracketLink.RE_LINK_BRACKET,
-            text_sanitized
-        )
-
-        result: list[BracketLink] = []
-        for match in matches:
-            position = Position(
-                offset=base_offset + match.start(),
-                length=match.end() - match.start()
-            )
-
-            result.append(
-                BracketLink(
-                    position=position,
-                    string=match.group(),
-                    url=match.group("url")
-                )
-            )
-        return result
-
-    @staticmethod
-    def sanitize(text: str) -> str:
-        """
-        Replace any Bracket Links with whitespace
-        """
-        return sanitize_text(BracketLink.RE_LINK_BRACKET, text)
+        return sanitize_text(ExtendedAutolink.RE_URL, text)
 
 
 @dataclass(frozen=False)

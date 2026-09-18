@@ -6,8 +6,8 @@ import pytest
 
 # Local
 from tiredize.core_types import Position
-from tiredize.markdown.types.link import BareLink
-from tiredize.markdown.types.link import BracketLink
+from tiredize.markdown.types.link import Autolink
+from tiredize.markdown.types.link import ExtendedAutolink
 from tiredize.markdown.types.link import InlineLink
 
 
@@ -111,180 +111,181 @@ def test_inline_link_sanitize_replaces_with_whitespace():
 
 
 # ===================================================================
-#  BracketLink -- basic extraction
+#  Autolink -- basic extraction
 # ===================================================================
 
 
-def test_bracket_link_basic():
+def test_autolink_basic():
     text = "<https://example.com>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
     assert results[0].string == text
 
 
-def test_bracket_link_http():
+def test_autolink_http():
     text = "<http://insecure.example.com>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "http://insecure.example.com"
 
 
-def test_bracket_link_with_path():
+def test_autolink_with_path():
     text = "<https://example.com/path?q=1&r=2>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com/path?q=1&r=2"
 
 
-def test_bracket_link_multiple():
+def test_autolink_multiple():
     text = "See <https://a.com> and <https://b.com> for details."
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 2
     assert results[0].url == "https://a.com"
     assert results[1].url == "https://b.com"
 
 
-def test_bracket_link_no_matches():
+def test_autolink_no_matches():
     text = "No angle bracket links here."
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 0
 
 
-def test_bracket_link_position_tracking():
+def test_autolink_position_tracking():
     text = "Check <https://example.com> now."
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].position == Position(
         offset=6, length=len("<https://example.com>")
     )
 
 
-def test_bracket_link_base_offset():
+def test_autolink_base_offset():
     text = "<https://example.com>"
-    results = BracketLink.extract(text, base_offset=50)
+    results = Autolink.extract(text, base_offset=50)
     assert len(results) == 1
     assert results[0].position.offset == 50
 
 
 # ===================================================================
-#  BracketLink -- sanitize
+#  Autolink -- sanitize
 # ===================================================================
 
 
-def test_bracket_link_sanitize_preserves_length():
+def test_autolink_sanitize_preserves_length():
     text = "Before <https://example.com> after"
-    sanitized = BracketLink.sanitize(text)
+    sanitized = Autolink.sanitize(text)
     assert len(sanitized) == len(text)
     assert "<https://example.com>" not in sanitized
 
 
 # ===================================================================
-#  BareLink -- basic extraction
+#  ExtendedAutolink -- basic extraction
 # ===================================================================
 
 
-def test_bare_link_https():
+def test_extended_autolink_https():
     text = "Visit https://example.com for more."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
 
 
-def test_bare_link_http():
+def test_extended_autolink_http():
     text = "Visit http://example.com for more."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "http://example.com"
 
 
-def test_bare_link_relative_dot_slash():
+def test_extended_autolink_relative_dot_slash():
     text = "See ./docs/readme.md for details."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "./docs/readme.md"
 
 
-def test_bare_link_backslash():
+def test_extended_autolink_backslash():
     text = r"See \docs\readme.md for details."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == r"\docs\readme.md"
 
 
-def test_bare_link_backslash_not_matched_mid_word():
+def test_extended_autolink_backslash_not_matched_mid_word():
     text = r'Registry key: "HKLM\SYSTEM\CurrentControlSet\Control"'
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert results == []
 
 
-def test_bare_link_multiple():
+def test_extended_autolink_multiple():
     text = "Visit https://a.com and https://b.com today."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 2
     assert results[0].url == "https://a.com"
     assert results[1].url == "https://b.com"
 
 
-def test_bare_link_no_matches():
+def test_extended_autolink_no_matches():
     text = "No URLs here, just words."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 0
 
 
-def test_bare_link_position_tracking():
+def test_extended_autolink_position_tracking():
     text = "Go to https://example.com now."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].position == Position(
         offset=6, length=len("https://example.com")
     )
 
 
-def test_bare_link_base_offset():
+def test_extended_autolink_base_offset():
     text = "https://example.com"
-    results = BareLink.extract(text, base_offset=200)
+    results = ExtendedAutolink.extract(text, base_offset=200)
     assert len(results) == 1
     assert results[0].position.offset == 200
 
 
 # ===================================================================
-#  BareLink -- sanitize
+#  ExtendedAutolink -- sanitize
 # ===================================================================
 
 
-def test_bare_link_sanitize_preserves_length():
+def test_extended_autolink_sanitize_preserves_length():
     text = "Visit https://example.com today"
-    sanitized = BareLink.sanitize(text)
+    sanitized = ExtendedAutolink.sanitize(text)
     assert len(sanitized) == len(text)
     assert "https://example.com" not in sanitized
 
 
 # ===================================================================
-#  BareLink -- sanitization chain
-#  BareLink sanitizes: CodeBlock, CodeInline, InlineImage,
-#  BracketLink, InlineLink, ReferenceDefinition before matching.
+#  ExtendedAutolink -- sanitization chain
+#  ExtendedAutolink sanitizes: CodeBlock, CodeInline, InlineImage,
+#  Autolink, InlineLink, ReferenceDefinition before matching.
 # ===================================================================
 
 
-def test_bare_link_not_inside_inline_link():
-    """A URL inside [text](url) should not also appear as a BareLink."""
+def test_extended_autolink_not_inside_inline_link():
+    """A URL inside [text](url) should not also appear as an
+    ExtendedAutolink."""
     text = "[click](https://example.com)"
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 0
 
 
-def test_bare_link_not_inside_bracket_link():
-    """A URL inside <url> should not also appear as a BareLink."""
+def test_extended_autolink_not_inside_autolink():
+    """A URL inside <url> should not also appear as an ExtendedAutolink."""
     text = "<https://example.com>"
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 0
 
 
-def test_bare_link_not_inside_code_inline():
-    """A URL inside backticks should not appear as a BareLink."""
+def test_extended_autolink_not_inside_code_inline():
+    """A URL inside backticks should not appear as an ExtendedAutolink."""
     text = "Run `https://example.com` as a test."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 0
 
 
@@ -300,15 +301,15 @@ def test_inline_link_not_inside_code_block():
     assert len(results) == 0
 
 
-def test_bracket_link_not_inside_code_block():
+def test_autolink_not_inside_code_block():
     text = "```\n<https://example.com>\n```"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 0
 
 
-def test_bare_link_not_inside_code_block():
+def test_extended_autolink_not_inside_code_block():
     text = "```\nhttps://example.com\n```"
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 0
 
 
@@ -324,15 +325,15 @@ def test_inline_link_not_inside_inline_code():
     assert len(results) == 0
 
 
-def test_bracket_link_not_inside_inline_code():
+def test_autolink_not_inside_inline_code():
     text = "Use `<https://example.com>` as example."
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 0
 
 
-def test_bare_link_not_inside_inline_code():
+def test_extended_autolink_not_inside_inline_code():
     text = "Use `https://example.com` as example."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 0
 
 
@@ -387,27 +388,27 @@ def test_inline_link_escaped_bracket_in_text():
 
 
 @pytest.mark.skip(reason="gfm-parity: non-HTTP URI schemes not supported")
-def test_bracket_link_ftp():
+def test_autolink_ftp():
     """GFM autolinks support ftp:// scheme."""
     text = "<ftp://files.example.com>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "ftp://files.example.com"
 
 
 @pytest.mark.skip(reason="gfm-parity: email autolinks not supported")
-def test_bracket_link_email():
+def test_autolink_email():
     """GFM supports email autolinks in angle brackets."""
     text = "<user@example.com>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
 
 
 @pytest.mark.skip(reason="gfm-parity: www. autolinks not supported")
-def test_bare_link_www():
+def test_extended_autolink_www():
     """GFM extended autolinks recognize www. prefix without scheme."""
     text = "Visit www.example.com for details."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "www.example.com"
 
@@ -415,19 +416,19 @@ def test_bare_link_www():
 @pytest.mark.skip(
     reason="gfm-parity: trailing punctuation not stripped from URLs"
 )
-def test_bare_link_trailing_punctuation_stripped():
+def test_extended_autolink_trailing_punctuation_stripped():
     """GFM strips trailing punctuation from extended autolinks."""
     text = "Visit https://example.com."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
 
 
-def test_bare_link_parent_dir_not_partial_match():
+def test_extended_autolink_parent_dir_not_partial_match():
     """Relative paths with ../ should match the full path, not a
     false partial match of ./sibling/ from position 1."""
     text = "See ../sibling/readme.md for details."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "../sibling/readme.md"
 
@@ -441,24 +442,24 @@ def test_inline_link_empty_string():
     assert InlineLink.extract("") == []
 
 
-def test_bracket_link_empty_string():
-    assert BracketLink.extract("") == []
+def test_autolink_empty_string():
+    assert Autolink.extract("") == []
 
 
-def test_bare_link_empty_string():
-    assert BareLink.extract("") == []
+def test_extended_autolink_empty_string():
+    assert ExtendedAutolink.extract("") == []
 
 
 def test_inline_link_single_char():
     assert InlineLink.extract("x") == []
 
 
-def test_bracket_link_single_char():
-    assert BracketLink.extract("<") == []
+def test_autolink_single_char():
+    assert Autolink.extract("<") == []
 
 
-def test_bare_link_single_char():
-    assert BareLink.extract("h") == []
+def test_extended_autolink_single_char():
+    assert ExtendedAutolink.extract("h") == []
 
 
 def test_inline_link_no_trailing_newline():
@@ -480,18 +481,18 @@ def test_inline_link_sanitize_idempotent():
     assert len(second) == len(text)
 
 
-def test_bracket_link_sanitize_idempotent():
+def test_autolink_sanitize_idempotent():
     text = "Before <https://example.com> after"
-    first = BracketLink.sanitize(text)
-    second = BracketLink.sanitize(first)
+    first = Autolink.sanitize(text)
+    second = Autolink.sanitize(first)
     assert first == second
     assert len(second) == len(text)
 
 
-def test_bare_link_sanitize_idempotent():
+def test_extended_autolink_sanitize_idempotent():
     text = "Before https://example.com after"
-    first = BareLink.sanitize(text)
-    second = BareLink.sanitize(first)
+    first = ExtendedAutolink.sanitize(text)
+    second = ExtendedAutolink.sanitize(first)
     assert first == second
     assert len(second) == len(text)
 
@@ -508,17 +509,17 @@ def test_inline_link_extract_does_not_mutate_input():
     assert text == original
 
 
-def test_bracket_link_extract_does_not_mutate_input():
+def test_autolink_extract_does_not_mutate_input():
     text = "See <https://example.com> here."
     original = text
-    BracketLink.extract(text)
+    Autolink.extract(text)
     assert text == original
 
 
-def test_bare_link_extract_does_not_mutate_input():
+def test_extended_autolink_extract_does_not_mutate_input():
     text = "See https://example.com here."
     original = text
-    BareLink.extract(text)
+    ExtendedAutolink.extract(text)
     assert text == original
 
 
@@ -534,16 +535,16 @@ def test_inline_link_unicode_text_and_url():
     assert results[0].url == "https://example.com/café"
 
 
-def test_bracket_link_unicode_url():
+def test_autolink_unicode_url():
     text = "<https://example.com/日本語>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com/日本語"
 
 
-def test_bare_link_unicode_url():
+def test_extended_autolink_unicode_url():
     text = "Visit https://example.com/über-cool page."
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert "über-cool" in results[0].url
 
@@ -562,18 +563,18 @@ def test_inline_link_inside_table_cell():
     assert results[0].url == "https://example.com"
 
 
-def test_bracket_link_inside_table_cell():
-    """Bracket links in table cells should be extracted."""
+def test_autolink_inside_table_cell():
+    """Autolinks in table cells should be extracted."""
     text = "| <https://example.com> |\n|---|\n| data |\n"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
 
 
-def test_bare_link_inside_table_cell():
-    """Bare links in table cells should be extracted."""
+def test_extended_autolink_inside_table_cell():
+    """Extended autolinks in table cells should be extracted."""
     text = "| https://example.com |\n|---|\n| data |\n"
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
 
@@ -583,18 +584,18 @@ def test_bare_link_inside_table_cell():
 # ===================================================================
 
 
-def test_bracket_link_inside_quote_block():
+def test_autolink_inside_quote_block():
     """Per GFM, links inside blockquotes are real links."""
     text = "> <https://example.com>"
-    results = BracketLink.extract(text)
+    results = Autolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
 
 
-def test_bare_link_inside_quote_block():
+def test_extended_autolink_inside_quote_block():
     """Per GFM, links inside blockquotes are real links."""
     text = "> https://example.com"
-    results = BareLink.extract(text)
+    results = ExtendedAutolink.extract(text)
     assert len(results) == 1
     assert results[0].url == "https://example.com"
 

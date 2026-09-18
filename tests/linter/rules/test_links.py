@@ -132,12 +132,12 @@ def test_inline_link_invalid():
 
 
 # ===================================================================
-#  Bracket link -- valid and invalid
+#  Autolink -- valid and invalid
 # ===================================================================
 
 
-def test_bracket_link_valid():
-    """Valid bracket link produces no violation."""
+def test_autolink_valid():
+    """Valid autolink produces no violation."""
     doc = Document()
     doc.load(text="# Nav\n<https://example.com>\n")
     with patch(MOCK_TARGET, return_value=(True, 200, None)):
@@ -145,24 +145,24 @@ def test_bracket_link_valid():
     assert results == []
 
 
-def test_bracket_link_invalid():
-    """Invalid bracket link produces a violation."""
+def test_autolink_invalid():
+    """Invalid autolink produces a violation."""
     doc = Document()
     doc.load(text="# Nav\n<https://dead.example>\n")
     with patch(MOCK_TARGET, return_value=(False, 500, "server error")):
         results = validate(doc, {"validate": True})
     assert len(results) == 1
-    assert "Bracket link" in results[0].message
+    assert "Autolink" in results[0].message
     assert "https://dead.example" in results[0].message
 
 
 # ===================================================================
-#  Bare link -- valid and invalid
+#  Extended autolink -- valid and invalid
 # ===================================================================
 
 
-def test_bare_link_valid():
-    """Valid bare link produces no violation."""
+def test_extended_autolink_valid():
+    """Valid extended autolink produces no violation."""
     doc = Document()
     doc.load(text="# Nav\nhttps://example.com\n")
     with patch(MOCK_TARGET, return_value=(True, 200, None)):
@@ -170,14 +170,14 @@ def test_bare_link_valid():
     assert results == []
 
 
-def test_bare_link_invalid():
-    """Invalid bare link produces a violation."""
+def test_extended_autolink_invalid():
+    """Invalid extended autolink produces a violation."""
     doc = Document()
     doc.load(text="# Nav\nhttps://gone.example\n")
     with patch(MOCK_TARGET, return_value=(False, None, "timeout")):
         results = validate(doc, {"validate": True})
     assert len(results) == 1
-    assert "Bare link" in results[0].message
+    assert "Extended autolink" in results[0].message
     assert "https://gone.example" in results[0].message
 
 
@@ -341,8 +341,9 @@ def test_valid_status_codes_non_integer_raises():
 # ===================================================================
 
 
-def test_same_url_inline_and_bare_both_checked():
-    """Same URL as InlineLink and BareLink are both checked independently."""
+def test_same_url_inline_and_extended_autolink_both_checked():
+    """Same URL as InlineLink and ExtendedAutolink are both checked
+    independently."""
     md = (
         "# Dupes\n"
         "[click](https://example.com/path.html)\n"
@@ -578,8 +579,8 @@ def test_multiple_exclude_patterns():
 
 
 def test_exclude_applies_to_all_link_types():
-    """Domain exclusions apply to inline, bracket, bare, and reference
-    links."""
+    """Domain exclusions apply to inline links, autolinks, extended
+    autolinks, and reference definitions."""
     md = (
         "# Links\n"
         "[inline](https://internal.mycompany.com/a)\n"
@@ -749,7 +750,6 @@ def test_www_extended_autolink_excluded_by_hostname():
     mock.assert_not_called()
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_autolink_finding_names_element_autolink():
     doc = Document()
     doc.load(text="# Nav\n<https://dead.example>\n")
@@ -761,7 +761,6 @@ def test_autolink_finding_names_element_autolink():
     assert "https://dead.example" in results[0].message
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_extended_autolink_finding_names_element_extended_autolink():
     doc = Document()
     doc.load(text="# Nav\nhttps://gone.example\n")

@@ -120,13 +120,13 @@ def test_disallow_code_block():
     assert "Fenced code block" in results[0].message
 
 
-def test_disallow_link_bare():
-    """Disallowing 'link_bare' flags bare URLs."""
+def test_disallow_autolink_extended():
+    """Disallowing 'autolink_extended' flags bare URLs."""
     doc = Document()
     doc.load(text="# H\nhttps://example.com\n")
-    results = validate(doc, {"disallow": ["link_bare"]})
+    results = validate(doc, {"disallow": ["autolink_extended"]})
     assert len(results) == 1
-    assert "Bare link" in results[0].message
+    assert "Extended autolink" in results[0].message
 
 
 def test_disallow_quoteblock():
@@ -283,7 +283,6 @@ def test_disallow_autolink_extended_flags_each_form(markdown):
     assert "Extended autolink" in results[0].message
 
 
-@pytest.mark.skip(reason=PENDING)
 def test_disallow_autolink_does_not_flag_extended_autolink():
     """The two vocabularies are distinct: a bare URL is not an
     `autolink`, and a bracketed one is not an `autolink_extended`."""
@@ -293,7 +292,6 @@ def test_disallow_autolink_does_not_flag_extended_autolink():
     assert len(validate(doc, {"disallow": ["autolink_extended"]})) == 1
 
 
-@pytest.mark.skip(reason=PENDING)
 @pytest.mark.parametrize("old_name", ["link_bare", "link_bracket"])
 def test_disallow_rejects_old_link_names(old_name):
     doc = Document()
