@@ -1,9 +1,9 @@
 ---
-assignee: software-engineer
+assignee: program-manager
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-progress
+status: in-review
 step: implementation
 tags: [gfm-parity, parser, pr-44]
 type: bug
