@@ -3,8 +3,8 @@ assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-review
-step: code-and-test-review
+status: in-progress
+step: implementation
 tags: [gfm-parity, parser, pr-44]
 type: bug
 workflow: software-engineering
@@ -1071,3 +1071,66 @@ Author: software-engineer/software-engineering/code-review,python,testing
       not "mailto and friends".
 
     Action: @program-manager — request for edit
+
+### 2026-09-18T15:01:06+00:00
+
+Author: software-engineer/software-engineering/git,python,testing
+
+    Step-3 revision per the 14:56 review, Finding 1 only. One code
+    commit, b8be8f4, green under the local flake8 + pytest hook; no
+    step-2 acceptance test changed; the observations list was not
+    acted on (`_trim`, `_has_checkable_scheme` and the stale header
+    comments are untouched).
+
+    What changed, in `tiredize/markdown/types/link.py`:
+
+    - `ExtendedAutolink._scan(text, text_sanitized)` now takes the
+      original text alongside the sanitized copy. It still searches
+      candidates in the sanitized copy, but before validating one it
+      calls the new `_valid_preceding(text, match.start())`, which
+      reads the source character before the candidate; on rejection
+      it does `pos = match.start() + 1; continue`, the same one-
+      character resume a failed validation uses, so the check sits
+      inside the loop as the review asked and not as a post-filter.
+    - `_valid_preceding` accepts `start == 0`, `str.isspace()` (the
+      set the pattern's `\s` matches) or one of `*`, `_`, `~`, `(`,
+      the last four lifted into a `PRECEDING_DELIMITERS` constant
+      beside `TRAILING_PUNCTUATION`.
+    - `extract()` passes `text` and `text_sanitized`; its docstring
+      and `_scan`'s say the rule is judged on the source. `sanitize()`
+      is unchanged: it derives its spans from `extract()`.
+
+    Tests added to `tests/markdown/types/test_link.py`, in the
+    "preceding character and scanning" subsection, ten cases:
+
+    - `test_extended_autolink_not_directly_after_blanked_construct`,
+      parametrised over `[x](https://a.b)`, `` `code` ``,
+      `<https://a.b>`, `![i](p.png)`, each glued to `www.c.d`,
+      `https://c.d/e` and `mailto:a@b.c`: no link.
+    - `test_extended_autolink_after_blanked_construct_and_space`, the
+      same four constructs with a real space: the link is matched.
+    - `test_extended_autolink_rejected_after_blanked_construct_is_
+      rescanned`: `[x](u)www.a.b(www.c.d)` yields exactly `www.c.d`.
+    - `test_extended_autolink_sanitize_after_blanked_construct`: the
+      glued form sanitizes to itself, the spaced form blanks exactly
+      the seven characters of `www.c.d`.
+
+    Pre-fix evidence (tests written first, run at 53afde9): 6 failed,
+    4 passed. The four glued parametrisations failed on the first
+    assertion with `www.c.d` extracted; the rescan test returned
+    `www.a.b(www.c.d)` instead of `www.c.d`; the sanitize test got
+    `[x](https://a.b)       ` for the glued input. The four spaced
+    controls passed before and after, as they should. After the fix:
+    10 passed.
+
+    Sanitize check the routing asked for: a scratch probe over the
+    four reproductions, the recovery case, the spaced controls and a
+    newline-separated case compared `sanitize()` output with the
+    text blanked at `extract()`'s reported spans; every one agrees.
+    Recovery case now sanitizes to `[x](u)www.a.b(       )`.
+
+    Final state: `python3 -m pytest -q` 1075 passed, 47 skipped (the
+    ten new tests; the `links-exclude-malformed-url-crash` skip is
+    still in place); flake8 clean; `link.py` 172 statements, 100%;
+    `links.py` 96, 100%; package 99%. The issue file is committed
+    separately.
