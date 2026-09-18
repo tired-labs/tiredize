@@ -1,9 +1,9 @@
 ---
-assignee: program-manager
+assignee: software-engineer
 created: 2026-09-14
 knowledge: []
 priority: medium
-status: in-review
+status: in-progress
 step: implementation
 tags: [gfm-parity, parser, pr-44]
 type: bug
@@ -878,3 +878,66 @@ Author: program-manager/software-engineering
     skipped regression test is added for the `_is_excluded()` crash,
     referencing the new draft issue `links-exclude-malformed-url-crash`.
     Step 4 begins once the revision lands.
+
+### 2026-09-18T14:42:46+00:00
+
+Author: software-engineer/software-engineering/git,python,testing
+
+    Step-3 revision per the 16:15 routing. Two code commits, each
+    green under the local flake8 + pytest hook; interpretations 4, 5
+    and 6a untouched; no step-2 acceptance test changed.
+
+    - 553f25c email alphanumerics become ASCII. In
+      `tiredize/markdown/types/link.py` the email alternative of
+      `RE_CANDIDATE` now uses `[A-Za-z0-9]` for the local part, the
+      domain segments and the xmpp resource, for the bare, `mailto:`
+      and `xmpp:` forms alike; `RE_DOMAIN` (www/http domains) keeps
+      `\w`. The class docstring and the pattern comments say which is
+      which and why (cmark-gfm: `isalnum` for emails, Unicode-aware
+      host check for domains). In `tests/markdown/types/test_link.py`,
+      `test_extended_autolink_email_may_be_non_ascii` became
+      `test_extended_autolink_email_must_be_ascii` (`josé@example.com`
+      and `jose@exämple.com` yield nothing; `jose@example.cöm` yields
+      `jose@example.c`), `test_extended_autolink_domain_may_be_non_
+      ascii` now also pins `www.münchen.de` and `https://münchen.de/x`
+      and says emails differ, and two tests were added:
+      `test_extended_autolink_protocol_address_must_be_ascii`
+      (`mailto:`/`xmpp:` with a non-ASCII local part or domain) and
+      `test_extended_autolink_xmpp_resource_must_be_ascii`
+      (`xmpp:a@b.c/ré` links as `xmpp:a@b.c/r`; `xmpp:a@b.c/é` as
+      `xmpp:a@b.c`). Coverage of `link.py` stays 162/162.
+
+      One point worth a reviewer's eye: a non-ASCII character inside
+      an email *domain* does not void the address, it ends it, so
+      `jose@example.cöm` links as `jose@example.c` and `xmpp:jose@b.cé`
+      as `xmpp:jose@b.c`. That is the same rule `/`, `?` and `_` in a
+      resource already follow (`a@b.c/d` links as `a@b.c`), it is what
+      cmark-gfm's byte scanner does (it breaks at the first
+      non-`isalnum` byte and links what precedes it), and it is what
+      the contract's grammar produces. My first draft of the test
+      asserted "no link at all" from a wrong assumption; the code was
+      right and the test was corrected, not the code. Before the `@`
+      a non-ASCII letter does void the address, because it breaks the
+      local part and `é` is not a valid preceding character.
+
+    - f0173fd skipped regression test for the `_is_excluded` crash.
+      `test_malformed_url_with_exclude_configured_is_a_finding_not_a_
+      crash` in `tests/linter/rules/test_links.py`: `<http://[::1>`
+      with `{"validate": True, "exclude": ["*.example.com"]}`,
+      `check_url_valid` mocked to `(False, None, "invalid url")`,
+      asserting one call, one finding, `http://[::1` in its message.
+      Run unskipped first: it fails with `ValueError: Invalid IPv6
+      URL`, raised at `/usr/lib/python3.13/urllib/parse.py:514` in
+      `urlsplit`, via `urlparse` from `_is_excluded`
+      (`tiredize/linter/rules/links.py:65`), reached from the
+      autolink loop in `validate` (`links.py:171`). Then marked
+      `@pytest.mark.skip(reason="links-exclude-malformed-url-crash:
+      _is_excluded raises on URLs urlparse cannot parse")`. The crash
+      is not fixed; the draft issue owns it.
+
+    Final state: `python3 -m pytest -q` 1065 passed, 47 skipped;
+    flake8 clean; package coverage 99%, `link.py` and `links.py`
+    100%. The passed count is 1065 rather than the 1063 the routing
+    anticipated because the two protocol/resource ASCII tests are
+    new; the 47th skip is the regression test above. The issue file
+    is committed separately as a third commit.
