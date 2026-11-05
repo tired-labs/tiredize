@@ -497,7 +497,7 @@ and available configuration helpers.
 
 [TIRED Labs]: https://www.tired-labs.org/
 [TRR]: https://github.com/tired-labs/techniques
-[spec-validator]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/markdown-schema-validator.md
-[spec-frontmatter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/frontmatter-schema-validator.md
-[spec-linter]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/linter.md
-[spec-parser]: https://github.com/tired-labs/tiredize/blob/main/.context/specifications/markdown-parser.md
+[spec-validator]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/markdown-schema-validator.md
+[spec-frontmatter]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/frontmatter-schema-validator.md
+[spec-linter]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/linter-engine.md
+[spec-parser]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/autolinks.md

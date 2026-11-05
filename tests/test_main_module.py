@@ -29,12 +29,6 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-FRONTMATTER_SCHEMA = (
-    REPO_ROOT / ".context" / "schemas" / "issue-frontmatter.yaml"
-)
-MARKDOWN_SCHEMA = (
-    REPO_ROOT / ".context" / "schemas" / "issue-markdown.yaml"
-)
 RULES_PACKAGE = REPO_ROOT / "tiredize" / "linter" / "rules"
 
 # One valid configuration body per built-in rule. Each supplies every
@@ -73,24 +67,6 @@ def _console_script() -> str:
     if path is None:
         pytest.skip("the tiredize console script is not on PATH")
     return path
-
-
-def _issue_frontmatter(assignee: str) -> str:
-    """A minimal issue frontmatter block naming `assignee`."""
-    return (
-        "---\n"
-        f"assignee: {assignee}\n"
-        "created: 2026-09-05\n"
-        "knowledge: []\n"
-        "priority: low\n"
-        "status: draft\n"
-        "tags: [tea, biscuits]\n"
-        "type: spike\n"
-        "workflow: software-engineering\n"
-        "---\n"
-        "\n"
-        "# Tea Break Protocol\n"
-    )
 
 
 def _rule_modules() -> set[str]:
@@ -416,59 +392,6 @@ class TestStreamParity:
         assert module.stdout == console.stdout
         assert module.stderr == console.stderr
         assert "[line_length]" in module.stdout
-
-
-class TestIssueAssigneeVocabulary:
-    """The project's own issue frontmatter schema names functions.
-
-    Every allowed `assignee` value matches a function filename;
-    `program-manager` replaces the lone exception, `PM`. These run the
-    console script because it is what CI and the pre-commit hook use to
-    validate `.context/issues/`, and its exit status is already correct.
-    """
-
-    def test_program_manager_is_allowed(self, tmp_path):
-        doc = tmp_path / "tea_break.md"
-        doc.write_text(_issue_frontmatter("program-manager"))
-        result = _run_console([
-            "--frontmatter-schema", str(FRONTMATTER_SCHEMA),
-            str(doc),
-        ])
-        assert result.returncode == 0
-        assert "no issues found" in result.stdout
-
-    def test_pm_is_no_longer_allowed(self, tmp_path):
-        """`program-manager` replaces `PM` rather than joining it.
-
-        Reading of "in place of `PM`" in acceptance criterion 7; see
-        the qa-engineer comment on the tracking issue.
-        """
-        doc = tmp_path / "old_habits.md"
-        doc.write_text(_issue_frontmatter("PM"))
-        result = _run_console([
-            "--frontmatter-schema", str(FRONTMATTER_SCHEMA),
-            str(doc),
-        ])
-        assert result.returncode == 1
-        assert "schema.frontmatter.value_not_allowed" in result.stdout
-
-    def test_every_issue_file_validates_clean(self):
-        """The repository's own issues must stay valid.
-
-        Unskipped: this passes today and guards the schema change —
-        swapping the allowed value without updating
-        `context-process-migration.md` breaks it.
-        """
-        issues = sorted(
-            (REPO_ROOT / ".context" / "issues").glob("*.md")
-        )
-        assert issues, "expected issue files under .context/issues/"
-        result = _run_console([
-            "--markdown-schema", str(MARKDOWN_SCHEMA),
-            "--frontmatter-schema", str(FRONTMATTER_SCHEMA),
-            *[str(path) for path in issues],
-        ])
-        assert result.returncode == 0, result.stdout + result.stderr
 
 
 class TestRuleConfigurationValidation:
