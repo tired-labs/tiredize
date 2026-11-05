@@ -89,7 +89,7 @@ is a URI whose `url` is written as-is, while `<x@y.z>` is an email
 whose `url` gains `mailto:`. The email branch is the HTML5 regex the
 specification reproduces: labels are 1-63 characters, may not start or
 end with `-`, and the dotted part is optional, so `<x@y>` is an email
-autolink. Backslashes inside the brackets are literal characters. See Autolink below.
+autolink. Backslashes inside the brackets are literal characters. See `Autolink` (section 6.8) below.
 
 ### `ExtendedAutolink.RE_CANDIDATE` (link.py)
 
@@ -114,7 +114,7 @@ This is a *candidate* finder, not the extended autolink pattern: GFM
 section 6.9 is procedural (count parentheses over the whole link,
 inspect the last two domain segments, judge the character before the
 link) and is not expressible in one regex. Each alternative captures
-the longest run its form allows; the `_scan` pass in "Autolinks" below
+the longest run its form allows; the `_scan` pass under Extraction Passes below
 then judges the preceding character, validates the domain and trims the
 tail. The email alternative writes its domain and xmpp resource as
 non-empty `.`-joined segments, so a trailing `.` falls outside the
@@ -136,7 +136,7 @@ entity-like tail that path validation removes.
 ## `Autolink` (section 6.8)
 
 A match is `<`, then an absolute URI or an email address, then `>`,
-with no whitespace inside. `RE_AUTOLINK` (Pattern Reference) is the
+with no whitespace inside. `RE_AUTOLINK` (see Patterns) is the
 whole rule. An absolute URI is a 2-32 character scheme (ASCII letter,
 then ASCII letters, digits, `+`, `.`, `-`), a colon, and zero or more
 characters other than ASCII whitespace, ASCII control characters, `<`
@@ -212,7 +212,7 @@ The rules above are applied in this order by `extract()`:
    overlap.
 
 `string` is `text[start:end]` as written; `url` derives from it as the
-Autolink Elements contract states. `sanitize()` blanks exactly the
+Contracts and Interfaces section states. `sanitize()` blanks exactly the
 spans `extract()` reports. Because the matcher is context-sensitive,
 `ExtendedAutolink.sanitize()` is not idempotent in general: blanking an
 accepted link turns the character before whatever was glued to it into

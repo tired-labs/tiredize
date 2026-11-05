@@ -9,7 +9,9 @@ the component pages it links.
 
 ## Installing
 
-Tiredize needs Python 3.10 or later. Install it from a clone:
+Tiredize declares Python 3.10 as its minimum (`requires-python` in
+`pyproject.toml`). CI tests on 3.11 and the release workflow on 3.12
+(see [CI](../practices/ci.md)). Install it from a clone:
 
 ```bash
 git clone https://github.com/tired-labs/tiredize.git
@@ -26,15 +28,17 @@ tiredize --markdown-schema schema.yaml --frontmatter-schema fm.yaml --rules rule
 python3 -m tiredize [same arguments]
 ```
 
-Both forms behave identically. In a hook or CI job, prefer
+Both forms behave identically (see [CLI](../components/cli.md) for
+the one difference, in tracebacks). In a hook or CI job, prefer
 `python3 -m tiredize`, which works when the console script is not on
 `PATH`; write `python -m` only where `python` is known to be the
 interpreter tiredize was installed into, since many systems ship only
 `python3`.
 
 Gate on the exit status: `0` is clean, `1` means findings or a runtime
-error, `2` is a usage mistake. A `1` with an `error:` line on stderr
-means later files were not checked.
+error, `2` is a usage mistake. A `1` with an `error:` line or a Python
+traceback on stderr means a runtime error stopped the run and later
+files were not checked.
 
 ## Design Decisions
 

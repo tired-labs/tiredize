@@ -28,7 +28,8 @@ flowchart LR
    validator](../components/markdown-schema-validator.md) checks the
    section tree; the [frontmatter schema
    validator](../components/frontmatter-schema-validator.md) checks the
-   frontmatter. Each runs only when its configuration file was given.
+   frontmatter. Each runs only when its flag was given a non-empty
+   value (see [CLI](../components/cli.md)).
 4. The CLI prints each path's findings and returns the exit status.
 
 The checks never call each other. They share only the parsed
@@ -41,7 +42,7 @@ The checks never call each other. They share only the parsed
 @dataclass(frozen=True)
 class Position:
     offset: int   # character index from the start of the document
-    length: int
+    length: int   # characters the finding covers, starting at offset
 
 @dataclass(frozen=False)
 class RuleResult:
@@ -55,17 +56,25 @@ class RuleNotFoundError(Exception): ...
 Every check reports a finding as a `RuleResult`. Offsets count
 characters from the start of the file, frontmatter included, so the CLI
 can turn any finding into a line and column with
-`Document.line_col()`. Linter findings carry the rule id
-(`line_length`); validator findings carry a dotted id
-(`schema.markdown.missing_section`, `schema.frontmatter.wrong_type`).
+`Document.line_col()`. The CLI prints only the start of a finding;
+`length` is for Python callers.
+
+Linter findings carry the rule id (`line_length`); validator findings
+carry a dotted id (`schema.markdown.missing_section`,
+`schema.frontmatter.wrong_type`). `rule_id` is `None` only on a result
+a rule function returns: rules leave it unset and the [linter
+engine](../components/linter-engine.md) stamps the rule id on every
+result before returning it, so every finding the CLI prints has one.
 
 ## Findings and Errors
 
 Across every component, a problem in the **document** is a finding and
 a problem in the **configuration** is an error. A bad rules file, an
 invalid schema, an unknown rule or an ambiguous schema raises, and the
-CLI stops the run (see [CLI](../components/cli.md)). Nothing degrades a
-configuration mistake into a check that quietly does nothing.
+CLI stops the run (see [CLI](../components/cli.md)). Two configuration
+mistakes do not raise: an empty rules file enables no rule, and a flag
+given an empty value skips its check; both are open questions on the
+[CLI](../components/cli.md) page.
 
 ## Design Decisions
 

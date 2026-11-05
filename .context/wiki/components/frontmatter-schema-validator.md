@@ -33,8 +33,11 @@ def load_frontmatter_schema(yaml_string: str) -> FrontmatterSchema:
 
 Parses a YAML string into a `FrontmatterSchema`. Validates the schema
 itself before returning: required `fields` key, valid type declarations,
-`allowed` value type consistency, and unknown property rejection. Raises
-`ValueError` for all validation failures.
+`allowed` value type consistency, and unknown property rejection. Schema
+faults raise `ValueError` with the messages listed under Loader Errors.
+Malformed YAML raises `yaml.YAMLError`. An unknown top-level key that
+YAML reads as a non-string (for example `1: x`) raises `TypeError`
+while the error message is being built.
 
 ### Duplicate Key Loader
 
@@ -43,11 +46,17 @@ itself before returning: required `fields` key, valid type declarations,
 def safe_load_yaml(text: str):
 ```
 
-Parses YAML with duplicate key detection. Raises `ValueError` when a
-mapping key appears more than once. Uses a `SafeLoader`
-subclass with a custom constructor for `DEFAULT_MAPPING_TAG` that
-calls `construct_pairs` to detect duplicates before building the dict.
-Used in both the schema loader and the frontmatter validation path.
+Parses YAML with duplicate key detection, at any nesting depth. Uses a
+`SafeLoader` subclass with a custom constructor for
+`DEFAULT_MAPPING_TAG` that calls `construct_pairs` to detect duplicates
+before building the dict. Raises `ValueError` with
+`Frontmatter contains duplicate key: '<key>'` when a mapping key
+appears more than once, and with `Mapping key <repr> is unhashable
+(<type>)` when a key is a sequence or mapping (the repr shows the key
+before its contents are built, e.g. `[]`). Keys are compared after YAML
+typing with Python equality, so `1`, `1.0` and `true` count as the same
+key. Any other YAML fault raises `yaml.YAMLError`. Used in both the
+schema loader and the frontmatter validation path.
 
 ### Data Model
 
@@ -76,9 +85,13 @@ class FrontmatterSchema:
 
 The file must be a YAML mapping. Any key not listed below, at the top
 level or in a field definition, is rejected, as is a key that appears
-twice. Every fault in the schema file raises `ValueError` before any
-document is checked, which the [CLI](./cli.md) reports as a runtime
-error. An empty file is rejected, because `fields` is required.
+twice (see Duplicate Key Loader). Every fault in the schema file is
+raised before any document is checked; the [CLI](./cli.md) page
+describes how each is reported. An empty file is rejected, because
+`fields` is required.
+
+A key given an empty (YAML `null`) value is rejected, except `allowed`,
+where `null` means no restriction.
 
 ### Top-Level Keys
 
@@ -93,7 +106,32 @@ error. An empty file is rejected, because `fields` is required.
 |------------|--------|----------|-------------|-----------------|
 | `type`     | string | yes      | —           | `string`, `int`, `float`, `bool`, `date`, `list` |
 | `required` | bool   | no       | `true`      | `false` lets the field be absent or null |
-| `allowed`  | list   | no       | any value of the type | A non-empty list. Entries must have the field's type (strings for a `list` field), with the same guards as values: no `bool` for `int`, no `int` for `float`, no timestamp for `date` |
+| `allowed`  | list   | no       | any value of the type | A non-empty list. Entries must have the field's type (strings for a `list` field), with the same guards as values: no `bool` for `int`, no `int` for `float`, no timestamp for `date`. `null` is the same as absent |
+
+### Loader Errors
+
+Every message below is raised as `ValueError`. `<type>` is the Python
+type name of the offending value (`NoneType` for an empty value).
+
+| Fault | Message |
+|-------|---------|
+| Duplicate key | `Schema contains duplicate key: Frontmatter contains duplicate key: '<key>'` |
+| Unhashable key | `Schema contains duplicate key: Mapping key <repr> is unhashable (<type>)` |
+| File is not a mapping | `Schema must be a YAML mapping, got <type>.` |
+| Unknown top-level key | `Unknown top-level key(s): <keys>.` (sorted, comma-separated) |
+| No `fields` key | `Schema must contain a 'fields' key.` |
+| `fields` not a mapping | `'fields' must be a YAML mapping, got <type>.` |
+| `allow_extra_fields` not a bool | `'allow_extra_fields' must be a bool, got <type>.` |
+| Field name not a string | `Field name must be a string, got <type>: <repr>. Quote it in YAML to prevent type coercion.` |
+| Field definition not a mapping | `Field '<name>' definition must be a YAML mapping, got <type>.` |
+| Unknown field property | `Unknown property in field '<name>': <keys>.` |
+| No `type` | `Field '<name>' must declare a 'type'.` |
+| Unknown `type` | `Field '<name>' has unknown type '<value>'. Valid types: bool, date, float, int, list, string.` |
+| `required` not a bool | `'required' for field '<name>' must be a bool, got <type>.` |
+| `allowed` not a list | `'allowed' for field '<name>' must be a list, got <type>.` |
+| `allowed` empty | `'allowed' for field '<name>' must not be empty.` |
+| `allowed` entry of the wrong type | `'allowed' value <repr> for field '<name>' has wrong type (<type>, expected <field type>).` |
+| `allowed` entry not a string on a `list` field | `'allowed' values for list field '<name>' must be strings, got <type>: <repr>.` |
 
 ### Type Mapping
 
@@ -112,7 +150,12 @@ error. An empty file is rejected, because `fields` is required.
   value itself must be in the list. For `list` fields, every item must
   be in the list.
 - `type: list` items must be strings, and duplicate items are always
-  rejected.
+  rejected. If any item is not a string, each such item reports
+  `list_item_not_string` and the field's duplicate and `allowed` checks
+  are skipped. Otherwise each repeated occurrence of an item reports
+  `duplicate_list_item` (three `a` items give two findings), and each
+  occurrence of a disallowed item reports `value_not_allowed`,
+  duplicates included. An empty list passes, even with `allowed`.
 - Map values (YAML mappings) are never accepted as field values; they
   report `map_not_supported`.
 
@@ -129,8 +172,9 @@ parser](./markdown-parser.md)); no YAML error is reported.
 Frontmatter that parses to something other than a mapping, such as a
 list, reports `wrong_type` and is then treated as empty.
 
-Every finding points at the frontmatter block, or at offset 0 when
-there is none.
+Every finding points at the whole frontmatter block, from the opening
+`---` through the closing `---` and its newline, or at offset 0 with
+length 0 when there is none.
 
 ### Empty Field Values
 
@@ -141,13 +185,18 @@ required field with a null value reports `missing_field`; an optional
 not type-checked. This supports the convention of leaving optional
 frontmatter fields blank until they are populated. An empty list
 (`tags: []`) is a real list value, not null, and is validated as a list.
+This applies only to fields the schema defines: an undefined key with
+an empty value still reports `extra_field` when extra fields are not
+allowed.
 
 ### Duplicate YAML Keys
 
 Before validation, the frontmatter is re-parsed with `safe_load_yaml`
 to detect duplicate keys. If a duplicate is found, a single
-`duplicate_key` error is returned and validation stops (the data is
-unreliable).
+`duplicate_key` error is returned, for the first duplicate found, and
+validation stops (the data is unreliable). Because keys are compared
+with Python equality, distinct keys such as `1` and `true` also trigger
+it.
 
 ### Type Checking
 
@@ -170,26 +219,38 @@ When a field has the wrong type, subsequent checks (allowed values,
 list item checks) are skipped for that field. This prevents cascading
 errors from a single root cause.
 
+### Finding Order
+
+Findings come in this order: `wrong_type` for frontmatter that is not a
+mapping; every `missing_field`, in schema order; every `extra_field`, in
+frontmatter order; then each defined field's value findings, in schema
+order.
+
 ## Error Types
 
-| Rule ID                                   | Trigger                          |
-|-------------------------------------------|----------------------------------|
-| `schema.frontmatter.missing_field`        | Required field not present       |
-| `schema.frontmatter.extra_field`          | Field not defined in schema      |
-| `schema.frontmatter.wrong_type`           | Value type does not match schema, or frontmatter is not a mapping |
-| `schema.frontmatter.value_not_allowed`    | Value not in `allowed` list      |
-| `schema.frontmatter.duplicate_list_item`  | List contains duplicate entries  |
-| `schema.frontmatter.map_not_supported`    | Field value is a YAML map        |
-| `schema.frontmatter.duplicate_key`        | YAML key appears more than once  |
-| `schema.frontmatter.list_item_not_string` | List item is not a string        |
+Every finding's position is the frontmatter block (see Missing
+Frontmatter). In the messages, `<value>` and `<item>` use Python's
+`str()`, and `<allowed>` is the Python repr of the `allowed` list (for
+example `[datetime.date(2024, 1, 1)]`).
+
+| Rule ID                                   | Message format | Fires when |
+|-------------------------------------------|----------------|------------|
+| `schema.frontmatter.missing_field`        | `Missing required field: '<name>'` | A required field is absent or null |
+| `schema.frontmatter.extra_field`          | `Unexpected field: '<key>'` | A key is not defined in the schema and `allow_extra_fields` is false |
+| `schema.frontmatter.wrong_type`           | `Field '<name>' has wrong type: expected <type>, got <python type>` | A value's type does not match the schema |
+| `schema.frontmatter.wrong_type`           | `Frontmatter must be a YAML mapping, got <python type>` | The frontmatter is not a mapping |
+| `schema.frontmatter.value_not_allowed`    | `Field '<name>' value '<value>' is not allowed. Accepted values: <allowed>` | A scalar value is not in `allowed` |
+| `schema.frontmatter.value_not_allowed`    | `List field '<name>' contains disallowed item: '<item>'. Accepted values: <allowed>` | A list item is not in `allowed` |
+| `schema.frontmatter.duplicate_list_item`  | `List field '<name>' contains duplicate item: '<item>'` | A list item repeats |
+| `schema.frontmatter.map_not_supported`    | `Field '<name>' is a map — maps are not supported` | A defined field's value is a YAML mapping, whatever its type |
+| `schema.frontmatter.duplicate_key`        | The `safe_load_yaml` message, e.g. `Frontmatter contains duplicate key: '<key>'` | A key repeats in any mapping of the frontmatter |
+| `schema.frontmatter.list_item_not_string` | `List field '<name>' contains non-string item: <repr> (<python type>)` | A list item is not a string |
 
 ## CLI Integration
 
-The `--frontmatter-schema` flag in `tiredize/cli.py` passes the schema
-file path to `_run_frontmatter_schema()`, which calls
-`load_frontmatter_schema()` and `validate()`. Error handling catches
-`ValueError`, `FileNotFoundError`, and `yaml.YAMLError`, printing to
-stderr and returning exit code 1.
+The `--frontmatter-schema` flag passes the schema file to
+`load_frontmatter_schema()` and `validate()`; the [CLI](./cli.md) page
+describes how their exceptions and findings are reported.
 
 ## Design Decisions
 

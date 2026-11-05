@@ -29,8 +29,15 @@ tiredize [--rules FILE] [--markdown-schema FILE] [--frontmatter-schema FILE] PAT
 python -m tiredize [same arguments]
 ```
 
-They take the same arguments and must produce the same stdout, stderr
-and exit status for any argument list.
+This synopsis is illustrative. The `--help` usage line is argparse's
+own: it names the values `RULES_PATH`, `MARKDOWN_SCHEMA_PATH` and
+`FRONTMATTER_SCHEMA_PATH`, and shows `[paths ...]` as optional although
+at least one path is required.
+
+Both entry points take the same arguments and produce the same stdout,
+stderr and exit status for any argument list, with one exception: when
+an error the CLI does not handle ends the run (see Runtime Errors by
+Step), the traceback on stderr shows different call frames for each.
 
 The console script is generated from `[project.scripts]` in
 `pyproject.toml` and wraps the call in `sys.exit(...)`. Module execution
@@ -51,20 +58,35 @@ raise SystemExit(main())
 | `PATH...`              | Markdown files to check                         |
 | `-h`, `--help`         | Print the help text to stdout and exit `0`      |
 
-There is no `--version` and no other flag. Each configuration flag
-names its file directly; there is no configuration discovery and no
-default file. A flag given twice keeps its last value. At least one
-configuration flag and at least one path are required. Paths are taken
-as given: the shell expands globs, and a path listed twice is checked
-twice.
+There is no `--version` and no other flag. Argparse's defaults apply to
+the flags: each can be written `--rules FILE` or `--rules=FILE`, each
+can be abbreviated to any unique prefix (`--rul FILE`), and `--` ends
+option parsing.
 
-Configuration and schema files are read as UTF-8 whatever the platform
-default. Their formats are the contracts on the [linter
-engine](./linter-engine.md) (rules file), [markdown schema
-validator](./markdown-schema-validator.md) and [frontmatter schema
-validator](./frontmatter-schema-validator.md) pages. An empty rules
-file enables no rule, so the run checks nothing and reports every path
-clean.
+Each configuration flag names its file directly; there is no
+configuration discovery and no default file. A flag given twice keeps
+its last value. A flag given an empty value (`--rules ""`) counts as
+absent: its check does not run, and if no other flag has a value the
+run is a usage error.
+
+At least one configuration flag and at least one path are required.
+The paths must form one contiguous group: they may come before or after
+the flags, but not on both sides of them. `a.md --rules r.yaml b.md` is
+an argparse error (`unrecognized arguments: b.md`, exit `2`).
+
+Paths are taken as given: the shell expands globs, and a path listed
+twice is checked twice. Directories are not searched.
+
+Input documents and configuration files are all read as UTF-8 whatever
+the platform default. The configuration formats are the contracts on
+the [linter engine](./linter-engine.md) (rules file, under Rules File),
+[markdown schema validator](./markdown-schema-validator.md) and
+[frontmatter schema validator](./frontmatter-schema-validator.md)
+pages. The CLI loads the rules file itself: an empty or comment-only
+file is an empty mapping, so it enables no rule and the run reports
+every path clean; a top level that is not a mapping is a runtime error;
+a rule id listed twice keeps its last configuration, in the position of
+its first entry.
 
 ### main
 
@@ -78,10 +100,12 @@ defaults to `sys.argv[1:]` through argparse. `main()` does not call
 `sys.exit()`; a caller that discards the return value discards the
 failure signal.
 
-Argparse is the exception: it raises `SystemExit` from inside `main()`.
-Its own errors (an unknown flag, a flag missing its value) print to
-stderr and raise `SystemExit(2)`. `--help` prints to stdout and raises
-`SystemExit(0)`.
+Two things leave `main()` without a return value. Argparse raises
+`SystemExit` from inside it: its own errors (an unknown flag, a flag
+missing its value, paths on both sides of the flags) print to stderr
+and raise `SystemExit(2)`, and `--help` prints to stdout and raises
+`SystemExit(0)`. Any exception the CLI does not handle (see Runtime
+Errors by Step) propagates out of `main()` unchanged.
 
 ## File Layout
 
@@ -100,9 +124,15 @@ stderr and raise `SystemExit(2)`. `--help` prints to stdout and raises
 | `1`    | At least one path produced findings, or a runtime error occurred |
 | `2`    | Usage error                                                      |
 
-A usage error is no positional paths, or none of the three flags. It
-prints the usage message and an explanatory line to stderr. Argparse's
-own errors also exit `2`.
+A usage error is no positional paths, or no configuration flag with a
+non-empty value. It prints the usage message and this line to stderr:
+
+```
+error: at least one of --rules, --markdown-schema, or --frontmatter-schema must be provided, and at least one path.
+```
+
+Argparse's own errors also exit `2`, printing the usage message and a
+line of the form `tiredize: error: <message>`.
 
 ### Findings and Runtime Errors
 
@@ -111,27 +141,69 @@ violation, a markdown schema mismatch, or a frontmatter schema
 violation.
 
 **Runtime errors** stop a check from running at all: an input document
-that does not exist, a configuration or schema file that is missing or
-unparseable, an unknown rule id, an invalid rule configuration, or an
-ambiguous markdown schema. The subsystems raise `FileNotFoundError`,
-`ValueError`, `yaml.YAMLError`, `RuleNotFoundError` or `AmbiguityError`,
-and the CLI catches them around each check.
+that is missing or unreadable, a configuration or schema file that is
+missing, unreadable or invalid, an unknown rule id, an invalid rule
+configuration, or an ambiguous markdown schema.
+
+### Runtime Errors by Step
+
+The CLI catches a fixed set of exception types around each step. A
+caught exception prints `error: <message>` to stderr and `main()`
+returns `1` at once. Any other exception is not caught: the run ends
+with a Python traceback on stderr, no `error:` line, and status `1`
+from the interpreter.
+
+| Step                 | Caught                                                                         | Not caught (traceback)                                                                  |
+|----------------------|--------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
+| Load the document    | `FileNotFoundError`                                                            | A document that is not UTF-8 (`UnicodeDecodeError`), an unreadable one (`PermissionError`) |
+| Rules                | `RuleNotFoundError`, `FileNotFoundError`, `ValueError`, `yaml.YAMLError`       | A directory (`IsADirectoryError`) or unreadable file (`PermissionError`) as the rules file |
+| Markdown schema      | `ValueError`, `AmbiguityError`, `FileNotFoundError`, `yaml.YAMLError`          | A directory or unreadable file as the schema file                                       |
+| Frontmatter schema   | `ValueError`, `FileNotFoundError`, `yaml.YAMLError`                            | A directory or unreadable file as the schema file                                       |
+
+`UnicodeDecodeError` is a `ValueError`, so a configuration or schema
+file that is not UTF-8 is caught and printed, while an input document
+that is not UTF-8 is not. Any exception a rule raises other than
+`ValueError` or `RuleNotFoundError` is also uncaught.
+
+`<message>` is the text of the raised exception. It does not name the
+flag or check that failed, and it may span several lines (PyYAML parse
+errors do). The messages the CLI and the document loader produce:
+
+| Cause                                      | stderr                                              |
+|--------------------------------------------|-----------------------------------------------------|
+| Path that is not a regular file            | `error: Path does not exist: <path>`                |
+| Missing configuration or schema file       | `error: [Errno 2] No such file or directory: '<file>'` |
+| Rules file whose top level is not a mapping | `error: Expected YAML mapping in <file>, got <type>.` |
+| Configuration file that is not UTF-8       | `error: 'utf-8' codec can't decode ...`             |
+
+A directory given as a path is therefore reported as `Path does not
+exist`. The other messages belong to the component that raises them:
+see the [linter engine](./linter-engine.md), [markdown schema
+validator](./markdown-schema-validator.md) and [frontmatter schema
+validator](./frontmatter-schema-validator.md).
 
 ### Processing Order
 
 Findings never stop the run: every path is processed, every finding is
 reported, and the status is `1` at the end. A runtime error does stop
-it: the first one prints to stderr and `main()` returns `1` at once,
-leaving the remaining paths unprocessed. This holds for a missing input
-document as for a bad configuration file. A `1` from a runtime error
-therefore means the remaining paths were never looked at.
+it, caught or not: `main()` ends at the first one, leaving the remaining
+paths unprocessed. This holds for a missing input document as for a bad
+configuration file. A `1` from a runtime error therefore means the
+remaining paths were never looked at.
 
 Paths are processed in the order given. For each path the CLI loads the
 document, then runs the rules, the markdown schema and the frontmatter
 schema, in that order, for whichever flags were given. Configuration
-and schema files are read again for each path. Findings from all three
-are collected before any is printed, so one path's findings print
-together, in this order and not sorted by line:
+and schema files are read again for each path, so a missing or invalid
+configuration file stops the run at the first path. An ambiguous
+markdown schema is detected per document: earlier paths are reported
+normally and the run stops at the first document with a section that
+matches two schema entries.
+
+Findings from all three checks are collected before any is printed. If
+a later check on a path raises, the findings already gathered for that
+path are discarded; only earlier paths' output has been printed. One
+path's findings print together, in this order and not sorted by line:
 
 1. rule findings, rule by rule in the order the rules file lists them,
    each rule's in the order it reports them;
@@ -140,19 +212,28 @@ together, in this order and not sorted by line:
 
 ### Output Streams
 
-| Stream | Content                                             |
-|--------|-----------------------------------------------------|
+| Stream | Content                                              |
+|--------|------------------------------------------------------|
 | stdout | Findings, as `path:line:col: [rule_id] message`      |
 | stdout | `path: no issues found.` for a path with no findings |
-| stdout | The `--help` text                                   |
-| stderr | Runtime errors, as `error: <message>`               |
-| stderr | The usage message and the usage-error explanation   |
-| stderr | Argparse's own error messages                       |
+| stdout | The `--help` text                                    |
+| stderr | Runtime errors, as `error: <message>` or a traceback |
+| stderr | The usage message and the usage-error explanation    |
+| stderr | Argparse's own error messages                        |
 
-Findings never go to stderr and runtime errors never go to stdout. Line
-and column come from `Document.line_col()`: the line is 1-based, the
-column 0-based, and every character, multi-byte or astral, counts as one
-column.
+Findings never go to stderr and runtime errors never go to stdout.
+
+`path` is the argument as normalised by `pathlib`: `./a.md` prints as
+`a.md` and `docs//a.md` as `docs/a.md`; it is not made absolute or
+relative. `rule_id` and `message` are the finding's own; each check's
+ids and messages are on its page.
+
+Line and column come from `Document.line_col()` applied to the start of
+the finding: the line is 1-based, the column 0-based, and every
+character, multi-byte or astral, counts as one column. Documents are
+read with universal newlines, so `\n`, `\r\n` and a lone `\r` each end
+a line, and columns are counted after that translation. The finding's
+length is not printed.
 
 ## Design Decisions
 
@@ -175,7 +256,3 @@ column.
 - **Three statuses, no more.** Runtime errors share `1` with findings.
   The stream tells them apart: a caller that needs to know reads
   stderr.
-
-## Open Questions
-
-- An empty `--rules` file enables nothing and exits `0`, a silent no-op of the kind configuration validation otherwise forbids.

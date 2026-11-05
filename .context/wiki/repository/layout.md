@@ -43,8 +43,8 @@ Each component page under `components/` lists its own files.
   following the element pattern on the [parser](../components/markdown-parser.md)
   page, plus a `Section` field and, if rules should see it, an entry in
   the element vocabulary.
-- **Runtime dependencies** are declared in `pyproject.toml`: PyYAML and
-  requests. Development tools (pytest, pytest-cov, flake8) are not
+- **Runtime dependencies** are declared in `pyproject.toml`:
+  `PyYAML>=6.0` and `requests>=2.32.5`. Development tools (pytest, pytest-cov, flake8) are not
   declared there; CI installs them by name (see [CI](../practices/ci.md)).
 
 ## Design Decisions
@@ -53,7 +53,3 @@ Each component page under `components/` lists its own files.
   unlike the markdown schema, whose data model lives in
   `markdown/types/schema.py`. The frontmatter model is flat and is not a
   markdown type.
-
-## Open Questions
-
-- The test files listed under Conventions break the one-test-file-per-module rule in dotclaude's Python knowledge; whether to rename them or record an override is undecided.

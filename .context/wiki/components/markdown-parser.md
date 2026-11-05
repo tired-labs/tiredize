@@ -36,35 +36,64 @@ class Document:
 ```
 
 `Document.load()` reads a UTF-8 file (via `path`) or takes raw text (via
-`text`), never both, then parses it. A missing file raises
-`FileNotFoundError`. `line_col()` converts a character offset to a
-`(line, column)` pair, line 1-based and column 0-based.
+`text`), then parses it and returns `None`. It raises `ValueError`
+with the message `Provide either 'path' or 'text', not both.` when
+given both, and `Provide either 'path' or 'text'.` when given neither.
+An empty `text` counts as not given, so empty text cannot be loaded
+this way, while an empty file loads as one empty section. `Path(".")`
+equals the default `Path()` and also counts as not given. A path that
+is not a regular file (missing, or a directory) raises
+`FileNotFoundError` with the message `Path does not exist: <path>`,
+and a file that is not valid UTF-8 raises `UnicodeDecodeError`.
+
+A file is read in text mode with universal newlines, so `\r\n` and a
+lone `\r` become `\n` before parsing; text passed as `text` is parsed
+exactly as given. `string` holds the whole text as parsed, and every
+position refers to it. `path` is set only by a path load and is kept
+by a later `load(text=...)` on the same object.
+
+`line_col()` converts a character offset in `string` to a
+`(line, column)` pair, line 1-based and column 0-based, counting
+characters. An offset below 0 is treated as 0 and one past the end as
+the end, so it never raises; before any `load()` it returns `(1, 0)`.
 
 ### Document Model
 
 Parsing runs in this order:
 
 1. **Frontmatter.** A YAML block at the very start of the document (see
-   `RE_FRONT_MATTER_YAML`) becomes `frontmatter`, with its parsed
-   content. A block whose YAML does not parse yields no frontmatter at
+   `RE_FRONT_MATTER_YAML`) becomes `frontmatter`. Its `content` is
+   whatever `yaml.safe_load` returns: usually a mapping, but `None` for
+   a block holding only blank lines and a list or scalar when the YAML
+   is one. A block whose YAML does not parse yields no frontmatter at
    all: the block is then treated as markdown, and no error is raised.
 2. **Markdown.** The rest of the text becomes `string_markdown`. It
    starts one character after the frontmatter's closing `---` line
    ending, so the first character after the frontmatter is skipped: a
-   heading on the very next line loses its `#`, and positions in such a
-   document are one character off. A blank line after the frontmatter
-   avoids both.
+   heading on the very next line loses its `#` and is not a heading,
+   and the first section's `position` starts one character after the
+   frontmatter. Element positions are unaffected and still index
+   `string`. A blank line after the frontmatter avoids the problem,
+   since the skipped character is then the blank line's newline.
 3. **Sections.** Each heading starts a `Section` that runs to the next
-   heading of any level. `sections` lists every section in document
-   order, flat. Each section's `subsections` holds the sections nested
-   directly under it by heading level. A document with no heading is one
-   section whose header has level 0 and an empty title. When a document
-   has headings, text before the first heading belongs to no section,
-   so no element there is extracted.
+   heading of any level: its `string` and `position` cover the heading
+   line through the character before the next heading (or the end).
+   `sections` lists every section in document order, flat. A section's
+   `subsections` are the later sections of a deeper level, up to the
+   next section of the same or a higher level, leaving out any section
+   already inside an earlier subsection. The levels need not be
+   consecutive: in `# 1`, `### 3`, `## 2`, both `### 3` and `## 2` are
+   subsections of `# 1`. A document with no heading is one section
+   whose header has level 0, an empty title and slug `#section`; it
+   has no subsections. When a document has headings, text before the
+   first heading belongs to no section, so no element there is
+   extracted.
 4. **Elements.** Each section's elements are extracted from its own text
    (see Section Fields).
-5. **Slugs.** Each header's anchor slug is computed (see
-   `Header.slugify_header`).
+5. **Slugs.** Each header's anchor slug is computed across the whole
+   document, so repeated titles get suffixes (see
+   `Header.slugify_header`). This overwrites the per-section slug
+   `Section.extract()` left on each header.
 
 ### Section Fields
 
@@ -94,6 +123,17 @@ class Section:
 `lists` is always empty: `List.extract()` is a stub, and lists are not
 parsed. Every other field is filled by its element's `extract()`.
 
+```python
+@staticmethod
+def extract(text: str, base_offset: int = 0) -> list[Section]
+```
+
+`Section.extract()` builds the sections and their subsections from
+markdown text whose character 0 is at `base_offset`. Called on its own,
+it leaves the level-0 header's slug as an empty string, and each
+header's slug is computed from its own section only, so repeated titles
+are not suffixed; `Document` assigns the document-wide slugs.
+
 ### Shared Types
 
 ```python
@@ -109,12 +149,16 @@ document root (character 0 of the original file content).
 
 ### Element Type Pattern
 
-Every markdown element type follows this pattern:
+Every markdown element type except `List` (a stub with no position,
+pattern or `sanitize()`) follows this pattern:
 
-- A frozen or mutable dataclass with a `position: Position` field.
+- A mutable dataclass (`frozen=False`) with a `position: Position`
+  field.
 - A class-level regex constant (`RE_*`) using `re.VERBOSE` syntax.
 - A `@staticmethod extract(text: str, base_offset: int = 0) -> list[T]`
   method that finds all instances in the given text.
+  `FrontMatter.extract()` is the exception: it returns one
+  `FrontMatter` or `None`.
 - A `@staticmethod sanitize(text: str) -> str` method that replaces
   matched regions with whitespace, preserving character offsets for
   downstream extractors.
@@ -122,6 +166,83 @@ Every markdown element type follows this pattern:
 The `base_offset` parameter threads position tracking through nested
 extraction calls so that offsets in child elements are relative to the
 document root, not to the parent's text slice.
+
+### Element Fields
+
+Every element's `string` is the full matched source text and its
+`position` covers exactly that text. The autolink fields are on
+[autolinks](./autolinks.md).
+
+```python
+# code.py
+class CodeBlock:      code: str; delimiter: str; language: str
+                      position: Position; string: str
+class CodeInline:     code: str; position: Position; string: str
+# frontmatter.py
+class FrontMatter:    content: dict[Any, Any]; position: Position
+                      string: str
+# header.py
+class Header:         level: int; position: Position; slug: str
+                      string: str; title: str
+# image.py
+class InlineImage:    text: str; position: Position; string: str
+                      title: str | None; url: str
+# link.py
+class InlineLink:     position: Position; string: str; title: str
+                      url: str
+# list.py
+class List:           end: int; items: list[str]; match: str
+                      start: int; sublists: list[List]
+# quoteblock.py
+class QuoteBlock:     depth: int; position: Position; quote: str
+                      string: str
+# reference.py
+class ReferenceDefinition: position: Position; string: str; text: str
+                      title: str; url: str
+class LinkReference:  position: Position; reference: str; string: str
+                      text: str | None
+class ImageReference: position: Position; reference: str; string: str
+                      text: str | None
+# table.py
+class Table:          divider: list[str]; header: list[str]
+                      position: Position; rows: list[list[str]]
+                      string: str
+```
+
+- **CodeBlock.** `code` is the text between the fence lines, without
+  their newlines. `delimiter` is the opening backtick run. `language`
+  is the whole info string after the opening fence (`py title=x`
+  stays whole), or an empty string.
+- **CodeInline.** `code` is the text between the backticks.
+- **FrontMatter.** `content` is the parsed YAML, which despite the
+  annotation can be `None`, a list or a scalar (see Document Model).
+  `string` includes both `---` lines and the final newline.
+- **Header.** `level` is the number of `#`. `title` is the rest of the
+  line, trailing whitespace and closing `#` included. `string` and
+  `position` cover the heading line without its newline. `slug` is the
+  anchor (see `Header.slugify_header`).
+- **InlineImage and InlineLink.** `url` is the destination and `title`
+  the double-quoted title, or `None` when there is none (although
+  `InlineLink.title` is annotated `str`). `InlineImage.text` is the alt
+  text with surrounding whitespace removed. `InlineLink` has no field
+  for the link text.
+- **QuoteBlock.** `depth` is the number of adjacent `>` characters.
+  `quote` is the content after the `>` run and following whitespace;
+  merged lines are joined with `\n`.
+- **ReferenceDefinition.** `text` is the label, `url` the destination
+  as written (angle brackets kept), and `title` the double-quoted
+  title or `None` (although annotated `str`).
+- **LinkReference and ImageReference.** `reference` is the label in the
+  last bracket pair, leading whitespace removed and trailing whitespace
+  kept (`[ sp ]` gives `sp `). `text` is the text of the first bracket
+  pair in the full form `[text][ref]`, and `None` in the shortcut form
+  `[ref]`. The collapsed form `[c][]` is reported as the shortcut
+  `[c]`.
+- **Table.** `header`, `divider` and each entry of `rows` are lists of
+  cell strings with the outer pipes removed and each cell stripped of
+  whitespace. Divider cells keep their dashes and colons (`---`,
+  `:-:`). `string` and `position` include the table's final newline.
+- **List.** The fields exist but no `List` is ever produced.
 
 ### Utility Functions
 
@@ -155,6 +276,7 @@ tiredize/markdown/
     ├── quoteblock.py    QuoteBlock
     ├── reference.py     LinkReference, ImageReference,
     │                    ReferenceDefinition
+    ├── schema.py        markdown schema validator (see its page)
     ├── section.py       Section (tree builder, extraction
     │                    orchestrator)
     └── table.py         Table
@@ -192,15 +314,20 @@ and component descriptions. The autolink patterns are on
 ```
 (?:(?<=\n)|(?:^))       # Start-of-line anchor (zero-width)
 (?P<delimiter>``[`]+)   # Opening fence: 3+ backticks
-(?P<language>.*)        # Optional language identifier
+(?P<language>.*)        # Info string: rest of the opening line
 \n                      # Newline after opening fence
 (?P<code>[\s\S]*?)      # Code content (lazy, spans newlines)
 \n                      # Newline before closing fence
 \1                      # Closing fence: must match opening backtick count
 ```
 
-The closing fence uses backreference `\1` to ensure the delimiter
-length matches. `[\s\S]*?` is used instead of `.*?` because `.`
+The closing fence uses backreference `\1`, and nothing after it is
+anchored: the closing line need only begin with the opening backtick
+run. A longer closing run closes the block after the opening run's
+length, and anything after the fence on the closing line is left
+outside the block as ordinary text. A block with no content line
+(an opening fence directly followed by its closing fence) is not
+matched. `[\s\S]*?` is used instead of `.*?` because `.`
 does not match newlines. The lazy quantifier prevents consuming
 past the first matching closing fence.
 
@@ -241,14 +368,17 @@ newline will not match.
 (?P<title>[^\n]+)       # Title: rest of line
 ```
 
-Requires at least one space after `#`. A line like `#no-space`
-will not match. The title captures everything to end-of-line
+Requires whitespace after the hashes, so a line like `#no-space`
+will not match. `\s` includes tabs and line breaks: a line holding
+only `#` (or `#` and spaces) becomes a heading whose title is the next
+non-blank line, and that heading's `string` spans the lines between. The title captures everything to end-of-line
 including trailing whitespace and closing `#` characters.
 
 #### `Header.slugify_header` (header.py)
 
 Generates GFM-compatible anchor slugs from heading text:
 
+0. Replace an empty title with `section`.
 1. Lowercase the text.
 2. Remove characters that are not Unicode word characters (`\w`),
    spaces, or hyphens. This preserves non-ASCII letters (accented,
@@ -334,7 +464,10 @@ don't consume content on the same line.
 ```
 
 Matches both full references `[text][ref]` and shortcut
-references `[ref]`. The `(?<!(!|\]))` lookbehind prevents matching
+references `[ref]`. It matches any bracketed text not followed by
+`(` or `:`, whether or not a matching definition exists, so task-list
+boxes (`- [ ]`, `- [x]`) and footnote markers (`[^1]`) are
+`LinkReference` elements too. The `(?<!(!|\]))` lookbehind prevents matching
 image references (`![alt][ref]`) and consecutive bracket
 sequences. The `(?!:)` lookahead prevents matching reference
 definitions `[ref]:`. The `(?!\()` lookahead prevents matching
@@ -369,7 +502,11 @@ lookbehind filtering. Matches both full `![alt][ref]` and shortcut
 Matches individual blockquote lines. The `extract()` method
 merges consecutive lines of the same depth into a single
 QuoteBlock element. Multi-level nesting is indicated by the
-`depth` field (e.g., `>>` has depth 2).
+`depth` field (e.g., `>>` has depth 2), which counts only adjacent
+`>` characters: `> > d` has depth 1 and quote `> d`. `\s` includes
+line breaks, so a line holding only `>` takes the next non-blank line
+as its quote, even when that line is an ordinary paragraph after a
+blank line.
 
 #### `Table.RE_TABLE` (table.py)
 
@@ -398,9 +535,12 @@ QuoteBlock element. Multi-level nesting is indicated by the
 
 The divider uses two alternatives to ensure at least one pipe
 appears in the repeating group, preventing catastrophic
-backtracking (see Design Decisions). Data rows require `|` on each line — a line without
-`|` terminates the table, preventing the rows pattern from
-consuming non-table content.
+backtracking (see Design Decisions). A divider with no pipe at all
+(a single-column `---`) therefore never matches. Data rows require
+`|` on each line — a line without `|` terminates the table,
+preventing the rows pattern from consuming non-table content. Cells
+are split on every `|`, so an escaped `\|` or a pipe inside inline
+code splits a cell.
 
 ## Sanitize Chain
 
@@ -438,11 +578,11 @@ calling context, ensuring correct results whether called from
 | `List`                | (none)                                    |
 | `Table`               | CodeBlock                                 |
 
-**Design principle:** The chain order follows GFM rendering
-precedence. Code constructs have highest precedence (content inside
-code is never interpreted as other elements). ExtendedAutolink has the
-deepest chain because a bare URL is the most ambiguous pattern and
-must exclude every other link type; it is also the one extractor that
+**Design principle:** Code constructs have highest precedence
+(content inside code is never interpreted as other elements).
+ExtendedAutolink has the deepest chain because a bare URL is the most
+ambiguous pattern: it blanks inline images, autolinks, inline links
+and reference definitions, but not reference-style links or images; it is also the one extractor that
 reads the original text alongside the blanked copy, because its
 preceding-character rule must see the source character, not the blank
 (see [autolinks](./autolinks.md)).
@@ -474,12 +614,18 @@ rules that need code-free text).
 ## Known Gaps
 
 Elements other than the autolinks match only part of GFM. Unsupported
-forms include indented code blocks, unclosed fences, multi-backtick
-inline code, setext headings, URLs with balanced parentheses, single
-quoted titles, multi-line reference definitions, lazy blockquote
-continuation, TOML or JSON frontmatter, and CRLF line endings. Each
-known gap has a skipped test in `tests/markdown/types/` whose reason
-starts `gfm-parity:` (see [testing](../practices/testing.md)).
+forms include indented code blocks, indented and tilde code fences,
+unclosed fences, multi-backtick inline code, setext headings, URLs with
+balanced parentheses, single quoted titles, a reference definition
+title on its own line, lazy blockquote continuation, TOML or JSON
+frontmatter, and CRLF line endings in text not read from a file (see
+Entry Point). A reference definition's label and URL may sit on
+different lines, and the pattern also accepts a blank line between
+them, which GFM does not. Most known gaps have a skipped test in
+`tests/markdown/types/` whose reason starts `gfm-parity:` (see
+[testing](../practices/testing.md)); indented code blocks, unclosed
+fences, balanced-parenthesis URLs, title-on-its-own-line definitions
+and TOML or JSON frontmatter have none.
 
 ## Design Decisions
 
