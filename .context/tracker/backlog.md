@@ -129,14 +129,14 @@ when the `links` rule has `exclude` set. A skipped test in
 `tests/linter/rules/test_links.py` already pins one answer: hand the
 URL to `check_url_valid()` and report it.
 
-Changes: [linter rules](../wiki/components/linter-rules.md)
+Changes: [links rule](../wiki/components/rule-links.md)
 
 ### links-rule-cleanup
 
 Tidy `links.py`: fold its four per-kind loops into one, and rename
 `_has_checkable_scheme`, which returns true when there is no scheme.
 
-Changes: [linter rules](../wiki/components/linter-rules.md)
+Changes: [links rule](../wiki/components/rule-links.md)
 
 ### null-rule-config-message
 
@@ -169,7 +169,7 @@ Resolve relative link targets without a leading `.` (`sibling.md`) as
 local files instead of HTTP requests. Once done, dotclaude's rule that
 wiki links start with `./` can be dropped.
 
-Changes: [linter engine](../wiki/components/linter-engine.md), [linter rules](../wiki/components/linter-rules.md)
+Changes: [linter engine](../wiki/components/linter-engine.md), [links rule](../wiki/components/rule-links.md)
 
 ### repeat-required-false
 

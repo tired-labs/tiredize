@@ -8,7 +8,7 @@ GitHub's rendering what tiredize treats as a link. This page holds their
 contract, patterns and matching rules. The rest of the parser, including
 the sanitize chain these extractors take part in, is on [markdown
 parser](./markdown-parser.md). How the `links` rule checks the targets
-is on [linter rules](./linter-rules.md).
+is on [rule-links](./rule-links.md).
 
 `Autolink` and `ExtendedAutolink` implement GFM 0.29-gfm as published
 at `https://github.github.com/gfm/` (dated 2019-04-06), sections 6.8

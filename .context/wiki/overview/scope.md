@@ -32,7 +32,7 @@ Tiredize validates structure and style, not meaning.
   [frontmatter schema
   validator](../components/frontmatter-schema-validator.md).
 - **Style and formatting** (line length, whitespace, allowed elements,
-  reachable links) belong to [linter rules](../components/linter-rules.md).
+  reachable links) belong to [linter rules](../components/linter-engine.md).
 - **Content** is out of scope: what a section says, and whether
   sections agree with each other.
 

@@ -37,8 +37,13 @@ user guide is the repository's `README.md`.
   readings where GFM is silent, and divergences from `cmark-gfm`.
 - [Linter engine](./components/linter-engine.md): rule discovery,
   configuration validation, the element vocabulary and URL checking.
-- [Linter rules](./components/linter-rules.md): the built-in rules
-  and their configuration.
+- Linter rules, one page each with its configuration contract:
+  [elements](./components/rule-elements.md),
+  [line_length](./components/rule-line-length.md),
+  [links](./components/rule-links.md),
+  [tabs](./components/rule-tabs.md),
+  [trailing_whitespace](./components/rule-trailing-whitespace.md),
+  [unicode](./components/rule-unicode.md).
 - [Markdown schema validator](./components/markdown-schema-validator.md):
   the schema format and the ordered and unordered algorithms.
 - [Frontmatter schema validator](./components/frontmatter-schema-validator.md):

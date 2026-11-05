@@ -24,7 +24,7 @@ flowchart LR
 2. For each path, the [markdown parser](../components/markdown-parser.md)
    builds a `Document`: frontmatter, sections and the elements in each.
 3. The [linter engine](../components/linter-engine.md) runs the enabled
-   [rules](../components/linter-rules.md); the [markdown schema
+   [rules](../components/linter-engine.md); the [markdown schema
    validator](../components/markdown-schema-validator.md) checks the
    section tree; the [frontmatter schema
    validator](../components/frontmatter-schema-validator.md) checks the

@@ -9,13 +9,59 @@ parsed document and stamps each finding with its rule id. It lives in
 configuration checking, typed configuration accessors, the element
 vocabulary and URL checking.
 
-What each built-in rule checks is on [linter rules](./linter-rules.md).
+Each built-in rule's contract and behaviour is on its own `rule-` page, listed under Built-in Rules.
 The engine reads the `Section` fields the [markdown
 parser](./markdown-parser.md) fills in. Structural checks do not belong
 here; they belong to the [markdown schema
 validator](./markdown-schema-validator.md) (see [scope](../overview/scope.md)).
 
 ## Contracts and Interfaces
+
+### Rules File
+
+The file passed with `--rules` is a YAML mapping from rule id to that
+rule's configuration mapping. A rule runs only when it has an entry.
+
+```yaml
+line_length:
+  maximum_length: 80
+  exclude: [code_block, table]
+tabs: {}
+links:
+  validate: true
+  timeout: 10
+```
+
+A rule that needs no keys is enabled with an empty mapping (`tabs: {}`);
+an entry with nothing under it (`tabs:`) is YAML null and is a runtime
+error. Every key below is checked by `validate_config()` before the rule
+runs: an unknown key, a wrong type or a missing required key stops the
+run (see Configuration Validation). "Type" uses that
+function's vocabulary: `bool`, `int` (never a boolean), `list`, `dict`.
+
+### Rules at a Glance
+
+| Rule                  | Required keys    | Optional keys                                         |
+|-----------------------|------------------|-------------------------------------------------------|
+| `elements`            | `disallow`       | —                                                     |
+| `line_length`         | `maximum_length` | `exclude`                                             |
+| `links`               | `validate`       | `exclude`, `headers`, `timeout`, `valid_status_codes` |
+| `tabs`                | —                | `allowed`                                             |
+| `trailing_whitespace` | —                | `allowed`                                             |
+| `unicode`             | `allowed`        | `exclude`                                             |
+
+### Built-in Rules
+
+| Rule                  | Page                                                   | Required keys    | Optional keys                                         |
+|-----------------------|--------------------------------------------------------|------------------|-------------------------------------------------------|
+| `elements`            | [rule-elements](./rule-elements.md)                    | `disallow`       | —                                                     |
+| `line_length`         | [rule-line-length](./rule-line-length.md)              | `maximum_length` | `exclude`                                             |
+| `links`               | [rule-links](./rule-links.md)                          | `validate`       | `exclude`, `headers`, `timeout`, `valid_status_codes` |
+| `tabs`                | [rule-tabs](./rule-tabs.md)                            | —                | `allowed`                                             |
+| `trailing_whitespace` | [rule-trailing-whitespace](./rule-trailing-whitespace.md) | —             | `allowed`                                             |
+| `unicode`             | [rule-unicode](./rule-unicode.md)                      | `allowed`        | `exclude`                                             |
+
+A new rule gets its own `rule-<id>.md` page with the same sections.
 
 ### Engine Entry Point
 
@@ -256,9 +302,8 @@ raises `ValueError` itself.
 **Enabling a rule must never be a no-op.** A key is required when its
 absence leaves the rule inert, and optional when the rule still does
 its job without it. Required means present, not truthy:
-`links: {validate: false}` deliberately turns link checking off. The
-classification of every built-in rule's keys is on [linter
-rules](./linter-rules.md).
+`links: {validate: false}` deliberately turns link checking off. Each
+rule page gives the reason for its own classification.
 
 ## Design Decisions
 
