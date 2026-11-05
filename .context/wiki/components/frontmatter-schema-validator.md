@@ -74,20 +74,26 @@ class FrontmatterSchema:
 
 ## Schema File Format
 
-### Top-Level Properties
+The file must be a YAML mapping. Any key not listed below, at the top
+level or in a field definition, is rejected, as is a key that appears
+twice. Every fault in the schema file raises `ValueError` before any
+document is checked, which the [CLI](./cli.md) reports as a runtime
+error. An empty file is rejected, because `fields` is required.
 
-| Property             | Type | Default | Description                        |
-|----------------------|------|---------|------------------------------------|
-| `allow_extra_fields` | bool | `false` | Allow fields not defined in schema |
-| `fields`             | map  | —       | Map of field name to field definition |
+### Top-Level Keys
 
-### Field Definition Properties
+| Key                  | Type    | Required | When absent | Accepted values |
+|----------------------|---------|----------|-------------|-----------------|
+| `fields`             | mapping | yes      | —           | Field name to field definition; `{}` is allowed. Names must be strings, so quote a name YAML would read as another type (`"true"`, `"42"`) |
+| `allow_extra_fields` | bool    | no       | `false`     | `true` accepts frontmatter fields the schema does not define |
 
-| Property   | Type   | Default | Description                            |
-|------------|--------|---------|----------------------------------------|
-| `type`     | string | —       | Required. One of: `string`, `int`, `float`, `bool`, `date`, `list` |
-| `required` | bool   | `true`  | Field must be present in frontmatter   |
-| `allowed`  | list   | —       | Restricts values to this set           |
+### Field Definition Keys
+
+| Key        | Type   | Required | When absent | Accepted values |
+|------------|--------|----------|-------------|-----------------|
+| `type`     | string | yes      | —           | `string`, `int`, `float`, `bool`, `date`, `list` |
+| `required` | bool   | no       | `true`      | `false` lets the field be absent or null |
+| `allowed`  | list   | no       | any value of the type | A non-empty list. Entries must have the field's type (strings for a `list` field), with the same guards as values: no `bool` for `int`, no `int` for `float`, no timestamp for `date` |
 
 ### Type Mapping
 
@@ -95,28 +101,20 @@ class FrontmatterSchema:
 |-------------|--------------------|
 | `string`    | `str`              |
 | `int`       | `int` (not `bool`) |
-| `float`     | `float`            |
+| `float`     | `float` (not `int`) |
 | `bool`      | `bool`             |
 | `date`      | `datetime.date` (not `datetime.datetime`) |
-| `list`      | `list`             |
+| `list`      | `list` of strings  |
 
 ### Constraints
 
-- `type` is required on every field definition.
-- `required` defaults to `true`. Explicit `required: true` is accepted.
 - `allowed` values are compared using equality. For scalar fields, the
   value itself must be in the list. For `list` fields, every item must
   be in the list.
-- `type: list` items must be strings. Non-string items are rejected.
-- Duplicate items in a list field are always rejected.
-- Map values (YAML dicts) are not supported and produce a clear error.
-- `allowed` entries must match the declared type. For list fields,
-  entries must be strings.
-- Field names in the schema must be strings. Non-string keys (e.g.,
-  bare `true`, `null`, or `42` in YAML) are rejected with a message
-  advising the user to quote them.
-- Unknown properties in field definitions or at the top level are
+- `type: list` items must be strings, and duplicate items are always
   rejected.
+- Map values (YAML mappings) are never accepted as field values; they
+  report `map_not_supported`.
 
 ## Validation Behavior
 

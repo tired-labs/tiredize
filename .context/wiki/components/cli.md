@@ -49,11 +49,22 @@ raise SystemExit(main())
 | `--markdown-schema`    | YAML file describing the section structure      |
 | `--frontmatter-schema` | YAML file describing the frontmatter fields     |
 | `PATH...`              | Markdown files to check                         |
+| `-h`, `--help`         | Print the help text to stdout and exit `0`      |
 
-Each flag names its file directly; there is no configuration discovery
-and no default file. Configuration and schema files are read as UTF-8
-whatever the platform default. At least one flag and at least one path
-are required.
+There is no `--version` and no other flag. Each configuration flag
+names its file directly; there is no configuration discovery and no
+default file. A flag given twice keeps its last value. At least one
+configuration flag and at least one path are required. Paths are taken
+as given: the shell expands globs, and a path listed twice is checked
+twice.
+
+Configuration and schema files are read as UTF-8 whatever the platform
+default. Their formats are the contracts on the [linter
+engine](./linter-engine.md) (rules file), [markdown schema
+validator](./markdown-schema-validator.md) and [frontmatter schema
+validator](./frontmatter-schema-validator.md) pages. An empty rules
+file enables no rule, so the run checks nothing and reports every path
+clean.
 
 ### main
 
@@ -115,11 +126,17 @@ leaving the remaining paths unprocessed. This holds for a missing input
 document as for a bad configuration file. A `1` from a runtime error
 therefore means the remaining paths were never looked at.
 
-For each path the CLI loads the document, then runs the rules, the
-markdown schema and the frontmatter schema, in that order, for
-whichever flags were given. Configuration and schema files are read
-again for each path. Findings from all three are collected before any
-is printed, so one path's findings print together.
+Paths are processed in the order given. For each path the CLI loads the
+document, then runs the rules, the markdown schema and the frontmatter
+schema, in that order, for whichever flags were given. Configuration
+and schema files are read again for each path. Findings from all three
+are collected before any is printed, so one path's findings print
+together, in this order and not sorted by line:
+
+1. rule findings, rule by rule in the order the rules file lists them,
+   each rule's in the order it reports them;
+2. markdown schema findings;
+3. frontmatter schema findings.
 
 ### Output Streams
 
@@ -158,3 +175,7 @@ column.
 - **Three statuses, no more.** Runtime errors share `1` with findings.
   The stream tells them apart: a caller that needs to know reads
   stderr.
+
+## Open Questions
+
+- An empty `--rules` file enables nothing and exits `0`, a silent no-op of the kind configuration validation otherwise forbids.

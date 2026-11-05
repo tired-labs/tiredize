@@ -105,48 +105,53 @@ tiredize/validators/
 
 The schema is a YAML file passed to the CLI via `--markdown-schema`.
 
-### Top-Level Properties
+The file must be a YAML mapping. An empty file is a valid schema with
+no sections, so every document section is reported as unexpected. Any
+key not listed below, at the top level, in a section or in `repeat`, is
+rejected. Every fault in the schema file raises `ValueError` before any
+document is checked, which the [CLI](./cli.md) reports as a runtime
+error.
 
-| Property               | Type | Default | Description                    |
-|------------------------|------|---------|--------------------------------|
-| `enforce_order`        | bool | `true`  | Validate section ordering      |
-| `allow_extra_sections` | bool | `false` | Allow sections not in schema   |
-| `sections`             | list | --      | Ordered list of section defs   |
+### Top-Level Keys
 
-### Section Definition Properties
+| Key                    | Type   | Required | When absent | Accepted values |
+|------------------------|--------|----------|-------------|-----------------|
+| `sections`             | list   | no       | no sections | Section definitions (below) |
+| `enforce_order`        | bool   | no       | `true`      | `true` checks sibling order; `false` checks presence only |
+| `allow_extra_sections` | bool   | no       | `false`     | `true` accepts document sections the schema does not define, at every nesting level |
 
-| Property   | Type        | Default        | Description                     |
-|------------|-------------|----------------|---------------------------------|
-| `name`     | string      | --             | Exact section header match      |
-| `pattern`  | string      | --             | Regex pattern for header match  |
-| `level`    | int         | parent + 1     | Required heading level (1-6, must be greater than parent level) |
-| `required` | bool        | `true`         | Section must be present         |
-| `repeat`   | bool or map | --             | Section may appear repeatedly   |
-| `sections` | list        | --             | Nested child section defs       |
+### Section Definition Keys
+
+| Key        | Type   | Required | When absent            | Accepted values |
+|------------|--------|----------|------------------------|-----------------|
+| `name`     | string | one of `name` or `pattern` | —    | Exact, case-sensitive header title |
+| `pattern`  | string | one of `name` or `pattern` | —    | Python `re` regular expression, matched against the whole title (`re.fullmatch`); must compile |
+| `level`    | int    | no       | parent's level + 1 (1 at the top) | 1 to 6, greater than the parent's level; may skip levels |
+| `required` | bool   | no       | `true`                 | `false` lets the section be absent; ignored on a repeating entry |
+| `repeat`   | `true` or mapping | no | the section appears at most once | `true` (one or more, no upper bound) or a mapping with `min` and `max`; `false` is rejected |
+| `sections` | list   | no       | no children: any subsection is unexpected | Section definitions |
+
+### `repeat` Mapping Keys
+
+| Key   | Type | Required | When absent | Accepted values |
+|-------|------|----------|-------------|-----------------|
+| `min` | int  | no       | `1`         | 0 or more; `0` makes the repeating entry optional |
+| `max` | int  | no       | no limit    | 0 or more, and not less than `min` |
+
+`repeat: {}` therefore means one or more.
 
 ### Constraints
 
-- Exactly one of `name` or `pattern` must be present. Both or neither
-  is an error.
-- `level` is optional. When omitted, it is inferred as the parent
-  section's level + 1. Top-level sections with no parent default to 1.
-  When present, the loader validates it is between 1 and 6 and
-  strictly greater than the parent level. Explicit levels may skip
-  levels (e.g., parent level 1, child level 3 is valid).
-- When `required` is omitted, it defaults to `true`.
-- `repeat: true` means one or more occurrences with no upper bound.
-- `repeat: {min: N, max: N}` sets explicit bounds. `min` defaults to 1
-  if omitted. `max` defaults to no limit if omitted.
+- Each section definition has exactly one of `name` or `pattern`.
 - On a repeating entry, `repeat` alone decides whether it may be absent:
   `required` has no effect there. `repeat: true` with `required: false`
   still reports `repeat_below_minimum` when no section matches; only
   `min: 0` makes a repeating entry optional.
-- `sections` defines child sections nested under this section. Children
-  are validated within the scope of their parent. Nesting in the schema
-  mirrors nesting in the document.
-- Sections not declared in the schema are considered unexpected. When
-  `allow_extra_sections: false` (default), unexpected sections produce
-  an error.
+- `sections` nests child definitions under this one. Children are
+  checked only within the document section their parent matched, so
+  nesting in the schema mirrors nesting in the document.
+- A document section that matches more than one sibling definition
+  raises `AmbiguityError` (see Exceptions).
 
 ### Example: TRR Schema
 
