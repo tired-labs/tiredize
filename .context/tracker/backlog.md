@@ -138,13 +138,6 @@ Tidy `links.py`: fold its four per-kind loops into one, and rename
 
 Changes: [linter rules](../wiki/components/linter-rules.md)
 
-### linter-rules-spec
-
-Write a reference page for each built-in rule. The wiki's linter rules
-page may already cover this; check at scoping whether anything is left.
-
-Changes: [linter rules](../wiki/components/linter-rules.md)
-
 ### null-rule-config-message
 
 Name the missing required key when a rule block is empty
