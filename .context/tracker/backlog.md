@@ -303,6 +303,14 @@ Changes: [markdown parser](../wiki/components/markdown-parser.md)
 
 - The code is wrong, not the documentation.
 
+### pypi-org-transfer
+
+Transfer the `tiredize` project on pypi.org and test.pypi.org from the
+personal `daemorgue` account to the `tired-labs` organization once PyPI
+approves the organization requests on each.
+
+Changes: [releasing](../wiki/operations/releasing.md)
+
 ### python-310-ci
 
 Test the declared minimum, Python 3.10, in CI; no workflow runs it.
