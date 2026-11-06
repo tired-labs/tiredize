@@ -25,7 +25,8 @@ if they pass, builds tiredize and publishes it to TestPyPI and, for a
 release tag, to PyPI. Its jobs, guards and use are on
 [releasing](../operations/releasing.md).
 
-These two are the only workflows.
+These two are the only workflows. Dependabot is configured in
+`.github/dependabot.yml`.
 
 Every action either workflow uses is pinned to a full commit SHA, with
 the release it was resolved from in a comment, such as
@@ -33,8 +34,18 @@ the release it was resolved from in a comment, such as
 new release's tag to its commit (dereferencing an annotated tag) and
 replace both the SHA and the comment.
 
+Dependabot (`.github/dependabot.yml`) proposes those updates: once a
+week it opens one pull request for all actions with a release at least
+14 days old. Before merging one, read the release notes, above all
+for a new major version. CI on the pull request runs only `ci.yaml`,
+so after merging an update that touches `release.yaml`, run `Release`
+by hand on `main` before the next release.
+
 ## Design Decisions
 
 - **Actions are pinned to commit SHAs, not tags.** A tag can be moved
   to new code; a SHA cannot. This matters most in the publish jobs,
   which hold `id-token: write` and so can publish tiredize.
+- **Dependabot updates the pins, with a 14-day cooldown,** so the pins
+  do not go stale and a bad or compromised release has time to be
+  found before it is proposed.

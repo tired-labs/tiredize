@@ -1,0 +1,16 @@
+# Keep the GitHub Actions in .github/workflows/ current. Every action is
+# pinned to a commit SHA with its release in a comment; Dependabot
+# updates both. Updates are proposed weekly, grouped into one PR, and
+# only for releases at least 14 days old.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    groups:
+      actions:
+        patterns:
+          - "*"
