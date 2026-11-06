@@ -7,13 +7,37 @@ when its issue file is created. -->
 
 ## Ranked
 
-### ci-secrets-in-aws
+### tooling-migration
 
-Keep no long-lived secret for this repo in GitHub: the credentials
-tiredize's workflows use should live in AWS, not in GitHub Actions
-secrets.
+Pin every Python tool CI and releases install, and keep the pins
+current with Dependabot. Today the workflows install pip, build,
+twine, flake8, pytest, pytest-cov and the build backend unpinned, so
+each run gets whatever is newest; an unpinned hatchling 1.33.0 is what
+broke the first TestPyPI upload. Also evaluate Ruff in place of flake8,
+declare development dependencies in `pyproject.toml` (`.[dev]`), drop
+the `coveralls` package `ci.yaml` installs but never uses, and finish
+the import-grouping comments in the seven test files that lack them.
 
-Changes: [releasing](../wiki/operations/releasing.md), [CI](../wiki/practices/ci.md)
+Changes: [CI](../wiki/practices/ci.md), [testing](../wiki/practices/testing.md), [releasing](../wiki/operations/releasing.md)
+
+- Runtime dependencies (`PyYAML`, `requests`) keep minimum versions and
+  are never pinned exactly, since tiredize installs into other
+  people's environments.
+- Build tools (`hatchling`, `hatch-vcs`) are pinned for CI and releases
+  through a constraints file, not in `[build-system]`, so people
+  building from source are not bound by them.
+- Dependabot's `pip` ecosystem keeps the pinned tools current, with the
+  same weekly schedule, grouping and 14-day cooldown as actions.
+
+### dotclaude-backlog-move
+
+Move the entries about dotclaude's own process out of this backlog:
+`specifications-knowledge-mapping`, `documentation-review-knowledge`,
+`fill-rule-code-spans`, `regression-only-acceptance-tests`,
+`unexercised-reference-text` and `pm-deliverable-edits`. Each belongs
+in dotclaude's tracker, or is already filed there.
+
+Changes: this backlog
 
 ### contribution-guide
 
@@ -421,14 +445,6 @@ Rename the test files that break dotclaude's one-test-file-per-module
 rule, or record an override.
 
 Changes: [repository layout](../wiki/repository/layout.md)
-
-### tooling-migration
-
-Evaluate Ruff in place of flake8, declare development dependencies in
-`pyproject.toml` (`.[dev]`), and finish the import-grouping comments in
-the seven test files that lack them.
-
-Changes: [CI](../wiki/practices/ci.md), [testing](../wiki/practices/testing.md)
 
 ### unicode-bom
 
