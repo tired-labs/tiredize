@@ -8,9 +8,19 @@ runs is on [CI](./ci.md).
 
 ## Running
 
+Set up a virtual environment in the repository root once, then
+activate it in each new shell. `.venv` is ignored by git.
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
 pip install pytest pytest-cov flake8
+```
+
+With it active, run the same checks as CI:
+
+```bash
 flake8 tiredize tests
 pytest --cov=tiredize
 ```

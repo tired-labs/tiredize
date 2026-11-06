@@ -7,15 +7,6 @@ when its issue file is created. -->
 
 ## Ranked
 
-### pypi-release
-
-Publish tiredize to the production PyPI, which users have asked for;
-releases go only to TestPyPI today, so `pip install tiredize` in the
-README does not work. Scoping must settle how the publish job
-authenticates, which overlaps `ci-secrets-in-aws`.
-
-Changes: [releasing](../wiki/operations/releasing.md), [installing and running](../wiki/operations/installing-and-running.md), [README](../../README.md)
-
 ### ci-secrets-in-aws
 
 Keep no long-lived secret for this repo in GitHub: the credentials
