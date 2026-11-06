@@ -28,6 +28,13 @@ release tag, to PyPI. Its jobs, guards and use are on
 These two are the only workflows. Dependabot is configured in
 `.github/dependabot.yml`.
 
+Neither workflow uses a stored secret. Publishing uses Trusted
+Publishing, and the Coveralls action authenticates with the job's own
+`GITHUB_TOKEN`, which works because the repository is public; a
+private repository would need a `COVERALLS_REPO_TOKEN` secret. The
+`tired-labs` organization makes every workflow's `GITHUB_TOKEN`
+read-only unless the workflow asks for more.
+
 Every action either workflow uses is pinned to a full commit SHA, with
 the release it was resolved from in a comment, such as
 `actions/checkout@<sha>  # v7.0.1`. To update an action, resolve the

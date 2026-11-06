@@ -130,7 +130,11 @@ changed to match.
 | Environment | Used by            | Protection                                   |
 |-------------|--------------------|----------------------------------------------|
 | `testpypi`  | `publish-testpypi` | None; runs as soon as `build` passes         |
-| `pypi`      | `publish-pypi`     | Waits for a maintainer to approve the run    |
+| `pypi`      | `publish-pypi`     | Only `v*` tags may deploy, and the run waits for a maintainer's approval |
+
+Both environments were created by hand in the repository's settings.
+They are not yet managed in `iac-github`, which defines every other
+setting of the repository (see Open Questions).
 
 ## Cutting a Release
 
@@ -198,8 +202,9 @@ on TestPyPI before changing any tag.
   not run again and the same `dist` artifact reaches PyPI. Do not
   choose "Re-run all jobs": it runs `build` again, and PyPI would get a
   second build while TestPyPI keeps the first, breaking the build-once
-  rule. (This follows GitHub's documented re-run behaviour; it has not
-  yet been exercised on this workflow.) `skip-existing` lets the
+  rule. This was exercised on `v0.1.0`: TestPyPI answered the Trusted
+  Publishing token exchange with a 503, and "Re-run failed jobs"
+  published the original build to both registries. `skip-existing` lets the
   TestPyPI upload pass for files already there, so the re-run can reach
   PyPI. Do not move the tag to a different commit: TestPyPI never
   accepts the same file name twice, so the re-run would check the old
@@ -256,3 +261,10 @@ on TestPyPI before changing any tag.
   project through GitHub issues.
 - **This page is the release procedure.** There is no separate
   procedure file to drift from it.
+
+## Open Questions
+
+- The `pypi` and `testpypi` environments are set by hand. Bringing them
+  under `iac-github` needs its repository module to support tag
+  deployment rules and required reviewers; that work belongs to
+  `iac-github`.
