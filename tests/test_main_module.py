@@ -718,3 +718,37 @@ class TestModuleExecution:
         second = _run_module_in_process(args, monkeypatch)
         assert first == second == 0
         assert "no issues found" in capsys.readouterr().out
+
+
+class TestVersionFlag:
+    """`--version` through both entry points (issue pypi-release).
+
+    Each prints the version that importlib.metadata reports for the
+    interpreter it runs under, to stdout, and exits 0.
+    """
+
+    @staticmethod
+    def _installed_version() -> str:
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import importlib.metadata as m; "
+             "print(m.version('tiredize'))"],
+            capture_output=True,
+            cwd=REPO_ROOT,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+
+    def test_module_prints_installed_version(self):
+        result = _run_module(["--version"])
+        assert result.returncode == 0, result.stderr
+        assert self._installed_version() in result.stdout.split()
+        assert result.stderr == ""
+
+    def test_console_script_matches_module(self):
+        console = _run_console(["--version"])
+        module = _run_module(["--version"])
+        assert console.returncode == module.returncode == 0
+        assert console.stdout == module.stdout
+        assert self._installed_version() in console.stdout.split()

@@ -1,17 +1,19 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 authors = [
-  { name = "Adam Przybyszewski" }
+  { name = "TIRED Labs" }
 ]
 description = "Configurable schema/linter validation for markdown docs"
+# The version is not written here: hatch-vcs derives it from git tags
+# (see [tool.hatch.version] below).
+dynamic = ["version"]
 license = { file = "LICENSE" }
 name = "tiredize"
 readme = "README.md"
 requires-python = ">=3.10"
-version = "0.0.3"
 dependencies = [
   "PyYAML>=6.0",
   "requests>=2.32.5",
@@ -21,6 +23,15 @@ dependencies = [
 homepage = "https://www.tired-labs.org/"
 repository = "https://github.com/tired-labs/tiredize"
 
+
+# A commit tagged vX.Y.Z builds as X.Y.Z; any other commit builds as a
+# dev version that sorts after the last tag. "no-local-version" drops
+# the "+g<hash>" local segment, which PyPI and TestPyPI reject. There
+# is deliberately no fallback-version: a build without git history
+# fails instead of publishing a made-up number.
+[tool.hatch.version]
+source = "vcs"
+raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.wheel]
 packages = ["tiredize"]

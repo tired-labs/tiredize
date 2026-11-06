@@ -20,7 +20,8 @@ tests/                    mirrors tiredize/
 .github/workflows/        CI and release workflows
 .context/wiki/            this wiki
 .context/tracker/         work not yet done (backlog.md, issue files)
-pyproject.toml            package metadata, dependencies, console script
+pyproject.toml            package metadata, dependencies, console script,
+                          version source (hatch-vcs)
 README.md                 the user guide
 ```
 

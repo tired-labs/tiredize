@@ -53,11 +53,20 @@ items with no duplicates.
 
 Requires Python 3.10 or later.
 
+Releases are published to PyPI. `pip install tiredize` installs the latest
+release there, so it works once at least one release has been published. To
+install a particular release, pin its version:
+
 ```bash
 pip install tiredize
+pip install tiredize==X.Y.Z
+tiredize --version
 ```
 
-For development:
+How releases are numbered and published is described on the
+[releasing][wiki-releasing] page.
+
+For development, install from a clone of the repository:
 
 ```bash
 git clone https://github.com/tired-labs/tiredize.git
@@ -65,6 +74,17 @@ cd tiredize
 pip install -e .
 pip install pytest pytest-cov flake8
 ```
+
+No file in the repository holds a version number. The version is derived from
+the repository's git tags when tiredize is built or installed, so use a full
+clone. `git clone` fetches the tags, but a shallow clone (`--depth`) may lack
+them and then builds a dev version that says nothing useful about where the
+code stands. A source tree with no git metadata at all, such as a GitHub
+"Download ZIP" source download, fails to build rather than invent a number.
+
+An editable install records the version current when it ran.
+`tiredize --version` keeps reporting that version after later commits or tags,
+until you run `pip install -e .` again.
 
 ## Usage
 
@@ -122,6 +142,21 @@ that file's findings to stdout as `file:line:col: [rule_id] message`,
 or a single `file: no issues found.` line if the file produced none.
 Runtime errors go to stderr as `error: <message>`.
 
+### Print the installed version
+
+```bash
+tiredize --version
+```
+
+This prints one line to stdout, `tiredize X.Y.Z`, and exits `0`. The version is
+that of the installed package. It is a release number such as `0.1.0`, or a dev
+version such as `0.1.1.dev3` when tiredize was installed from an untagged
+commit. If tiredize runs from a source tree that was never installed, the line
+reads `tiredize unknown`.
+
+Like `--help`, `--version` takes effect as soon as it is read. Any
+configuration flags and paths given with it are neither checked nor loaded.
+
 ### Exit status
 
 Every invocation exits with one of exactly three statuses, which is what
@@ -130,7 +165,7 @@ invocation forms return the same status for the same arguments.
 
 | Status | Meaning |
 | --- | --- |
-| `0` | Every file was read and produced no findings. `--help` also exits `0`. |
+| `0` | Every file was read and produced no findings. `--help` and `--version` also exit `0`. |
 | `1` | At least one file produced findings, or a runtime error occurred. |
 | `2` | Usage error: no files were given, or none of `--rules`, `--markdown-schema`, and `--frontmatter-schema` was given. An unrecognized flag, or a flag missing its value, also exits `2`. |
 
@@ -500,4 +535,5 @@ and available configuration helpers.
 [spec-validator]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/markdown-schema-validator.md
 [spec-frontmatter]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/frontmatter-schema-validator.md
 [spec-linter]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/linter-engine.md
+[wiki-releasing]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/operations/releasing.md
 [spec-parser]: https://github.com/tired-labs/tiredize/blob/main/.context/wiki/components/autolinks.md

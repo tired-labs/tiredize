@@ -1,5 +1,7 @@
 # Standard library
 from __future__ import annotations
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as metadata_version
 from pathlib import Path
 from typing import Any
 import argparse
@@ -44,12 +46,35 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         help="YAML configuration file defining frontmatter schema.",
     )
     parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {_installed_version()}",
+        help="Print the installed tiredize version and exit.",
+    )
+    parser.add_argument(
         "paths",
         nargs="*",
         help="Markdown files to validate.",
     )
 
     return parser
+
+
+def _installed_version() -> str:
+    """
+    Return the version of the installed tiredize distribution.
+
+    The version lives only in the distribution metadata, which
+    hatch-vcs derives from git tags at build time; no source file
+    holds it. When tiredize is imported from a source tree that was
+    never installed there is no metadata, and "unknown" is returned
+    so that normal runs still work and `--version` makes no number
+    up.
+    """
+    try:
+        return metadata_version("tiredize")
+    except PackageNotFoundError:
+        return "unknown"
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:

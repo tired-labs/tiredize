@@ -7,15 +7,6 @@ when its issue file is created. -->
 
 ## Ranked
 
-### pypi-release
-
-Publish tiredize to the production PyPI, which users have asked for;
-releases go only to TestPyPI today, so `pip install tiredize` in the
-README does not work. Scoping must settle how the publish job
-authenticates, which overlaps `ci-secrets-in-aws`.
-
-Changes: [releasing](../wiki/operations/releasing.md), [installing and running](../wiki/operations/installing-and-running.md), [README](../../README.md)
-
 ### ci-secrets-in-aws
 
 Keep no long-lived secret for this repo in GitHub: the credentials
@@ -57,6 +48,16 @@ ambiguous, and the only working schema needs a negative lookahead.
 Changes: [markdown schema validator](../wiki/components/markdown-schema-validator.md)
 
 ## Unranked
+
+### acceptance-test-commit-hook
+
+Acceptance Test Design commits tests that must fail, but the local
+pre-commit hook runs pytest, so every such commit needs `--no-verify`,
+which also skips the branch-name and commit-message checks. Settle a
+convention, such as the hook skipping known acceptance-test paths
+until implementation. Raised by the qa-engineer on `pypi-release`.
+
+Changes: [testing](../wiki/practices/testing.md)
 
 ### add-docstrings
 
@@ -312,6 +313,14 @@ Changes: [markdown parser](../wiki/components/markdown-parser.md)
 
 - The code is wrong, not the documentation.
 
+### pypi-org-transfer
+
+Transfer the `tiredize` project on pypi.org and test.pypi.org from the
+personal `daemorgue` account to the `tired-labs` organization once PyPI
+approves the organization requests on each.
+
+Changes: [releasing](../wiki/operations/releasing.md)
+
 ### python-310-ci
 
 Test the declared minimum, Python 3.10, in CI; no workflow runs it.
@@ -397,6 +406,15 @@ what they mean without a reference.
 
 Changes: [testing](../wiki/practices/testing.md)
 
+### test-suite-audit
+
+Review the whole test suite (1,128 tests) for tests that only check a
+one-time change, such as a file deleted, a value set or a structure
+built, rather than behavior that can regress, and remove them. Found on
+`pypi-release`, where 29 of 40 acceptance tests were of this kind.
+
+Changes: [testing](../wiki/practices/testing.md)
+
 ### test-file-layout
 
 Rename the test files that break dotclaude's one-test-file-per-module
@@ -425,3 +443,80 @@ Correct the README's "regex-based parser" claim and the history wording
 comment in `tests/markdown/types/test_link_gfm_autolinks.py`.
 
 Changes: [README](../../README.md)
+
+### venv-path-for-tests
+
+The local test command (`.venv/bin/pytest`, and the pre-commit hook's
+`.venv/bin/python -m pytest`) does not put `.venv/bin` on PATH, so a
+test that finds the `tiredize` console script with `shutil.which` can
+pick up an unrelated install elsewhere on PATH. Run tests in an
+activated venv, or have such tests look beside `sys.executable`.
+Raised by the software-engineer on `pypi-release`.
+
+Changes: [testing](../wiki/practices/testing.md)
+
+### specifications-knowledge-mapping
+
+`AGENTS.md` maps a `specifications` knowledge file to the
+technical-reference and architecture-review steps, but dotclaude has no
+`knowledge/specifications.md`. Create it or drop the mapping. Raised by
+the technical-architect on `pypi-release`.
+
+Changes: `AGENTS.md`
+
+### readme-style-pass
+
+The README predates the markdown-style rules: most prose paragraphs
+wrap near 72 columns instead of filling to 79, and it uses em dashes
+and `--` separators. Bring the whole file into line in one pass.
+Raised by the proofreader on `pypi-release`.
+
+Changes: [README](../../README.md)
+
+### documentation-review-knowledge
+
+The documentation-review step names markdown-style and
+ai-prose-hygiene as its mapped knowledge, but tiredize's `AGENTS.md`
+maps nothing to `user-documentation` or `documentation-review`, so the
+lens comes only from the step file's Inputs line. Add the mapping or
+make the step file state its default knowledge. Raised by the
+proofreader on `pypi-release`.
+
+Changes: `AGENTS.md`
+
+### fill-rule-code-spans
+
+dotclaude's markdown-style "fill to 79" rule does not say whether a
+line may break early to keep an inline code span whole. Settle it in
+the knowledge file. Raised by the proofreader on `pypi-release`.
+
+Changes: dotclaude `knowledge/markdown-style.md`
+
+### regression-only-acceptance-tests
+
+Put the rule settled on `pypi-release` into dotclaude's
+acceptance-test-design guidance: committed acceptance tests cover only
+behavior that can regress, and one-time criteria get evidence at
+Acceptance Verification. On `pypi-release`, 30 of 40 first-draft tests
+were thrown away. Raised by the workflow-owner.
+
+Changes: dotclaude `knowledge/testing.md` or the step 2 file
+
+### unexercised-reference-text
+
+When a technical reference describes operational behavior nobody has
+run, such as re-runs and approval expiry, step 6 should mark it as
+unexercised and keep it minimal. Speculative recovery text drove most
+of `pypi-release`'s three architecture-review iterations. Raised by
+the workflow-owner.
+
+Changes: dotclaude step 6 file
+
+### pm-deliverable-edits
+
+Say whether the PM may edit a deliverable directly, as it did to a
+wiki sentence on `pypi-release` (0e11632), or must route the edit to
+the producing step; if it may, the next review gate should check the
+edit by name. Raised by the workflow-owner.
+
+Changes: dotclaude PM function or workflow overview

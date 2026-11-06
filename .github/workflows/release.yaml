@@ -1,0 +1,309 @@
+# Build tiredize once and publish it through Trusted Publishing.
+#
+#   tag push vX.Y.Z  -> TestPyPI, install check, then PyPI (the `pypi`
+#                       environment waits for the maintainer's approval)
+#   manual run       -> a dev version to TestPyPI only
+#
+# Job order (each needs the one before it):
+#   tag-guard -> test -> build -> publish-testpypi
+#             -> testpypi-install-check -> publish-pypi (tag pushes only)
+#
+# The version comes only from git tags through hatch-vcs, so every job
+# that builds tiredize checks out the full history (fetch-depth: 0).
+# There are no tokens or secrets: the two publish jobs alone get
+# `id-token: write`, and each registry trusts this file by its name,
+# release.yaml, and the job's environment, `testpypi` or `pypi`.
+
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Read-only by default; the publish jobs widen this for themselves.
+permissions:
+  contents: read
+
+defaults:
+  run:
+    # bash -eo pipefail: any failing command fails the step.
+    shell: bash
+
+jobs:
+  # Guard: a tag push must be a release tag on main. Every other job
+  # depends on this one, so a malformed or stray tag stops the run
+  # before anything is tested, built or published. On a manual run
+  # both checks are skipped and `version` stays empty.
+  tag-guard:
+    name: Check the release tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.format.outputs.version }}
+    steps:
+      - name: Check out the full history
+        if: github.event_name == 'push'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Strictly vX.Y.Z, semantic versioning: three dot-separated
+      # numbers, no leading zeros, nothing before or after. The match
+      # is anchored at both ends, and bash's =~ treats $ as the end of
+      # the string, so a trailing newline does not slip through.
+      # Rejected: v1.2, v1.2.3.4, v1.2.3rc1, v1.2.3-x, v01.2.3.
+      # The tag reaches the script through env, never interpolated
+      # into it, so a tag name cannot inject shell code.
+      - name: Check the tag is vX.Y.Z
+        id: format
+        if: github.event_name == 'push'
+        env:
+          LC_ALL: C
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ "$GITHUB_REF" != "refs/tags/$TAG" ]]; then
+            echo "::error::Not a tag push: $GITHUB_REF"
+            exit 1
+          fi
+          semver='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
+          if [[ ! "$TAG" =~ $semver ]]; then
+            echo "::error::Tag '$TAG' is not a release tag vX.Y.Z"
+            exit 1
+          fi
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      # Only commits already on main are released: the tagged commit
+      # must be an ancestor of (or equal to) origin/main. Fetched
+      # explicitly so the check sees main as it is now.
+      - name: Check the tagged commit is on main
+        if: github.event_name == 'push'
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::Tagged commit $(git rev-parse HEAD) is not on main"
+            exit 1
+          fi
+
+  # Gate: lint and the full test suite pass before anything is built.
+  test:
+    name: Lint and test
+    needs: tag-guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # pip install -e . runs hatch-vcs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tiredize and the test tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install flake8 pytest
+          python -m pip install -e .
+
+      - name: Lint with flake8
+        run: flake8 tiredize tests
+
+      - name: Run the full test suite
+        run: pytest
+
+  # Build the sdist and wheel once; both publish jobs upload exactly
+  # these files.
+  build:
+    name: Build and check the distributions
+    needs: [tag-guard, test]
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.wheel.outputs.version }}
+    steps:
+      - name: Check out the full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # hatch-vcs reads the version from tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Build the sdist and wheel
+        run: python -m build
+
+      - name: Check there is exactly one sdist and one wheel
+        run: |
+          shopt -s nullglob
+          wheels=(dist/*.whl)
+          sdists=(dist/*.tar.gz)
+          ls -l dist
+          if (( ${#wheels[@]} != 1 || ${#sdists[@]} != 1 )); then
+            echo "::error::Expected one wheel and one sdist in dist/"
+            exit 1
+          fi
+
+      - name: Check the package metadata
+        run: twine check --strict dist/*
+
+      # Install the wheel into a fresh venv and run it from outside the
+      # checkout, so the source tree cannot stand in for the package.
+      # A tag push must build exactly the tag's version; a manual run
+      # must build a dev version, so it can never publish a release
+      # number to TestPyPI ahead of the tag.
+      - name: Install the wheel in a clean venv and check its version
+        id: wheel
+        env:
+          EXPECTED: ${{ needs.tag-guard.outputs.version }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          venv="$RUNNER_TEMP/wheel-check"
+          python -m venv "$venv"
+          "$venv/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          installed="$("$venv/bin/python" -c \
+            'import importlib.metadata as m; print(m.version("tiredize"))')"
+          printed="$("$venv/bin/tiredize" --version)"
+          echo "Installed $installed; tiredize --version printed '$printed'"
+          if [[ "$printed" != "tiredize $installed" ]]; then
+            echo "::error::tiredize --version printed '$printed'"
+            exit 1
+          fi
+          if [[ "$EVENT" == "push" ]]; then
+            if [[ "$installed" != "$EXPECTED" ]]; then
+              echo "::error::Built $installed, but the tag says $EXPECTED"
+              exit 1
+            fi
+          elif [[ "$installed" != *.dev* ]]; then
+            echo "::error::Manual runs build dev versions only, got $installed"
+            exit 1
+          fi
+          echo "version=$installed" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  # Publish to TestPyPI on every run. skip-existing lets a re-run of a
+  # tag whose TestPyPI upload already succeeded go on to PyPI.
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/tiredize/
+    permissions:
+      id-token: write  # Trusted Publishing; nothing else
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@v1.13.0
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  # Install the version just published from TestPyPI, as a user
+  # would, and check it reports itself correctly.
+  #
+  # Only tiredize may come from TestPyPI. Anyone can upload any name
+  # there, so letting pip resolve dependencies across both indexes
+  # (--extra-index-url) could pull a look-alike dependency from
+  # TestPyPI. Instead tiredize is installed alone (--no-deps) with
+  # TestPyPI as the only index, and the dependencies its published
+  # metadata declares are then installed with pypi.org as the only
+  # index.
+  testpypi-install-check:
+    name: Install from TestPyPI and check the version
+    needs: [build, publish-testpypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # TestPyPI's simple index can lag behind an upload, so the
+      # install is retried a bounded number of times before failing.
+      - name: Install tiredize alone from TestPyPI
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          cd "$RUNNER_TEMP"
+          python -m venv testpypi-check
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if testpypi-check/bin/python -m pip install --no-deps \
+                --no-cache-dir \
+                --index-url https://test.pypi.org/simple/ \
+                "tiredize==$VERSION"; then
+              exit 0
+            fi
+            echo "Attempt $attempt: tiredize==$VERSION not installable yet"
+            sleep 30
+          done
+          echo "::error::tiredize==$VERSION never became installable"
+          exit 1
+
+      - name: Install its dependencies from pypi.org only
+        run: |
+          cd "$RUNNER_TEMP"
+          testpypi-check/bin/python -c 'import importlib.metadata as m
+          print("\n".join(m.requires("tiredize") or []))' > requirements.txt
+          cat requirements.txt
+          if [[ -s requirements.txt ]]; then
+            testpypi-check/bin/python -m pip install --no-cache-dir \
+              --index-url https://pypi.org/simple/ -r requirements.txt
+          fi
+          testpypi-check/bin/python -m pip check
+
+      - name: Check tiredize --version prints the published version
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          cd "$RUNNER_TEMP"
+          printed="$(testpypi-check/bin/tiredize --version)"
+          echo "tiredize --version printed '$printed'"
+          if [[ "$printed" != "tiredize $VERSION" ]]; then
+            echo "::error::Expected 'tiredize $VERSION', got '$printed'"
+            exit 1
+          fi
+
+  # Publish to PyPI: tag pushes only, never a manual run, and only
+  # after the tag guard, the tests, the build checks and the TestPyPI
+  # install check have all passed. The `pypi` environment then waits
+  # for the maintainer's approval.
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [tag-guard, build, testpypi-install-check]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/tiredize/
+    permissions:
+      id-token: write  # Trusted Publishing; nothing else
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.13.0

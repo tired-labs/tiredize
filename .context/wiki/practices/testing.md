@@ -8,9 +8,19 @@ runs is on [CI](./ci.md).
 
 ## Running
 
+Set up a virtual environment in the repository root once, then
+activate it in each new shell. `.venv` is ignored by git.
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e .
 pip install pytest pytest-cov flake8
+```
+
+With it active, run the same checks as CI:
+
+```bash
 flake8 tiredize tests
 pytest --cov=tiredize
 ```
@@ -38,6 +48,13 @@ detected, and an absent one is skipped.
 - **No network.** HTTP is mocked with `unittest.mock`, patching
   `requests.get` in the `check_url_valid` tests. The `links` rule tests
   mock `check_url_valid` itself, so they test the rule's branching only.
+- **Packaging is checked statically.** `tests/test_versioning.py` reads
+  `pyproject.toml` and the tracked files: the version comes from git
+  through hatch-vcs with `no-local-version`, and no file holds a version
+  number. It skips on Python 3.10, which lacks `tomllib`. No test builds
+  a distribution, installs one or runs a workflow; the release workflow
+  checks the built and published package itself (see
+  [releasing](../operations/releasing.md)).
 - **Coverage aims at 100%.** A line is excluded only when it is
   unreachable, with the reason written in the test file. The target is
   not enforced: CI sets no threshold.
@@ -54,3 +71,8 @@ detected, and an absent one is skipped.
   fix are tied to a test and a slug rather than to prose that drifts.
 - **Pinned specification examples are the record of GFM parity,**
   instead of a copy of the specification kept in the repository.
+- **Release behaviour is tested only where it can regress.** The suite
+  keeps tests for `--version` and for where the version comes from;
+  the release workflow's structure is checked when it is changed, not by
+  a committed test, because a test of it would need builds or network
+  access.
