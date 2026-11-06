@@ -27,6 +27,14 @@ release tag, to PyPI. Its jobs, guards and use are on
 
 These two are the only workflows.
 
+Every action either workflow uses is pinned to a full commit SHA, with
+the release it was resolved from in a comment, such as
+`actions/checkout@<sha>  # v4.4.0`. To update an action, resolve the
+new release's tag to its commit (dereferencing an annotated tag) and
+replace both the SHA and the comment.
+
 ## Design Decisions
 
-None recorded yet.
+- **Actions are pinned to commit SHAs, not tags.** A tag can be moved
+  to new code; a SHA cannot. This matters most in the publish jobs,
+  which hold `id-token: write` and so can publish tiredize.
