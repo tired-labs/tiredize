@@ -454,3 +454,12 @@ activated venv, or have such tests look beside `sys.executable`.
 Raised by the software-engineer on `pypi-release`.
 
 Changes: [testing](../wiki/practices/testing.md)
+
+### specifications-knowledge-mapping
+
+`AGENTS.md` maps a `specifications` knowledge file to the
+technical-reference and architecture-review steps, but dotclaude has no
+`knowledge/specifications.md`. Create it or drop the mapping. Raised by
+the technical-architect on `pypi-release`.
+
+Changes: `AGENTS.md`
