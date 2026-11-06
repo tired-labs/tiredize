@@ -443,3 +443,14 @@ Correct the README's "regex-based parser" claim and the history wording
 comment in `tests/markdown/types/test_link_gfm_autolinks.py`.
 
 Changes: [README](../../README.md)
+
+### venv-path-for-tests
+
+The local test command (`.venv/bin/pytest`, and the pre-commit hook's
+`.venv/bin/python -m pytest`) does not put `.venv/bin` on PATH, so a
+test that finds the `tiredize` console script with `shutil.which` can
+pick up an unrelated install elsewhere on PATH. Run tests in an
+activated venv, or have such tests look beside `sys.executable`.
+Raised by the software-engineer on `pypi-release`.
+
+Changes: [testing](../wiki/practices/testing.md)
