@@ -181,9 +181,10 @@ on TestPyPI before changing any tag.
   failure that was not the code's fault (a runner or network problem)
   can instead be re-run from the run's page.
 - **Failed at or after `publish-testpypi`** (the install check, the
-  PyPI upload, or an approval that was rejected or expired). On the
-  run's page, choose "Re-run failed jobs". GitHub re-runs the failed
-  jobs and the jobs that depend on them within the same run, reusing
+  PyPI upload, or an approval that was rejected). On the run's page,
+  within 30 days of the run starting, choose "Re-run failed jobs".
+  GitHub re-runs the failed jobs and the jobs that depend on them
+  within the same run, reusing
   the outputs and artifacts of the jobs that succeeded, so `build` does
   not run again and the same `dist` artifact reaches PyPI. Do not
   choose "Re-run all jobs": it runs `build` again, and PyPI would get a
@@ -195,6 +196,13 @@ on TestPyPI before changing any tag.
   accepts the same file name twice, so the re-run would check the old
   files on TestPyPI while publishing new ones to PyPI. If the code must
   change, leave the tag in place and release the next version instead.
+- **Approval expired** (no one approved `pypi` in time). A job waiting
+  for deployment approval fails after 30 days, and a run can be re-run
+  only within 30 days of starting, so no re-run is left. Leave the tag
+  in place and release the next version. Do not delete and push the tag
+  again: that starts a new run that builds again, so PyPI would get
+  files TestPyPI never checked. (This follows GitHub's documentation; it
+  has not yet been exercised on this workflow.)
 - **Partly published to PyPI** (PyPI accepted one of the two files and
   not the other). A re-run fails: `publish-pypi` has no
   `skip-existing`, so its upload stops at the file already there. The
