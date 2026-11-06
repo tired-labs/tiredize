@@ -105,10 +105,17 @@ run; nothing is rebuilt between the TestPyPI and PyPI uploads.
 
 ### Trusted Publishing
 
-Both publish jobs use `pypa/gh-action-pypi-publish` with Trusted
+Both publish jobs use `pypa/gh-action-pypi-publish`, pinned to a
+commit like every action (see [CI](../practices/ci.md)), with Trusted
 Publishing: GitHub issues the job a short-lived OIDC token, and the
 registry accepts it because it has a trusted publisher registered for
 that workflow. No API token, password or secret is stored anywhere.
+
+The publish action runs its own bundled twine, not the one the `build`
+job installs, so `twine check` passing in `build` does not prove the
+action will accept the files. When hatchling starts writing a newer
+core metadata version, the action may need updating too: v1.13.0
+rejected metadata 2.5 from hatchling 1.33.0, which v1.14.2 fixed.
 
 The workflow is read-only by default (`contents: read`); only the two
 publish jobs get `id-token: write`, and nothing else. Each registry's
