@@ -3,7 +3,7 @@ assignee: workflow-owner
 created: 2026-11-06
 knowledge: []
 priority: high
-status: in-progress
+status: blocked
 step: closeout
 tags: []
 type: feature
@@ -135,4 +135,12 @@ Documentation:
 
 ## Open Questions
 
-None.
+- Approval (closeout): the user accepts the completed work, approving
+  the issue's close on this branch (lasting knowledge already in the
+  wiki, issue file deleted), the commit, and a push of
+  `issues/pypi-release` without force. Closeout summary: c241c84.
+- Before tagging `v0.1.0`: `release.yaml` has never run on GitHub.
+  Does the user want a manual TestPyPI practice run after merge
+  (`workflow_dispatch` works only once the file is on `main`)? And is
+  `pypa/gh-action-pypi-publish` pinned to tag `v1.13.0`, not a commit
+  SHA, acceptable?

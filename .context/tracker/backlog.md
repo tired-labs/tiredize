@@ -491,3 +491,32 @@ line may break early to keep an inline code span whole. Settle it in
 the knowledge file. Raised by the proofreader on `pypi-release`.
 
 Changes: dotclaude `knowledge/markdown-style.md`
+
+### regression-only-acceptance-tests
+
+Put the rule settled on `pypi-release` into dotclaude's
+acceptance-test-design guidance: committed acceptance tests cover only
+behavior that can regress, and one-time criteria get evidence at
+Acceptance Verification. On `pypi-release`, 30 of 40 first-draft tests
+were thrown away. Raised by the workflow-owner.
+
+Changes: dotclaude `knowledge/testing.md` or the step 2 file
+
+### unexercised-reference-text
+
+When a technical reference describes operational behavior nobody has
+run, such as re-runs and approval expiry, step 6 should mark it as
+unexercised and keep it minimal. Speculative recovery text drove most
+of `pypi-release`'s three architecture-review iterations. Raised by
+the workflow-owner.
+
+Changes: dotclaude step 6 file
+
+### pm-deliverable-edits
+
+Say whether the PM may edit a deliverable directly, as it did to a
+wiki sentence on `pypi-release` (0e11632), or must route the edit to
+the producing step; if it may, the next review gate should check the
+edit by name. Raised by the workflow-owner.
+
+Changes: dotclaude PM function or workflow overview
