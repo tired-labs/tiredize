@@ -3,7 +3,7 @@ assignee: qa-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: blocked
+status: in-progress
 step: acceptance-test-design
 tags: []
 type: feature
@@ -87,8 +87,8 @@ Release workflow (`.github/workflows/release.yaml`):
 
 Outside the repository (user):
 
-- [ ] The `pypi` environment requires the user's approval
-- [ ] The `TEST_PYPI_API_TOKEN` GitHub secret is deleted
+- [x] The `pypi` environment requires the user's approval
+- [x] The `TEST_PYPI_API_TOKEN` GitHub secret is deleted
 - [ ] Tag `v0.1.0` publishes to both registries and
       `pip install tiredize` in a clean environment installs `0.1.0`
       from pypi.org
@@ -124,17 +124,15 @@ Documentation:
 - The package author is `TIRED Labs` with no email; users reach the
   project through GitHub issues (user, 2026-11-06).
 
+- Acceptance tests are kept in the suite only for behavior that can
+  regress: `--version`, and an offline check that `pyproject.toml`
+  takes the version from git with `no-local-version` and holds none
+  itself. Every other criterion, including the release workflow's
+  structure, the author and the deleted file, is a one-time check
+  that Acceptance Verification records with evidence, with no
+  committed test. No test builds wheels or needs network access
+  (user, 2026-11-06).
+
 ## Open Questions
 
-- The versioning acceptance tests (`tests/test_versioning.py`) build
-  wheels with `pip wheel`, which downloads hatchling and hatch-vcs into
-  an isolated build environment and so needs network access. That
-  conflicts with the testing wiki's "No network" rule. The offline
-  alternative, `--no-build-isolation`, needs hatchling and hatch-vcs in
-  the test environment, which means changing `ci.yaml` (the criteria
-  keep it unchanged) or adding a dev dependency. Accept network for
-  packaging tests as a documented exception, or choose another
-  approach? (qa-engineer, step 2)
-- Approval gate after Acceptance Test Design: the user confirms the
-  acceptance suite in `a2d1028` captures the intent of the criteria
-  before implementation starts.
+None.

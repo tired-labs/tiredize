@@ -406,6 +406,15 @@ what they mean without a reference.
 
 Changes: [testing](../wiki/practices/testing.md)
 
+### test-suite-audit
+
+Review the whole test suite (1,128 tests) for tests that only check a
+one-time change, such as a file deleted, a value set or a structure
+built, rather than behavior that can regress, and remove them. Found on
+`pypi-release`, where 29 of 40 acceptance tests were of this kind.
+
+Changes: [testing](../wiki/practices/testing.md)
+
 ### test-file-layout
 
 Rename the test files that break dotclaude's one-test-file-per-module
