@@ -4,7 +4,7 @@ created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: architecture-review
+step: technical-reference
 tags: []
 type: feature
 workflow: software-engineering
