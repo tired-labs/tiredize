@@ -53,9 +53,9 @@ items with no duplicates.
 
 Requires Python 3.10 or later.
 
-Releases are published to PyPI. `pip install tiredize` installs the
-latest release there, so it works once at least one release has been
-published. To install a particular release, pin its version:
+Releases are published to PyPI. `pip install tiredize` installs the latest
+release there, so it works once at least one release has been published. To
+install a particular release, pin its version:
 
 ```bash
 pip install tiredize
@@ -75,17 +75,16 @@ pip install -e .
 pip install pytest pytest-cov flake8
 ```
 
-No file in the repository holds a version number. The version is
-derived from the repository's git tags when tiredize is built or
-installed, so use a full clone. `git clone` fetches the tags, but a
-shallow clone (`--depth`) may lack them and then builds a dev version
-that says nothing useful about where the code stands. A source tree
-with no git metadata at all, such as an unpacked archive, fails to
-build rather than invent a number.
+No file in the repository holds a version number. The version is derived from
+the repository's git tags when tiredize is built or installed, so use a full
+clone. `git clone` fetches the tags, but a shallow clone (`--depth`) may lack
+them and then builds a dev version that says nothing useful about where the
+code stands. A source tree with no git metadata at all, such as a GitHub
+"Download ZIP" source download, fails to build rather than invent a number.
 
 An editable install records the version current when it ran.
-`tiredize --version` keeps reporting that version after later commits
-or tags, until you run `pip install -e .` again.
+`tiredize --version` keeps reporting that version after later commits or tags,
+until you run `pip install -e .` again.
 
 ## Usage
 
@@ -149,15 +148,14 @@ Runtime errors go to stderr as `error: <message>`.
 tiredize --version
 ```
 
-This prints one line to stdout, `tiredize X.Y.Z`, and exits `0`. The
-version is that of the installed package. It is a release number such
-as `0.1.0`, or a dev version such as `0.1.1.dev3` when tiredize was
-installed from an untagged commit. If tiredize runs from a source tree
-that was never installed, the line reads `tiredize unknown`.
+This prints one line to stdout, `tiredize X.Y.Z`, and exits `0`. The version is
+that of the installed package. It is a release number such as `0.1.0`, or a dev
+version such as `0.1.1.dev3` when tiredize was installed from an untagged
+commit. If tiredize runs from a source tree that was never installed, the line
+reads `tiredize unknown`.
 
 Like `--help`, `--version` takes effect as soon as it is read. Any
-configuration flags and paths given with it are neither checked nor
-loaded.
+configuration flags and paths given with it are neither checked nor loaded.
 
 ### Exit status
 
