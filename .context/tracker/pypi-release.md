@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: technical-architect
 created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: acceptance-verification
+step: technical-reference
 tags: []
 type: feature
 workflow: software-engineering
@@ -44,42 +44,42 @@ This issue updates these wiki pages and files:
 
 Versioning:
 
-- [ ] The version is derived from git tags by hatch-vcs with
+- [x] The version is derived from git tags by hatch-vcs with
       `local_scheme = "no-local-version"`; no file in the repository
       holds a version number
-- [ ] A build of a commit tagged `vX.Y.Z` has version `X.Y.Z`; a build
+- [x] A build of a commit tagged `vX.Y.Z` has version `X.Y.Z`; a build
       of any other commit has a dev version that sorts after the last
       tag
-- [ ] `tiredize --version` prints the installed version, read with
+- [x] `tiredize --version` prints the installed version, read with
       `importlib.metadata`
 - [x] The `v0.1` tag is deleted from `origin` and locally (user)
-- [ ] `authors` in `pyproject.toml` names `TIRED Labs`, with no email
+- [x] `authors` in `pyproject.toml` names `TIRED Labs`, with no email
 
 Release workflow (`.github/workflows/release.yaml`):
 
-- [ ] `release.yaml` replaces `release-testpypi.yml`, which is deleted;
+- [x] `release.yaml` replaces `release-testpypi.yml`, which is deleted;
       `ci.yaml` is unchanged
-- [ ] Lint and the full test suite run first; nothing is built or
+- [x] Lint and the full test suite run first; nothing is built or
       published unless they pass
-- [ ] Checkout uses `fetch-depth: 0` so hatch-vcs sees the tags
-- [ ] The sdist and wheel are built once, pass a metadata check, and
+- [x] Checkout uses `fetch-depth: 0` so hatch-vcs sees the tags
+- [x] The sdist and wheel are built once, pass a metadata check, and
       the wheel installed into a clean environment runs
       `tiredize --version`; the publish jobs receive these files as an
       artifact
-- [ ] A manual run publishes a dev version to TestPyPI only, through
+- [x] A manual run publishes a dev version to TestPyPI only, through
       the `testpypi` environment
-- [ ] A tag push publishes to TestPyPI, skipping a version already
+- [x] A tag push publishes to TestPyPI, skipping a version already
       there so a re-run can reach PyPI
-- [ ] After the TestPyPI publish, the workflow installs that exact
+- [x] After the TestPyPI publish, the workflow installs that exact
       version from TestPyPI into a clean environment, taking its
       dependencies from pypi.org only, and checks that
       `tiredize --version` prints it
-- [ ] A tag push publishes to PyPI through the `pypi` environment only
+- [x] A tag push publishes to PyPI through the `pypi` environment only
       after the TestPyPI install check passes, the tag is strictly
       `vX.Y.Z`, and the tagged commit is on `main`
-- [ ] A tag matching `v*` but not `vX.Y.Z` fails before anything is
+- [x] A tag matching `v*` but not `vX.Y.Z` fails before anything is
       built
-- [ ] Publishing uses Trusted Publishing through
+- [x] Publishing uses Trusted Publishing through
       `pypa/gh-action-pypi-publish`, with `id-token: write` only on the
       publish jobs and no tokens or secrets, matching the registered
       publishers (owner `tired-labs`, repository `tiredize`, workflow
