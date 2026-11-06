@@ -1,10 +1,10 @@
 ---
-assignee: proofreader
+assignee: workflow-owner
 created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: documentation-review
+step: closeout
 tags: []
 type: feature
 workflow: software-engineering
@@ -95,7 +95,7 @@ Outside the repository (user):
 
 Documentation:
 
-- [ ] The wiki pages listed in the Summary explain the versioning
+- [x] The wiki pages listed in the Summary explain the versioning
       scheme, the release flow, and everything a developer needs to
       cut a release; the README's installation section is accurate
 

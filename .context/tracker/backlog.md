@@ -483,3 +483,11 @@ make the step file state its default knowledge. Raised by the
 proofreader on `pypi-release`.
 
 Changes: `AGENTS.md`
+
+### fill-rule-code-spans
+
+dotclaude's markdown-style "fill to 79" rule does not say whether a
+line may break early to keep an inline code span whole. Settle it in
+the knowledge file. Raised by the proofreader on `pypi-release`.
+
+Changes: dotclaude `knowledge/markdown-style.md`
