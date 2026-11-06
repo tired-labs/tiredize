@@ -7,6 +7,7 @@ import importlib.metadata
 import pytest
 
 # Local
+from tiredize import cli
 from tiredize.cli import main
 
 
@@ -446,3 +447,74 @@ def test_help_lists_version_flag(capsys):
         main(["--help"])
     assert raised.value.code == 0
     assert "--version" in capsys.readouterr().out
+
+
+# --- --version internals (white-box, issue pypi-release) ---
+#
+# The version is looked up when the parser is built, so the lookup
+# runs on every invocation. A missing distribution (tiredize imported
+# from a source tree that was never installed) must not break normal
+# runs; `--version` then reports "unknown" rather than inventing a
+# number.
+
+
+def _not_installed(name: str) -> str:
+    raise importlib.metadata.PackageNotFoundError(name)
+
+
+def test_version_line_format(capsys):
+    installed = importlib.metadata.version("tiredize")
+    with pytest.raises(SystemExit) as raised:
+        main(["--version"])
+    assert raised.value.code == 0
+    assert capsys.readouterr().out == f"tiredize {installed}\n"
+
+
+def test_version_reads_distribution_metadata(capsys, monkeypatch):
+    looked_up: list[str] = []
+
+    def fake_version(name: str) -> str:
+        looked_up.append(name)
+        return "4.2.0"
+
+    monkeypatch.setattr(cli, "metadata_version", fake_version)
+    with pytest.raises(SystemExit) as raised:
+        main(["--version"])
+    assert raised.value.code == 0
+    assert capsys.readouterr().out == "tiredize 4.2.0\n"
+    assert looked_up == ["tiredize"]
+
+
+def test_version_unknown_when_not_installed(capsys, monkeypatch):
+    monkeypatch.setattr(cli, "metadata_version", _not_installed)
+    with pytest.raises(SystemExit) as raised:
+        main(["--version"])
+    assert raised.value.code == 0
+    captured = capsys.readouterr()
+    assert captured.out == "tiredize unknown\n"
+    assert captured.err == ""
+
+
+def test_missing_metadata_does_not_break_a_run(
+        capsys, monkeypatch, tmp_path):
+    monkeypatch.setattr(cli, "metadata_version", _not_installed)
+    doc = tmp_path / "uninstalled_but_unbothered.md"
+    doc.write_text("# Still Fine\n")
+    schema = tmp_path / "schema.yaml"
+    schema.write_text(
+        "sections:\n"
+        "  - name: Still Fine\n"
+    )
+    assert main(["--markdown-schema", str(schema), str(doc)]) == 0
+    assert "no issues found" in capsys.readouterr().out
+
+
+def test_version_ignores_other_arguments(capsys):
+    """`--version` exits before configuration or paths are checked."""
+    installed = importlib.metadata.version("tiredize")
+    with pytest.raises(SystemExit) as raised:
+        main(["--rules", "no_such_rules.yaml", "--version", "ghost.md"])
+    assert raised.value.code == 0
+    captured = capsys.readouterr()
+    assert captured.out == f"tiredize {installed}\n"
+    assert captured.err == ""
