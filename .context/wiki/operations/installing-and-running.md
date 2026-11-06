@@ -25,8 +25,7 @@ tiredize --version
 
 PyPI holds only releases; the dev versions of practice runs go to
 TestPyPI. A release reaches PyPI only when a `vX.Y.Z` tag is pushed and
-its publication approved; the first release is `0.1.0`, and until it is
-published, installing from a clone is the only way.
+its publication approved.
 
 To run the code in a clone, install it in editable mode:
 

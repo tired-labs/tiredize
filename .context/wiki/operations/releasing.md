@@ -95,8 +95,8 @@ The guards, and what each one stops:
   `tiredize --version` must print `tiredize <installed version>`.
 - **Broken publication.** The TestPyPI install check installs the
   published files as a user would. TestPyPI's index can lag behind an
-  upload, so the install is retried every 30 seconds, ten times, before
-  the job fails.
+  upload, so the install is tried up to ten times, 30 seconds apart,
+  before the job fails.
 
 The files published to PyPI are the files `build` produced in the same
 run; nothing is rebuilt between the TestPyPI and PyPI uploads.
@@ -130,7 +130,10 @@ changed to match.
    pass.
 2. **Choose the number.** Pick `X.Y.Z` by semantic versioning against
    the last release (`git tag --list 'v*'` lists them). A version that
-   has reached PyPI is never reused.
+   has reached TestPyPI or PyPI is never reused. A failed release whose
+   files reached TestPyPI leaves its tag behind: leave that tag in place
+   and choose the next number (see
+   [recovering from a failed run](#recovering-from-a-failed-run)).
 3. **Tag the commit on `main`.** Tag `main`'s current tip, or an
    earlier commit on `main`:
 
@@ -178,15 +181,25 @@ on TestPyPI before changing any tag.
   failure that was not the code's fault (a runner or network problem)
   can instead be re-run from the run's page.
 - **Failed at or after `publish-testpypi`** (the install check, the
-  PyPI upload, or an approval that was rejected or expired). Re-run the
-  workflow for the same tag from the run's page. `skip-existing` lets
-  the TestPyPI upload pass for files already there, so the re-run can
-  reach PyPI; the install check then tests the files the earlier run
-  uploaded, built from the same commit. Do not move the tag to a
-  different commit: TestPyPI never accepts the same file name twice,
-  so the re-run would check the old files on TestPyPI while publishing
-  new ones to PyPI. If the code must change, release the next version
-  instead.
+  PyPI upload, or an approval that was rejected or expired). On the
+  run's page, choose "Re-run failed jobs". GitHub re-runs the failed
+  jobs and the jobs that depend on them within the same run, reusing
+  the outputs and artifacts of the jobs that succeeded, so `build` does
+  not run again and the same `dist` artifact reaches PyPI. Do not
+  choose "Re-run all jobs": it runs `build` again, and PyPI would get a
+  second build while TestPyPI keeps the first, breaking the build-once
+  rule. (This follows GitHub's documented re-run behaviour; it has not
+  yet been exercised on this workflow.) `skip-existing` lets the
+  TestPyPI upload pass for files already there, so the re-run can reach
+  PyPI. Do not move the tag to a different commit: TestPyPI never
+  accepts the same file name twice, so the re-run would check the old
+  files on TestPyPI while publishing new ones to PyPI. If the code must
+  change, leave the tag in place and release the next version instead.
+- **Partly published to PyPI** (PyPI accepted one of the two files and
+  not the other). A re-run fails: `publish-pypi` has no
+  `skip-existing`, so its upload stops at the file already there. The
+  version cannot be completed; leave the tag in place and release the
+  next version.
 - **Published to PyPI.** The release is final. PyPI never accepts a
   file name twice, even after a deletion, so a published version's
   files cannot be replaced; a fix is a new version.
