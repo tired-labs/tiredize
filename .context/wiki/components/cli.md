@@ -26,6 +26,7 @@ Two entry points exist and both call `tiredize.cli:main`:
 
 ```
 tiredize [--rules FILE] [--markdown-schema FILE] [--frontmatter-schema FILE] PATH...
+tiredize --version
 python -m tiredize [same arguments]
 ```
 
@@ -57,11 +58,12 @@ raise SystemExit(main())
 | `--frontmatter-schema` | YAML file describing the frontmatter fields     |
 | `PATH...`              | Markdown files to check                         |
 | `-h`, `--help`         | Print the help text to stdout and exit `0`      |
+| `--version`            | Print the installed version to stdout, exit `0` |
 
-There is no `--version` and no other flag. Argparse's defaults apply to
-the flags: each can be written `--rules FILE` or `--rules=FILE`, each
-can be abbreviated to any unique prefix (`--rul FILE`), and `--` ends
-option parsing.
+There is no other flag. Argparse's defaults apply to the flags: each
+can be written `--rules FILE` or `--rules=FILE`, each can be
+abbreviated to any unique prefix (`--rul FILE`), and `--` ends option
+parsing.
 
 Each configuration flag names its file directly; there is no
 configuration discovery and no default file. A flag given twice keeps
@@ -88,6 +90,32 @@ every path clean; a top level that is not a mapping is a runtime error;
 a rule id listed twice keeps its last configuration, in the position of
 its first entry.
 
+### Version
+
+`--version` prints one line to stdout and exits `0`:
+
+```
+tiredize X.Y.Z
+```
+
+The version is the installed distribution's, read with
+`importlib.metadata.version("tiredize")`; no source file holds it. It
+is set at build or install time from git tags (see
+[releasing](../operations/releasing.md)), so it is a release number
+such as `0.1.0` or a dev version such as `0.1.1.dev3`. The release
+workflow relies on this exact line: it compares the output with
+`tiredize <version>`.
+
+When no tiredize distribution metadata is found, as when the package
+is imported from a source tree that was never installed, the line is
+`tiredize unknown`, still with status `0`. The lookup runs whenever the
+argument parser is built, on every invocation, so missing metadata
+never affects a normal run.
+
+Like `--help`, `--version` acts as soon as argparse reads it: the
+configuration flags and paths around it are not checked or loaded, and
+the usage-error rule below does not apply.
+
 ### main
 
 ```python
@@ -103,8 +131,8 @@ failure signal.
 Two things leave `main()` without a return value. Argparse raises
 `SystemExit` from inside it: its own errors (an unknown flag, a flag
 missing its value, paths on both sides of the flags) print to stderr
-and raise `SystemExit(2)`, and `--help` prints to stdout and raises
-`SystemExit(0)`. Any exception the CLI does not handle (see Runtime
+and raise `SystemExit(2)`, and `--help` and `--version` print to stdout
+and raise `SystemExit(0)`. Any exception the CLI does not handle (see Runtime
 Errors by Step) propagates out of `main()` unchanged.
 
 ## File Layout
@@ -120,7 +148,7 @@ Errors by Step) propagates out of `main()` unchanged.
 
 | Status | Meaning                                                          |
 |--------|------------------------------------------------------------------|
-| `0`    | Every path loaded and produced no findings, or `--help`          |
+| `0`    | Every path loaded and produced no findings, `--help`, or `--version` |
 | `1`    | At least one path produced findings, or a runtime error occurred |
 | `2`    | Usage error                                                      |
 
@@ -217,6 +245,7 @@ path's findings print together, in this order and not sorted by line:
 | stdout | Findings, as `path:line:col: [rule_id] message`      |
 | stdout | `path: no issues found.` for a path with no findings |
 | stdout | The `--help` text                                    |
+| stdout | The `--version` line                                 |
 | stderr | Runtime errors, as `error: <message>` or a traceback |
 | stderr | The usage message and the usage-error explanation    |
 | stderr | Argparse's own error messages                        |
@@ -252,7 +281,15 @@ length is not printed.
   at the bottom of `cli.py`.
 - **Both entry points pin `prog="tiredize"`.** Left to argparse, `prog`
   renders as `__main__.py` under module execution, and the two entry
-  points would print different usage text.
+  points would print different usage text. `--version` prints
+  `%(prog)s`, so it reads `tiredize` through both.
+- **`--version` reads installed metadata,** because the version
+  exists only there: it comes from git tags at build time (see
+  [releasing](../operations/releasing.md)). Every published release
+  can report what it is.
+- **No metadata prints `unknown`, not an error,** so a source tree
+  that was never installed still runs, and `--version` never invents a
+  number.
 - **Three statuses, no more.** Runtime errors share `1` with findings.
   The stream tells them apart: a caller that needs to know reads
   stderr.

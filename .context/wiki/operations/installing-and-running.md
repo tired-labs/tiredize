@@ -11,7 +11,24 @@ the component pages it links.
 
 Tiredize declares Python 3.10 as its minimum (`requires-python` in
 `pyproject.toml`). CI tests on 3.11 and the release workflow on 3.12
-(see [CI](../practices/ci.md)). Install it from a clone:
+(see [CI](../practices/ci.md)).
+
+Releases are published to PyPI by the release workflow (see
+[releasing](./releasing.md)). Install the latest release, or a given
+one, and check what is installed:
+
+```bash
+python3 -m pip install tiredize
+python3 -m pip install tiredize==X.Y.Z
+tiredize --version
+```
+
+PyPI holds only releases; the dev versions of practice runs go to
+TestPyPI. A release reaches PyPI only when a `vX.Y.Z` tag is pushed and
+its publication approved; the first release is `0.1.0`, and until it is
+published, installing from a clone is the only way.
+
+To run the code in a clone, install it in editable mode:
 
 ```bash
 git clone https://github.com/tired-labs/tiredize.git
@@ -19,7 +36,9 @@ cd tiredize
 pip install -e .
 ```
 
-Releases are published to TestPyPI only (see [releasing](./releasing.md)).
+A clone needs its tags for the version to be right (see
+[releasing](./releasing.md)); `git clone` fetches them, a shallow clone
+may not. The editable install keeps the version it had when it ran.
 
 ## Running
 

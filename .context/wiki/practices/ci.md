@@ -2,8 +2,7 @@
 
 ## Overview
 
-What GitHub Actions runs for tiredize. Releasing is on
-[releasing](../operations/releasing.md); the test rules are on
+What GitHub Actions runs for tiredize. The test rules are on
 [testing](./testing.md).
 
 ## Workflows
@@ -18,8 +17,15 @@ request and by hand. On Python 3.11 it:
 5. uploads coverage to Coveralls with `coverallsapp/github-action`,
    which does not fail the build if the upload fails.
 
-The release workflow runs the tests again on Python 3.12 before it
-publishes.
+`ci.yaml` does not run on tag pushes and publishes nothing.
+
+`.github/workflows/release.yaml` runs on pushes of `v*` tags and by
+hand. It runs flake8 and the full test suite on Python 3.12 and, only
+if they pass, builds tiredize and publishes it to TestPyPI and, for a
+release tag, to PyPI. Its jobs, guards and use are on
+[releasing](../operations/releasing.md).
+
+These two are the only workflows.
 
 ## Design Decisions
 

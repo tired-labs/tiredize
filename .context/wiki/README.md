@@ -53,8 +53,8 @@ user guide is the repository's `README.md`.
 
 - [Installing and running](./operations/installing-and-running.md):
   installing, invoking, and gating hooks and CI on the exit status.
-- [Releasing](./operations/releasing.md): versioning and the TestPyPI
-  release workflow.
+- [Releasing](./operations/releasing.md): versions from git tags, the
+  release workflow through TestPyPI to PyPI, and how to cut a release.
 
 ### Practices
 
