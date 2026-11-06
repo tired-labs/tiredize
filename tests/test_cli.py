@@ -1,6 +1,10 @@
 # Standard library
 from __future__ import annotations
 from pathlib import Path
+import importlib.metadata
+
+# Third party
+import pytest
 
 # Local
 from tiredize.cli import main
@@ -409,3 +413,36 @@ def test_invalid_regex_schema_prints_error(capsys, tmp_path):
     assert result == 1
     captured = capsys.readouterr()
     assert "error:" in captured.err
+
+
+# --- --version (issue pypi-release) ---
+#
+# Acceptance tests: `--version` prints the installed version, as
+# importlib.metadata reports it, to stdout and exits 0 like `--help`.
+# The exact line format is not part of the contract; the version must
+# appear in it as a whole word.
+
+
+def test_version_prints_installed_version(capsys):
+    with pytest.raises(SystemExit) as raised:
+        main(["--version"])
+    assert raised.value.code == 0
+    captured = capsys.readouterr()
+    installed = importlib.metadata.version("tiredize")
+    assert installed in captured.out.split()
+    assert captured.err == ""
+
+
+def test_version_needs_no_configuration_or_paths(capsys):
+    """`--version` alone is not the usage error (exit 2)."""
+    with pytest.raises(SystemExit) as raised:
+        main(["--version"])
+    assert raised.value.code == 0
+    assert "error:" not in capsys.readouterr().err
+
+
+def test_help_lists_version_flag(capsys):
+    with pytest.raises(SystemExit) as raised:
+        main(["--help"])
+    assert raised.value.code == 0
+    assert "--version" in capsys.readouterr().out
