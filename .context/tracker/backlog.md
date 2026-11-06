@@ -49,6 +49,16 @@ Changes: [markdown schema validator](../wiki/components/markdown-schema-validato
 
 ## Unranked
 
+### acceptance-test-commit-hook
+
+Acceptance Test Design commits tests that must fail, but the local
+pre-commit hook runs pytest, so every such commit needs `--no-verify`,
+which also skips the branch-name and commit-message checks. Settle a
+convention, such as the hook skipping known acceptance-test paths
+until implementation. Raised by the qa-engineer on `pypi-release`.
+
+Changes: [testing](../wiki/practices/testing.md)
+
 ### add-docstrings
 
 Finish docstrings on the public API and settle their format. Most

@@ -1,10 +1,10 @@
 ---
-assignee:
+assignee: qa-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: ready
-step:
+status: blocked
+step: acceptance-test-design
 tags: []
 type: feature
 workflow: software-engineering
@@ -52,7 +52,7 @@ Versioning:
       tag
 - [ ] `tiredize --version` prints the installed version, read with
       `importlib.metadata`
-- [ ] The `v0.1` tag is deleted from `origin` and locally (user)
+- [x] The `v0.1` tag is deleted from `origin` and locally (user)
 - [ ] `authors` in `pyproject.toml` names `TIRED Labs`, with no email
 
 Release workflow (`.github/workflows/release.yaml`):
@@ -126,4 +126,15 @@ Documentation:
 
 ## Open Questions
 
-None.
+- The versioning acceptance tests (`tests/test_versioning.py`) build
+  wheels with `pip wheel`, which downloads hatchling and hatch-vcs into
+  an isolated build environment and so needs network access. That
+  conflicts with the testing wiki's "No network" rule. The offline
+  alternative, `--no-build-isolation`, needs hatchling and hatch-vcs in
+  the test environment, which means changing `ci.yaml` (the criteria
+  keep it unchanged) or adding a dev dependency. Accept network for
+  packaging tests as a documented exception, or choose another
+  approach? (qa-engineer, step 2)
+- Approval gate after Acceptance Test Design: the user confirms the
+  acceptance suite in `a2d1028` captures the intent of the criteria
+  before implementation starts.
