@@ -10,7 +10,7 @@ type: bug
 workflow: to-be-determined
 ---
 
-# Pin every GitHub Action to a commit and fix the TestPyPI upload
+# Pin and upgrade every GitHub Action and fix the TestPyPI upload
 
 ## Summary
 
@@ -34,8 +34,9 @@ This issue updates these wiki pages and files:
 - [x] Both publish steps use `pypa/gh-action-pypi-publish` v1.14.3
 - [x] Every `uses:` in `.github/workflows/` names a full 40-character
       commit SHA, with the release it was resolved from in a comment
-- [x] Each other action stays on its current major version, at that
-      major's latest release
+- [x] Every action is at its latest release; the four `actions/*`
+      actions move up major versions after their release notes were
+      checked for changes affecting these workflows
 - [x] The CI wiki page records the pinning rule
 - [ ] A manual `Release` run publishes a dev version to TestPyPI and
       passes the install check (user, after merge)
@@ -44,6 +45,13 @@ This issue updates these wiki pages and files:
 
 - Pin to commit SHAs everywhere, not only in the publish jobs (user,
   2026-11-06).
+- Upgrade every action to its latest major in the same change (user,
+  2026-11-06). Breaking changes checked and found not to apply:
+  checkout v5-v7 (Node 24, credentials file, `pull_request_target`
+  fork guard), setup-python v6-v7 (Node 24, `pip-install` input
+  removed, unused here), upload-artifact v5-v7 and download-artifact
+  v5-v8 (Node 24, by-ID path change and hash-mismatch errors; artifacts
+  here are zipped and downloaded by name).
 - Done directly by the PM as a mechanical change; SHAs were resolved
   from each tag through the GitHub API, dereferencing annotated tags.
 

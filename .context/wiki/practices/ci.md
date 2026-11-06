@@ -29,7 +29,7 @@ These two are the only workflows.
 
 Every action either workflow uses is pinned to a full commit SHA, with
 the release it was resolved from in a comment, such as
-`actions/checkout@<sha>  # v4.4.0`. To update an action, resolve the
+`actions/checkout@<sha>  # v7.0.1`. To update an action, resolve the
 new release's tag to its commit (dereferencing an annotated tag) and
 replace both the SHA and the comment.
 
