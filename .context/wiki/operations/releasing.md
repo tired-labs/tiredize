@@ -46,7 +46,9 @@ raw-options = { local_scheme = "no-local-version" }
   a shallow clone that lacks the tag builds a wrong dev version. Every
   job in `release.yaml` that builds or installs tiredize checks out
   with `fetch-depth: 0`. There is no `fallback-version`: building from
-  a source tree with no git metadata fails rather than invent a number.
+  a source tree with neither git metadata nor an sdist's `PKG-INFO`,
+  such as a GitHub "Download ZIP" archive, fails rather than invent a
+  number. An unpacked sdist builds with the version in its `PKG-INFO`.
 - **The installed version is fixed at install time.** An editable
   install (`pip install -e .`) records the version current when it ran;
   `tiredize --version` keeps reporting it after later commits or tags

@@ -463,3 +463,23 @@ technical-reference and architecture-review steps, but dotclaude has no
 the technical-architect on `pypi-release`.
 
 Changes: `AGENTS.md`
+
+### readme-style-pass
+
+The README predates the markdown-style rules: most prose paragraphs
+wrap near 72 columns instead of filling to 79, and it uses em dashes
+and `--` separators. Bring the whole file into line in one pass.
+Raised by the proofreader on `pypi-release`.
+
+Changes: [README](../../README.md)
+
+### documentation-review-knowledge
+
+The documentation-review step names markdown-style and
+ai-prose-hygiene as its mapped knowledge, but tiredize's `AGENTS.md`
+maps nothing to `user-documentation` or `documentation-review`, so the
+lens comes only from the step file's Inputs line. Add the mapping or
+make the step file state its default knowledge. Raised by the
+proofreader on `pypi-release`.
+
+Changes: `AGENTS.md`

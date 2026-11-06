@@ -1,10 +1,10 @@
 ---
-assignee: proofreader
+assignee: ghostwriter
 created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: documentation-review
+step: user-documentation
 tags: []
 type: feature
 workflow: software-engineering
