@@ -7,27 +7,19 @@ when its issue file is created. -->
 
 ## Ranked
 
-### tooling-migration
+### ruff-migration
 
-Pin every Python tool CI and releases install, and keep the pins
-current with Dependabot. Today the workflows install pip, build,
-twine, flake8, pytest, pytest-cov and the build backend unpinned, so
-each run gets whatever is newest; an unpinned hatchling 1.33.0 is what
-broke the first TestPyPI upload. Also evaluate Ruff in place of flake8,
-declare development dependencies in `pyproject.toml` (`.[dev]`), drop
-the `coveralls` package `ci.yaml` installs but never uses, and finish
-the import-grouping comments in the seven test files that lack them.
+Replace flake8 with Ruff for linting and adopt `ruff format`. Most of
+flake8's indentation, whitespace and blank-line checks (E1, E2, E3) are
+preview-only in Ruff, which expects its formatter to make them
+unnecessary. Settle the import-sorting approach, and update the local
+pre-commit hook once Ruff runs in CI. If Ruff proves a drop-in
+replacement, the user updates dotclaude's `python.md` to match.
 
 Changes: [CI](../wiki/practices/ci.md), [testing](../wiki/practices/testing.md), [releasing](../wiki/operations/releasing.md)
 
-- Runtime dependencies (`PyYAML`, `requests`) keep minimum versions and
-  are never pinned exactly, since tiredize installs into other
-  people's environments.
-- Build tools (`hatchling`, `hatch-vcs`) are pinned for CI and releases
-  through a constraints file, not in `[build-system]`, so people
-  building from source are not bound by them.
-- Dependabot's `pip` ecosystem keeps the pinned tools current, with the
-  same weekly schedule, grouping and 14-day cooldown as actions.
+- Ruff covers at least everything flake8 checks today.
+- `ruff format` is adopted, in this issue rather than a later one.
 
 ### dotclaude-backlog-move
 
