@@ -1,9 +1,12 @@
 """Tests for tiredize/linter/rules/elements.py."""
 
+# Standard library
 import copy
 
+# Third-party
 import pytest
 
+# Local
 from tiredize.linter.rules.elements import validate
 from tiredize.markdown.types.document import Document
 

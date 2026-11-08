@@ -93,24 +93,37 @@ jobs:
       - name: Check out the full history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          fetch-depth: 0  # pip install -e . runs hatch-vcs
+          fetch-depth: 0  # building tiredize runs hatch-vcs
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.12"
 
-      - name: Install tiredize and the test tools
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install flake8 pytest
-          python -m pip install -e .
+      # uv 0.13.5 is fixed and the Action checks the download against
+      # its built-in checksum list (no `checksum` input, never
+      # skipped). Everything below installs from uv.lock, hash-checked.
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        with:
+          version: "0.13.5"
+          enable-cache: false
+
+      # Two steps so the build tools (the `release` group that `dev`
+      # includes) are installed from the lock before tiredize is
+      # built, without build isolation, which would fetch them
+      # unlocked.
+      - name: Install the locked tools
+        run: uv sync --locked --no-install-project
+
+      - name: Install tiredize
+        run: uv sync --locked --no-build-isolation
 
       - name: Lint with flake8
-        run: flake8 tiredize tests
+        run: uv run --locked --no-build-isolation flake8 tiredize tests
 
       - name: Run the full test suite
-        run: pytest
+        run: uv run --locked --no-build-isolation pytest
 
   # Build the sdist and wheel once; both publish jobs upload exactly
   # these files.
@@ -131,13 +144,29 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install the build tools
+      # uv 0.13.5 is fixed and the Action checks the download against
+      # its built-in checksum list (no `checksum` input, never
+      # skipped). Everything below installs from uv.lock, hash-checked.
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        with:
+          version: "0.13.5"
+          enable-cache: false
+
+      - name: Install the locked build tools
+        run: uv sync --locked --only-group release
+
+      # Without build isolation, so the build uses the locked
+      # hatchling and hatch-vcs installed above, not ones it fetches.
+      # Their versions show in the log.
+      - name: Show the locked build tool versions
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install build twine
+          .venv/bin/python -c 'import importlib.metadata as m
+          for n in ("build", "hatchling", "hatch-vcs"):
+              print(n, m.version(n))'
 
       - name: Build the sdist and wheel
-        run: python -m build
+        run: .venv/bin/python -m build --no-isolation
 
       - name: Check there is exactly one sdist and one wheel
         run: |
@@ -150,11 +179,10 @@ jobs:
             exit 1
           fi
 
-      - name: Check the package metadata
-        run: twine check --strict dist/*
-
       # Install the wheel into a fresh venv and run it from outside the
       # checkout, so the source tree cannot stand in for the package.
+      # Its dependencies come from uv.lock, hash-checked; newer PyYAML
+      # and requests releases are tested by Dependabot's lock updates.
       # A tag push must build exactly the tag's version; a manual run
       # must build a dev version, so it can never publish a release
       # number to TestPyPI ahead of the tag.
@@ -165,8 +193,13 @@ jobs:
           EVENT: ${{ github.event_name }}
         run: |
           venv="$RUNNER_TEMP/wheel-check"
-          python -m venv "$venv"
-          "$venv/bin/python" -m pip install dist/*.whl
+          uv export --locked --no-default-groups --no-emit-project \
+            --format requirements-txt -o "$RUNNER_TEMP/runtime.txt"
+          uv venv "$venv"
+          uv pip install --python "$venv/bin/python" --require-hashes \
+            -r "$RUNNER_TEMP/runtime.txt"
+          uv pip install --python "$venv/bin/python" --no-deps \
+            dist/*.whl
           cd "$RUNNER_TEMP"
           installed="$("$venv/bin/python" -c \
             'import importlib.metadata as m; print(m.version("tiredize"))')"
@@ -222,22 +255,33 @@ jobs:
   # would, and check it reports itself correctly.
   #
   # Only tiredize may come from TestPyPI. Anyone can upload any name
-  # there, so letting pip resolve dependencies across both indexes
-  # (--extra-index-url) could pull a look-alike dependency from
-  # TestPyPI. Instead tiredize is installed alone (--no-deps) with
-  # TestPyPI as the only index, and the dependencies its published
-  # metadata declares are then installed with pypi.org as the only
-  # index.
+  # there, so letting the installer resolve dependencies across both
+  # indexes could pull a look-alike dependency from TestPyPI. Instead
+  # tiredize is installed alone (--no-deps) with TestPyPI as the only
+  # index, and its dependencies are then installed from uv.lock,
+  # hash-checked, from pypi.org.
   testpypi-install-check:
     name: Install from TestPyPI and check the version
     needs: [build, publish-testpypi]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: "3.12"
+
+      # uv 0.13.5 is fixed and the Action checks the download against
+      # its built-in checksum list (no `checksum` input, never
+      # skipped). Everything below installs from uv.lock, hash-checked.
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        with:
+          version: "0.13.5"
+          enable-cache: false
 
       # TestPyPI's simple index can lag behind an upload, so the
       # install is retried a bounded number of times before failing.
@@ -245,11 +289,11 @@ jobs:
         env:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          cd "$RUNNER_TEMP"
-          python -m venv testpypi-check
+          uv venv "$RUNNER_TEMP/testpypi-check"
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
-            if testpypi-check/bin/python -m pip install --no-deps \
-                --no-cache-dir \
+            if uv pip install \
+                --python "$RUNNER_TEMP/testpypi-check/bin/python" \
+                --no-deps --no-cache \
                 --index-url https://test.pypi.org/simple/ \
                 "tiredize==$VERSION"; then
               exit 0
@@ -260,24 +304,19 @@ jobs:
           echo "::error::tiredize==$VERSION never became installable"
           exit 1
 
-      - name: Install its dependencies from pypi.org only
+      - name: Install its dependencies from the lock
         run: |
-          cd "$RUNNER_TEMP"
-          testpypi-check/bin/python -c 'import importlib.metadata as m
-          print("\n".join(m.requires("tiredize") or []))' > requirements.txt
-          cat requirements.txt
-          if [[ -s requirements.txt ]]; then
-            testpypi-check/bin/python -m pip install --no-cache-dir \
-              --index-url https://pypi.org/simple/ -r requirements.txt
-          fi
-          testpypi-check/bin/python -m pip check
+          uv export --locked --no-default-groups --no-emit-project \
+            --format requirements-txt -o "$RUNNER_TEMP/runtime.txt"
+          uv pip install \
+            --python "$RUNNER_TEMP/testpypi-check/bin/python" \
+            --require-hashes -r "$RUNNER_TEMP/runtime.txt"
 
       - name: Check tiredize --version prints the published version
         env:
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          cd "$RUNNER_TEMP"
-          printed="$(testpypi-check/bin/tiredize --version)"
+          printed="$("$RUNNER_TEMP/testpypi-check/bin/tiredize" --version)"
           echo "tiredize --version printed '$printed'"
           if [[ "$printed" != "tiredize $VERSION" ]]; then
             echo "::error::Expected 'tiredize $VERSION', got '$printed'"

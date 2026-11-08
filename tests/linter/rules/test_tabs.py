@@ -4,10 +4,13 @@ Covers tab detection, position accuracy, config edge cases, line
 endings, unicode, idempotency, and state mutation.
 """
 
+# Standard library
 import copy
 
+# Third-party
 import pytest
 
+# Local
 from tiredize.linter.rules.tabs import validate
 from tiredize.markdown.types.document import Document
 

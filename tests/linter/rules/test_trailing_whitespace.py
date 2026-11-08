@@ -5,10 +5,13 @@ cases, whitespace-only lines, line endings, unicode, idempotency, and
 state mutation.
 """
 
+# Standard library
 import copy
 
+# Third-party
 import pytest
 
+# Local
 from tiredize.linter.rules.trailing_whitespace import validate
 from tiredize.markdown.types.document import Document
 

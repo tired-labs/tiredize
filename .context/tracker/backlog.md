@@ -7,13 +7,29 @@ when its issue file is created. -->
 
 ## Ranked
 
-### ci-secrets-in-aws
+### ruff-migration
 
-Keep no long-lived secret for this repo in GitHub: the credentials
-tiredize's workflows use should live in AWS, not in GitHub Actions
-secrets.
+Replace flake8 with Ruff for linting and adopt `ruff format`. Most of
+flake8's indentation, whitespace and blank-line checks (E1, E2, E3) are
+preview-only in Ruff, which expects its formatter to make them
+unnecessary. Settle the import-sorting approach, and update the local
+pre-commit hook once Ruff runs in CI. If Ruff proves a drop-in
+replacement, the user updates dotclaude's `python.md` to match.
 
-Changes: [releasing](../wiki/operations/releasing.md), [CI](../wiki/practices/ci.md)
+Changes: [CI](../wiki/practices/ci.md), [testing](../wiki/practices/testing.md), [releasing](../wiki/operations/releasing.md)
+
+- Ruff covers at least everything flake8 checks today.
+- `ruff format` is adopted, in this issue rather than a later one.
+
+### dotclaude-backlog-move
+
+Move the entries about dotclaude's own process out of this backlog:
+`specifications-knowledge-mapping`, `documentation-review-knowledge`,
+`fill-rule-code-spans`, `regression-only-acceptance-tests`,
+`unexercised-reference-text` and `pm-deliverable-edits`. Each belongs
+in dotclaude's tracker, or is already filed there.
+
+Changes: this backlog
 
 ### contribution-guide
 
@@ -422,14 +438,6 @@ rule, or record an override.
 
 Changes: [repository layout](../wiki/repository/layout.md)
 
-### tooling-migration
-
-Evaluate Ruff in place of flake8, declare development dependencies in
-`pyproject.toml` (`.[dev]`), and finish the import-grouping comments in
-the seven test files that lack them.
-
-Changes: [CI](../wiki/practices/ci.md), [testing](../wiki/practices/testing.md)
-
 ### unicode-bom
 
 Stop the `unicode` rule reporting a UTF-8 byte-order mark.
@@ -520,3 +528,38 @@ the producing step; if it may, the next review gate should check the
 edit by name. Raised by the workflow-owner.
 
 Changes: dotclaude PM function or workflow overview
+
+### tooling-test-command-scan
+
+In `tests/test_tooling.py`, `_tools_invoked` reads only the first six
+words of a command, so a tool named after a long option list, such as
+`uv run ... --group coverage coveralls`, is not seen as run. Widen the
+scan so the tests do not depend on how a command is written. Raised by
+the software-engineer on `tooling-migration`.
+
+### codecov-evaluation
+
+Evaluate Codecov against Coveralls for failing a pull request on a
+coverage regression. Codecov keeps its rules in a versioned
+`codecov.yml` and can check patch coverage (the lines a PR adds);
+Coveralls keeps its drop threshold in its web settings.
+
+Changes: [CI](../wiki/practices/ci.md)
+
+- The deciding value is failing on coverage regression at a threshold.
+- The uploader must be lockable and hash-checked like every other CI
+  package; check what `codecov-cli`'s `sentry-sdk` sends back.
+- Codecov's free plan covers public repos without upload limits. Its
+  SAML is inherited from GitHub sign-in, which needs GitHub
+  Enterprise Cloud; the org is on Team, so SAML is not a factor.
+
+### doc-decision-wiki-sweep
+
+Have the architecture review's documentation decision also search the
+wiki for facts the change made stale, not only name the user-facing
+surface. On `tooling-migration` the ghostwriter found the same stale
+`pip install -e .` guidance in two wiki pages the decision did not
+list. Raised by the ghostwriter; for the workflow owner to review in
+dotclaude's `07-architecture-review.md`.
+
+Changes: dotclaude `workflows/software-engineering/07-architecture-review.md`

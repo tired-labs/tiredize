@@ -8,22 +8,27 @@ runs is on [CI](./ci.md).
 
 ## Running
 
-Set up a virtual environment in the repository root once, then
-activate it in each new shell. `.venv` is ignored by git.
+uv is required. From the repository root, run once and again after
+`uv.lock` changes:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-pip install pytest pytest-cov flake8
+uv sync
 ```
 
-With it active, run the same checks as CI:
+It creates `.venv` (ignored by git) and installs tiredize in editable
+mode with the `dev` group at the versions in `uv.lock`, so a local
+environment matches CI. The groups and the lock are on
+[CI](./ci.md#locked-dependencies). Run the same checks as CI through uv,
+or activate `.venv` and run them directly:
 
 ```bash
-flake8 tiredize tests
-pytest --cov=tiredize
+uv run flake8 tiredize tests
+uv run pytest --cov=tiredize
 ```
+
+Unlike CI, `uv sync` builds tiredize with build isolation, so hatchling
+and hatch-vcs are fetched for that build rather than taken from the
+lock.
 
 The entry-point tests in `tests/test_main_module.py` run the installed
 `tiredize` console script. They are meaningful only when that script is
@@ -61,6 +66,14 @@ detected, and an absent one is skipped.
 - **`__main__.py` is covered in-process** with `runpy.run_module` and a
   patched `sys.argv`, not by subprocess coverage, which needs extra
   machinery and tends to be flaky.
+- **The tooling contract is tested statically.** `tests/test_tooling.py`
+  reads `pyproject.toml`, `uv.lock`, `dependabot.yml` and the workflows:
+  the groups and their minimums, the pins and hashes in the lock, and
+  that the workflows install only from the lock. It reads `run:` steps
+  heuristically; installing only from the lock is the supply-chain
+  invariant, so these stay regression tests. A real run is the check
+  for what a test cannot see: the build tool versions in the `Release`
+  log and the first Dependabot `uv` pull request.
 - **Real documents are checked by hand.** Changes to the parser or the
   schema validator are also run against the TRRs in the techniques
   repository; that is how the table backtracking hang was found.

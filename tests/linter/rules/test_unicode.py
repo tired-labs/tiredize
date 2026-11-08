@@ -4,8 +4,10 @@ Covers the allowed/forbidden modes, exclude behaviour, position
 accuracy, config edge cases, and interaction with the rule engine.
 """
 
+# Third-party
 import pytest
 
+# Local
 from tiredize.linter.rules.unicode import validate
 from tiredize.markdown.types.document import Document
 

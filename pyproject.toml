@@ -19,6 +19,34 @@ dependencies = [
   "requests>=2.32.5",
 ]
 
+# Tools for working on tiredize, not for using it. PEP 735 dependency
+# groups are not published in the package metadata. These lists are
+# the one place a tool is added or its minimum changed; `uv.lock` is
+# generated from them (`uv lock`) and never edited by hand. Minimums
+# only: the lock pins the exact versions CI and releases install.
+#
+# `uv sync` installs `dev`, so a local environment matches CI. `dev`
+# includes `release` because installing tiredize in editable mode runs
+# the build backend (hatchling, hatch-vcs), which CI installs from the
+# lock instead of letting the build fetch it unlocked.
+[dependency-groups]
+dev = [
+  "flake8>=7.0",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  { include-group = "release" },
+]
+release = [
+  "build>=1.2",
+  "editables>=0.5",
+  "hatch-vcs>=0.4",
+  "hatchling>=1.25",
+]
+# Installed only by the CI job that uploads coverage to Coveralls.
+coverage = [
+  "coveralls>=4.0",
+]
+
 [project.urls]
 homepage = "https://www.tired-labs.org/"
 repository = "https://github.com/tired-labs/tiredize"
@@ -38,3 +66,17 @@ packages = ["tiredize"]
 
 [project.scripts]
 tiredize = "tiredize.cli:main"
+
+# Resolve only releases at least 14 days old, the same cooldown
+# Dependabot uses, so a newly published (or hijacked) release is not
+# locked before it has had time to be noticed.
+#
+# tiredize itself is exempt: the TestPyPI install check in
+# release.yaml installs the version uploaded seconds earlier, which
+# the cooldown would filter out, and on a tag release it would block
+# the PyPI publish. uv 0.13.5 has no "exempt" switch, only a cutoff
+# date per package, so tiredize's cutoff is a date far in the future.
+# Every other package keeps the 14-day cooldown.
+[tool.uv]
+exclude-newer = "14 days"
+exclude-newer-package = { tiredize = "2999-01-01T00:00:00Z" }
