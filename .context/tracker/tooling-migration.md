@@ -4,7 +4,7 @@ created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: technical-reference
+step: architecture-review
 tags: []
 type: refactor
 workflow: software-engineering
