@@ -536,3 +536,19 @@ words of a command, so a tool named after a long option list, such as
 `uv run ... --group coverage coveralls`, is not seen as run. Widen the
 scan so the tests do not depend on how a command is written. Raised by
 the software-engineer on `tooling-migration`.
+
+### codecov-evaluation
+
+Evaluate Codecov against Coveralls for failing a pull request on a
+coverage regression. Codecov keeps its rules in a versioned
+`codecov.yml` and can check patch coverage (the lines a PR adds);
+Coveralls keeps its drop threshold in its web settings.
+
+Changes: [CI](../wiki/practices/ci.md)
+
+- The deciding value is failing on coverage regression at a threshold.
+- The uploader must be lockable and hash-checked like every other CI
+  package; check what `codecov-cli`'s `sentry-sdk` sends back.
+- Codecov's free plan covers public repos without upload limits. Its
+  SAML is inherited from GitHub sign-in, which needs GitHub
+  Enterprise Cloud; the org is on Team, so SAML is not a factor.

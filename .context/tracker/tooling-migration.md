@@ -3,7 +3,7 @@ assignee: qa-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: in-progress
+status: blocked
 step: acceptance-verification
 tags: []
 type: refactor
@@ -153,4 +153,14 @@ This issue updates these wiki pages:
 
 ## Open Questions
 
-None.
+Step 5 (acceptance verification) passed every check that runs locally
+(0f0b56f). The rest need a push, which only the user approves: may the
+branch be pushed (`git push -u origin issues/tooling-migration`, no
+force) so a pull request can be opened and these run?
+
+- CI passes on the pull request (criterion 14).
+- A manual `Release` run on the branch builds and passes the TestPyPI
+  install check (criterion 14).
+- The build log shows the locked hatchling 1.32.4 and hatch-vcs 0.5.0.
+- The setup-uv log line shows the checksum verified.
+- The first Dependabot `uv` PR changes only `uv.lock`.
