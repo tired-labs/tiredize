@@ -3,7 +3,7 @@ assignee: workflow-owner
 created: 2026-11-06
 knowledge: []
 priority: high
-status: in-progress
+status: blocked
 step: closeout
 tags: []
 type: refactor
@@ -166,4 +166,8 @@ This issue updates these wiki pages:
 
 ## Open Questions
 
-None.
+- Approval point (after closeout): the user accepts the completed
+  work. Closeout (a5a20d4) found no discrepancies. On approval, the PM
+  closes the issue by `knowledge/planning.md` and removes this entry.
+  Also confirm the `ci-secrets-in-aws` backlog entry's removal from the
+  backlog diff was intended.
