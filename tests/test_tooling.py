@@ -469,6 +469,34 @@ class TestRuntimeAndBuildSystemDeclarations:
         assert not [r for r in requires if "==" in r], requires
 
 
+class TestCooldownExemptsTiredize:
+    # The TestPyPI install check installs the version uploaded seconds
+    # earlier, from inside the checkout, where `[tool.uv]
+    # exclude-newer` applies. Without this exemption the check can
+    # never pass (a failed manual Release run), and on a tag release
+    # it would block the PyPI publish.
+
+    def test_cooldown_stays_relative_for_every_other_package(self):
+        assert _pyproject()["tool"]["uv"]["exclude-newer"] == "14 days"
+
+    def test_tiredize_alone_is_exempt_from_the_cooldown(self):
+        exempt = _pyproject()["tool"]["uv"].get(
+            "exclude-newer-package", {}
+        )
+        assert [_norm(n) for n in exempt] == ["tiredize"], exempt
+
+    def test_tiredize_cutoff_is_far_beyond_any_upload(self):
+        cutoff = str(
+            _pyproject()["tool"]["uv"]["exclude-newer-package"]["tiredize"]
+        )
+        assert int(cutoff[:4]) >= 2100, cutoff
+
+    def test_lock_records_the_exemption(self):
+        options = _lock().get("options", {})
+        exempt = options.get("exclude-newer-package", {})
+        assert [_norm(n) for n in exempt] == ["tiredize"], options
+
+
 # --- uv.lock ------------------------------------------------------------
 
 

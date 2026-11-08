@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: software-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: blocked
-step: acceptance-verification
+status: in-progress
+step: implementation
 tags: []
 type: refactor
 workflow: software-engineering
@@ -155,6 +155,11 @@ This issue updates these wiki pages:
   Dependabot's `versioning-strategy: lockfile-only`; "hashes checked"
   means `--require-hashes` on `-r` installs and `--locked` or
   `--frozen` on `uv sync`, `uv run` and `uv export`.
+- tiredize itself is exempt from the 14-day `exclude-newer` cooldown,
+  so the TestPyPI install check can install the version just uploaded.
+  The exemption lives in `pyproject.toml` (`[tool.uv]`) if uv supports
+  it; only if it cannot does that one install ignore the project's uv
+  configuration instead (user, 2026-11-08).
 
 ## Open Questions
 

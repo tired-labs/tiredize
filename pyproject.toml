@@ -70,5 +70,13 @@ tiredize = "tiredize.cli:main"
 # Resolve only releases at least 14 days old, the same cooldown
 # Dependabot uses, so a newly published (or hijacked) release is not
 # locked before it has had time to be noticed.
+#
+# tiredize itself is exempt: the TestPyPI install check in
+# release.yaml installs the version uploaded seconds earlier, which
+# the cooldown would filter out, and on a tag release it would block
+# the PyPI publish. uv 0.13.5 has no "exempt" switch, only a cutoff
+# date per package, so tiredize's cutoff is a date far in the future.
+# Every other package keeps the 14-day cooldown.
 [tool.uv]
 exclude-newer = "14 days"
+exclude-newer-package = { tiredize = "2999-01-01T00:00:00Z" }
