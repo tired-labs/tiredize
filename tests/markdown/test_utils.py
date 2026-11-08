@@ -6,6 +6,7 @@ directly rather than through the element type wrappers.
 """
 
 
+# Local
 from tiredize.markdown.utils import sanitize_text, search_all_re
 
 

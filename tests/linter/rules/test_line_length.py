@@ -4,10 +4,13 @@ The engine tests already cover the basic happy path. This file adds
 the CRLF and unicode coverage gaps identified in the audit.
 """
 
+# Standard library
 import copy
 
+# Third-party
 import pytest
 
+# Local
 from tiredize.linter.rules.line_length import validate
 from tiredize.markdown.types.document import Document
 

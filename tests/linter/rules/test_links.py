@@ -8,11 +8,14 @@ All tests mock check_url_valid to isolate the rule's branching logic
 from HTTP internals.
 """
 
+# Standard library
 import copy
 from unittest.mock import patch
 
+# Third-party
 import pytest
 
+# Local
 from tiredize.linter.rules.links import validate
 from tiredize.markdown.types.document import Document
 
