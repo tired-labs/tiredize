@@ -66,13 +66,15 @@ tiredize --version
 How releases are numbered and published is described on the
 [releasing][wiki-releasing] page.
 
-For development, install from a clone of the repository:
+For development, install from a clone of the repository. Working on tiredize
+requires [uv](https://docs.astral.sh/uv/). `uv sync` creates a `.venv` and
+installs tiredize in editable mode with flake8, pytest, and pytest-cov at the
+versions in `uv.lock`.
 
 ```bash
 git clone https://github.com/tired-labs/tiredize.git
 cd tiredize
-pip install -e .
-pip install pytest pytest-cov flake8
+uv sync
 ```
 
 No file in the repository holds a version number. The version is derived from
@@ -84,7 +86,7 @@ code stands. A source tree with no git metadata at all, such as a GitHub
 
 An editable install records the version current when it ran.
 `tiredize --version` keeps reporting that version after later commits or tags,
-until you run `pip install -e .` again.
+until you reinstall it with `uv sync --reinstall-package tiredize`.
 
 ## Usage
 
@@ -513,7 +515,7 @@ add a custom rule:
 
 2. Place the module in the built-in rules package
    (`tiredize/linter/rules/`). This requires an editable install
-   (`pip install -e .`) or a project fork. The module must be
+   (`uv sync`) or a project fork. The module must be
    non-private (no leading underscore) and expose a `validate`
    function. Discovery checks nothing beyond that, so nothing stops a
    rule that omits `validate_config()` from loading — the convention
