@@ -101,8 +101,13 @@ This issue updates these wiki pages:
   metadata. The groups are the one place a tool is added or its
   minimum changed; the lock is generated from them and never edited by
   hand (user, 2026-11-08).
-- Both workflows run Python 3.12, the newer of the two in use, so the
-  lock covers one Python version (user, 2026-11-08).
+- Both workflows run Python 3.12, the newer of the two in use (user,
+  2026-11-08). `uv.lock` still covers every Python version tiredize
+  supports (3.10 and later), since uv locks are universal; CI installs
+  only the 3.12 resolution (user, 2026-11-08).
+- The TestPyPI install check no longer runs `pip check`: every package
+  comes from one resolved lock, so the check adds little (user,
+  2026-11-08).
 - The wheel check and the TestPyPI install check in `release.yaml`
   install tiredize's dependencies from the lock too. The wheel check
   runs in the job that uploads the release files, and newer `PyYAML`
@@ -153,14 +158,16 @@ This issue updates these wiki pages:
 
 ## Open Questions
 
-Step 5 (acceptance verification) passed every check that runs locally
-(0f0b56f). The rest need a push, which only the user approves: may the
-branch be pushed (`git push -u origin issues/tooling-migration`, no
-force) so a pull request can be opened and these run?
+The branch is pushed (approved 2026-11-08). Waiting on the user to open
+the pull request and trigger a manual `Release` run on the branch, then
+verify:
 
 - CI passes on the pull request (criterion 14).
-- A manual `Release` run on the branch builds and passes the TestPyPI
-  install check (criterion 14).
+- The `Release` run builds and passes the TestPyPI install check
+  (criterion 14).
 - The build log shows the locked hatchling 1.32.4 and hatch-vcs 0.5.0.
 - The setup-uv log line shows the checksum verified.
-- The first Dependabot `uv` PR changes only `uv.lock`.
+- The `coveralls` package uploads with only the job's `GITHUB_TOKEN`.
+
+The first Dependabot `uv` PR can only run after merge, so it is checked
+then and does not hold this issue open.
