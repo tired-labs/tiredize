@@ -552,3 +552,15 @@ Changes: [CI](../wiki/practices/ci.md)
 - Codecov's free plan covers public repos without upload limits. Its
   SAML is inherited from GitHub sign-in, which needs GitHub
   Enterprise Cloud; the org is on Team, so SAML is not a factor.
+
+### wiki-uv-references
+
+Update the wiki pages `tooling-migration` left out of scope.
+[installing and running](../wiki/operations/installing-and-running.md)
+still shows `pip install -e .` for running from a clone, where the
+contributor setup is now `uv sync`, and
+[layout](../wiki/repository/layout.md) does not list `uv.lock` or
+`.github/dependabot.yml`. Raised by the technical-architect on
+`tooling-migration`.
+
+Changes: [installing and running](../wiki/operations/installing-and-running.md), [layout](../wiki/repository/layout.md)
