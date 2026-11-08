@@ -19,23 +19,41 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
-      - name: Install dependencies
-        run: pip install pytest pytest-cov flake8 coveralls
+      # Every package comes from uv.lock, hash-checked. uv 0.13.5 is
+      # fixed here and the Action checks the download against its own
+      # built-in checksum list (no `checksum` input, never skipped).
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e  # v10.3.2
+        with:
+          version: "0.13.5"
+          enable-cache: false
+
+      # Two steps so tiredize's build tools (hatchling, hatch-vcs, in
+      # the `release` group that `dev` includes) are installed from the
+      # lock before tiredize itself is built, without build isolation,
+      # which would fetch them unlocked.
+      - name: Install the locked tools
+        run: uv sync --locked --group coverage --no-install-project
 
       - name: Install tiredize
-        run: pip install -e .
+        run: uv sync --locked --group coverage --no-build-isolation
 
       - name: Lint with flake8
         run: |
-          flake8 tiredize tests
+          uv run --locked --no-build-isolation flake8 tiredize tests
 
       - name: Run tests
         run: |
-          pytest --cov=tiredize --cov-report=xml
+          uv run --locked --no-build-isolation pytest --cov=tiredize --cov-report=xml
 
-      - name: Coveralls
-        uses: coverallsapp/github-action@8d6379e14d29928660c4ba802d8e85393440b329  # v2.3.8
-        with:
-          fail-on-error: false
+      # coveralls comes from the lock (the `coverage` group), not the
+      # Coveralls Action, which downloads an unlocked reporter. As
+      # before, a failed upload does not fail the job.
+      - name: Upload coverage to Coveralls
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          uv run --locked --no-build-isolation --group=coverage coveralls --service=github

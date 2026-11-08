@@ -1,7 +1,8 @@
-# Keep the GitHub Actions in .github/workflows/ current. Every action is
-# pinned to a commit SHA with its release in a comment; Dependabot
-# updates both. Updates are proposed weekly, grouped into one PR, and
-# only for releases at least 14 days old.
+# Keep the GitHub Actions in .github/workflows/ and the locked Python
+# packages in uv.lock current. Every action is pinned to a commit SHA
+# with its release in a comment; Dependabot updates both. Updates are
+# proposed weekly, grouped into one PR per ecosystem, and only for
+# releases at least 14 days old.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -12,5 +13,20 @@ updates:
       default-days: 14
     groups:
       actions:
+        patterns:
+          - "*"
+
+  # Keep uv.lock current. Updates the locked versions and their hashes
+  # together and never raises the minimums in pyproject.toml. Same
+  # weekly schedule, single group and 14-day cooldown as the actions.
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    versioning-strategy: lockfile-only
+    groups:
+      python-packages:
         patterns:
           - "*"

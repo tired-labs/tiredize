@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: software-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: acceptance-test-design
+step: implementation
 tags: []
 type: refactor
 workflow: software-engineering
@@ -137,6 +137,19 @@ This issue updates these wiki pages:
   newest release at least 14 days old, hash-checked from PyPI into its
   own venv at `~/.local/venvs/uv` and linked from `~/.local/bin`
   (user approved the install, 2026-11-08).
+- Acceptance tests are in `tests/test_tooling.py` (fe9ca97). Criteria
+  14 and 15 are verification checks; the build versions in a run's
+  log, the setup-uv checksum log, the first Dependabot `uv` PR and
+  `uv lock --check` are verification checks too; every other criterion
+  is a regression test. The workflow tests stay regression tests
+  although they read `run:` steps heuristically, because installing
+  only from the lock is the supply-chain invariant (user, 2026-11-08).
+- Criterion readings (user, 2026-11-08): "every job" sets up Python
+  3.12 means every job that runs Python tooling, so `tag-guard` and the
+  publish jobs are exempt; "never raises the minimums" means
+  Dependabot's `versioning-strategy: lockfile-only`; "hashes checked"
+  means `--require-hashes` on `-r` installs and `--locked` or
+  `--frozen` on `uv sync`, `uv run` and `uv export`.
 
 ## Open Questions
 
