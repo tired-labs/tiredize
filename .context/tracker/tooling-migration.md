@@ -3,7 +3,7 @@ assignee: qa-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: in-progress
+status: blocked
 step: acceptance-verification
 tags: []
 type: refactor
@@ -163,20 +163,20 @@ This issue updates these wiki pages:
 
 ## Open Questions
 
-CI on pull request #53 failed (run 42443289697) on a missing `editables`
-build requirement. The fix is committed (4ed7509) and passed steps 4 and
-5 from fresh clones (b6ea68b, 4395448), but is not pushed. Waiting on the
-user to approve pushing the branch to update the pull request, then
-verify:
+The manual Release run 42444404923 failed in the TestPyPI install check
+because the project's 14-day `exclude-newer` cooldown filtered out the
+tiredize just uploaded. The fix (80dce50) exempts tiredize in
+`pyproject.toml` and passed steps 4 and 5 from fresh clones (c9e7f19,
+1831584), but is not pushed. Waiting on the user to approve pushing the
+branch to update the pull request, then verify:
 
-- CI passes on the pull request (criterion 14).
 - A manual `Release` run on the branch builds and passes the TestPyPI
   install check (criterion 14).
 - The build log shows the locked hatchling 1.32.4 and hatch-vcs 0.5.0.
-- The setup-uv checksum check is verified by re-running the CI job with
-  debug logging (`gh run rerun <id> --debug`), since setup-uv reports it
-  only in debug output.
-- The `coveralls` package uploads with only the job's `GITHUB_TOKEN`.
+
+Already verified after the earlier CI fix (run 42443289697 rerun as
+42444329107): CI on pull request #53 passes, the setup-uv checksum in
+debug output, and the Coveralls upload with only `GITHUB_TOKEN`.
 
 The first Dependabot `uv` PR can only run after merge, so it is checked
 then and does not hold this issue open.
