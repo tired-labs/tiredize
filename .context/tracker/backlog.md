@@ -528,3 +528,11 @@ the producing step; if it may, the next review gate should check the
 edit by name. Raised by the workflow-owner.
 
 Changes: dotclaude PM function or workflow overview
+
+### tooling-test-command-scan
+
+In `tests/test_tooling.py`, `_tools_invoked` reads only the first six
+words of a command, so a tool named after a long option list, such as
+`uv run ... --group coverage coveralls`, is not seen as run. Widen the
+scan so the tests do not depend on how a command is written. Raised by
+the software-engineer on `tooling-migration`.
