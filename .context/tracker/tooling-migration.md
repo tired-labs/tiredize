@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: technical-architect
 created: 2026-11-06
 knowledge: []
 priority: high
-status: blocked
-step: acceptance-verification
+status: in-progress
+step: technical-reference
 tags: []
 type: refactor
 workflow: software-engineering
@@ -39,42 +39,42 @@ This issue updates these wiki pages:
 
 ## Acceptance Criteria
 
-- [ ] `pyproject.toml` has a `[dependency-groups]` table with a `dev`
+- [x] `pyproject.toml` has a `[dependency-groups]` table with a `dev`
       group (flake8, pytest, pytest-cov) and a `release` group (build,
       hatchling, hatch-vcs), each with minimum versions only
-- [ ] A committed `uv.lock` pins an exact version and sha256 hashes for
+- [x] A committed `uv.lock` pins an exact version and sha256 hashes for
       every package the workflows install, nested dependencies and
       `PyYAML` and `requests` included
-- [ ] Every step in `ci.yaml` and `release.yaml` that installs packages,
+- [x] Every step in `ci.yaml` and `release.yaml` that installs packages,
       the wheel check and the TestPyPI install check included, installs
       them from `uv.lock` with hashes checked, and installs only the
       groups that job uses
-- [ ] No step installs a package that is not in `uv.lock`, including
+- [x] No step installs a package that is not in `uv.lock`, including
       the build tools `pip install -e .` and `python -m build` would
       otherwise fetch into an isolated environment
-- [ ] `python -m build` in `release.yaml` builds with the locked
+- [x] `python -m build` in `release.yaml` builds with the locked
       hatchling and hatch-vcs, shown by the versions in a run's log
-- [ ] uv is installed in CI by `astral-sh/setup-uv`, pinned to a commit
+- [x] uv is installed in CI by `astral-sh/setup-uv`, pinned to a commit
       SHA, at a fixed uv version whose checksum the Action verifies
       from its own built-in list or a `checksum` input in the workflow,
       never skipped
-- [ ] Every job in `ci.yaml` and `release.yaml` sets up Python 3.12
-- [ ] `release.yaml` has no `twine check` step and installs no twine
-- [ ] `[build-system] requires` in `pyproject.toml` names no exact
+- [x] Every job in `ci.yaml` and `release.yaml` sets up Python 3.12
+- [x] `release.yaml` has no `twine check` step and installs no twine
+- [x] `[build-system] requires` in `pyproject.toml` names no exact
       version
-- [ ] `PyYAML` and `requests` keep minimum versions in
+- [x] `PyYAML` and `requests` keep minimum versions in
       `[project.dependencies]`
-- [ ] `ci.yaml` uploads coverage to Coveralls with the `coveralls`
+- [x] `ci.yaml` uploads coverage to Coveralls with the `coveralls`
       package from `uv.lock`, in a dependency group only that job
       installs, and no workflow uses `coverallsapp/github-action`
-- [ ] `.github/dependabot.yml` adds the `uv` ecosystem with the same
+- [x] `.github/dependabot.yml` adds the `uv` ecosystem with the same
       weekly schedule, single group and 14-day cooldown as actions,
       updates `uv.lock` versions and hashes together, and never raises
       the minimums in `pyproject.toml`
-- [ ] Every test file has the import-group comments `python.md`
+- [x] Every test file has the import-group comments `python.md`
       requires; today `tests/markdown/test_utils.py` and six files in
       `tests/linter/rules/` lack them
-- [ ] CI passes on the pull request, and a manual `Release` run on the
+- [x] CI passes on the pull request, and a manual `Release` run on the
       branch builds and passes the TestPyPI install check
 - [ ] The CI, testing and releasing wiki pages describe the dependency
       groups, `uv.lock` and the command that regenerates it,
@@ -160,23 +160,10 @@ This issue updates these wiki pages:
   The exemption lives in `pyproject.toml` (`[tool.uv]`) if uv supports
   it; only if it cannot does that one install ignore the project's uv
   configuration instead (user, 2026-11-08).
+- The Dependabot `uv` verification check (its first PR changes only
+  `uv.lock`) runs after merge, since Dependabot only runs on `main`,
+  and does not hold this issue open (user, 2026-11-08).
 
 ## Open Questions
 
-The manual Release run 42444404923 failed in the TestPyPI install check
-because the project's 14-day `exclude-newer` cooldown filtered out the
-tiredize just uploaded. The fix (80dce50) exempts tiredize in
-`pyproject.toml` and passed steps 4 and 5 from fresh clones (c9e7f19,
-1831584), but is not pushed. Waiting on the user to approve pushing the
-branch to update the pull request, then verify:
-
-- A manual `Release` run on the branch builds and passes the TestPyPI
-  install check (criterion 14).
-- The build log shows the locked hatchling 1.32.4 and hatch-vcs 0.5.0.
-
-Already verified after the earlier CI fix (run 42443289697 rerun as
-42444329107): CI on pull request #53 passes, the setup-uv checksum in
-debug output, and the Coveralls upload with only `GITHUB_TOKEN`.
-
-The first Dependabot `uv` PR can only run after merge, so it is checked
-then and does not hold this issue open.
+None.
