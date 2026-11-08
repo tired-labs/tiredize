@@ -4,7 +4,7 @@ created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: implementation
+step: code-and-test-review
 tags: []
 type: refactor
 workflow: software-engineering
