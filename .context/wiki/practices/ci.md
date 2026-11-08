@@ -65,7 +65,7 @@ The groups are the one place a tool is added or its minimum changed.
 |------------|----------------------------------------------------|--------------|
 | `dev`      | flake8, pytest, pytest-cov, and the `release` group | `uv sync` (the default group); the test jobs of both workflows |
 | `release`  | build, hatchling, hatch-vcs, editables             | the `build` job alone (`--only-group release`); `dev` includes it |
-| `coverage` | coveralls                                          | the Coveralls upload in `ci.yaml` alone |
+| `coverage` | coveralls                                          | the test job of `ci.yaml` alone           |
 
 `dev` includes `release` because installing tiredize in editable mode
 runs the build backend. Runtime dependencies (`PyYAML`, `requests`)
