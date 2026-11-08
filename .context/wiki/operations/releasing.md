@@ -75,10 +75,10 @@ flowchart LR
 | Job                      | What it does                                                                                           |
 |--------------------------|--------------------------------------------------------------------------------------------------------|
 | `tag-guard`              | On a tag push, fails unless the tag is exactly `vX.Y.Z` and the tagged commit is on `main`. Skips its checks on a manual run |
-| `test`                   | On Python 3.12, installs tiredize with `pip install -e .`, runs `flake8 tiredize tests` and the full `pytest` suite |
-| `build`                  | Builds the sdist and wheel once with `python -m build`, requires exactly one of each, runs `twine check --strict`, installs the wheel into a clean venv and checks the version (below), and uploads `dist/` as the `dist` artifact |
+| `test`                   | On Python 3.12, installs the locked tools and tiredize with `uv sync --locked`, runs `flake8 tiredize tests` and the full `pytest` suite |
+| `build`                  | Installs the `release` group from the lock, builds the sdist and wheel once with `python -m build --no-isolation`, requires exactly one of each, installs the wheel into a clean venv with its dependencies from the lock and checks the version (below), and uploads `dist/` as the `dist` artifact |
 | `publish-testpypi`       | Uploads the `dist` artifact to TestPyPI with `skip-existing: true`, in the `testpypi` environment     |
-| `testpypi-install-check` | Installs that exact version from TestPyPI into a clean venv, its dependencies from pypi.org only, runs `pip check`, and requires `tiredize --version` to print `tiredize <version>` |
+| `testpypi-install-check` | Installs that exact version from TestPyPI into a clean venv with `--no-deps`, its dependencies from the lock (pypi.org only), and requires `tiredize --version` to print `tiredize <version>` |
 | `publish-pypi`           | On tag pushes only, uploads the same `dist` artifact to PyPI, in the `pypi` environment, which waits for approval |
 
 The guards, and what each one stops:
@@ -103,6 +103,17 @@ The guards, and what each one stops:
 The files published to PyPI are the files `build` produced in the same
 run; nothing is rebuilt between the TestPyPI and PyPI uploads.
 
+Every job installs its Python packages from `uv.lock` with hashes
+checked, and only the groups it uses; `build` installs the `release`
+group alone, and builds with `--no-isolation` so the build uses the
+locked hatchling and hatch-vcs, whose versions the job prints. The
+groups, the lock, the command that regenerates it (`uv lock`) and
+Dependabot's `uv` updates are on
+[CI](../practices/ci.md#locked-dependencies). After Dependabot's update
+to `uv.lock` or to `release.yaml` is merged, run `Release` by hand on
+`main` (see [Practice Runs](#practice-runs)) before the next release,
+because CI does not run this workflow on a pull request.
+
 ### Trusted Publishing
 
 Both publish jobs use `pypa/gh-action-pypi-publish`, pinned to a
@@ -111,11 +122,11 @@ Publishing: GitHub issues the job a short-lived OIDC token, and the
 registry accepts it because it has a trusted publisher registered for
 that workflow. No API token, password or secret is stored anywhere.
 
-The publish action runs its own bundled twine, not the one the `build`
-job installs, so `twine check` passing in `build` does not prove the
-action will accept the files. When hatchling starts writing a newer
-core metadata version, the action may need updating too: v1.13.0
-rejected metadata 2.5 from hatchling 1.33.0, which v1.14.2 fixed.
+The publish action runs its own bundled twine and checks the files
+before it uploads them; the workflow runs no `twine check` of its own.
+When hatchling starts writing a newer core metadata version, the action
+may need updating too: v1.13.0 rejected metadata 2.5 from hatchling
+1.33.0, which v1.14.2 fixed.
 
 The workflow is read-only by default (`contents: read`); only the two
 publish jobs get `id-token: write`, and nothing else. Each registry's
@@ -249,9 +260,18 @@ on TestPyPI before changing any tag.
 - **Build once per run, publish the same files twice,** so what was
   checked on TestPyPI is what reaches PyPI, not a second build of it.
 - **Only tiredize comes from TestPyPI in the install check.** Anyone
-  can upload any name to TestPyPI, so letting pip resolve dependencies
-  across both indexes could install a look-alike; dependencies come
-  from pypi.org alone.
+  can upload any name to TestPyPI, so letting the installer resolve
+  dependencies across both indexes could install a look-alike;
+  dependencies come from the lock, hash-checked, from pypi.org alone.
+  The check runs no `pip check`: every package comes from one resolved
+  lock.
+- **The wheel check and the install check install tiredize's
+  dependencies from the lock too.** Newer `PyYAML` and `requests`
+  releases are tested through Dependabot's lock updates instead.
+- **tiredize is exempt from uv's 14-day cooldown,** a per-package
+  cutoff in `[tool.uv]`, because the install check installs the version
+  uploaded seconds earlier, and on a tag release the cooldown would
+  block the PyPI publish.
 - **`skip-existing` on TestPyPI only,** so a re-run of a tag whose
   TestPyPI upload succeeded can still reach PyPI, while a PyPI upload
   of an existing version still fails loudly.
