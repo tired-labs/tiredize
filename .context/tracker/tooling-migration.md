@@ -3,7 +3,7 @@ assignee: qa-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: in-progress
+status: blocked
 step: acceptance-verification
 tags: []
 type: refactor
@@ -158,15 +158,19 @@ This issue updates these wiki pages:
 
 ## Open Questions
 
-The branch is pushed (approved 2026-11-08). Waiting on the user to open
-the pull request and trigger a manual `Release` run on the branch, then
+CI on pull request #53 failed (run 42443289697) on a missing `editables`
+build requirement. The fix is committed (4ed7509) and passed steps 4 and
+5 from fresh clones (b6ea68b, 4395448), but is not pushed. Waiting on the
+user to approve pushing the branch to update the pull request, then
 verify:
 
 - CI passes on the pull request (criterion 14).
-- The `Release` run builds and passes the TestPyPI install check
-  (criterion 14).
+- A manual `Release` run on the branch builds and passes the TestPyPI
+  install check (criterion 14).
 - The build log shows the locked hatchling 1.32.4 and hatch-vcs 0.5.0.
-- The setup-uv log line shows the checksum verified.
+- The setup-uv checksum check is verified by re-running the CI job with
+  debug logging (`gh run rerun <id> --debug`), since setup-uv reports it
+  only in debug output.
 - The `coveralls` package uploads with only the job's `GITHUB_TOKEN`.
 
 The first Dependabot `uv` PR can only run after merge, so it is checked
