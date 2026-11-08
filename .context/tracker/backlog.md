@@ -560,7 +560,19 @@ Update the wiki pages `tooling-migration` left out of scope.
 still shows `pip install -e .` for running from a clone, where the
 contributor setup is now `uv sync`, and
 [layout](../wiki/repository/layout.md) does not list `uv.lock` or
-`.github/dependabot.yml`. Raised by the technical-architect on
-`tooling-migration`.
+`.github/dependabot.yml`. [releasing](../wiki/operations/releasing.md)
+also still names `pip install -e .` for the editable install. Raised by
+the technical-architect and ghostwriter on `tooling-migration`.
 
-Changes: [installing and running](../wiki/operations/installing-and-running.md), [layout](../wiki/repository/layout.md)
+Changes: [installing and running](../wiki/operations/installing-and-running.md), [layout](../wiki/repository/layout.md), [releasing](../wiki/operations/releasing.md)
+
+### doc-decision-wiki-sweep
+
+Have the architecture review's documentation decision also search the
+wiki for facts the change made stale, not only name the user-facing
+surface. On `tooling-migration` the ghostwriter found the same stale
+`pip install -e .` guidance in two wiki pages the decision did not
+list. Raised by the ghostwriter; for the workflow owner to review in
+dotclaude's `07-architecture-review.md`.
+
+Changes: dotclaude `workflows/software-engineering/07-architecture-review.md`
