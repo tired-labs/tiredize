@@ -38,6 +38,7 @@ dev = [
 ]
 release = [
   "build>=1.2",
+  "editables>=0.5",
   "hatch-vcs>=0.4",
   "hatchling>=1.25",
 ]

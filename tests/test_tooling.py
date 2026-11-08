@@ -540,6 +540,30 @@ class TestLockFile:
                                    RUNTIME_DEPENDENCIES) + 1
 
 
+# Asked in a child process, from the repository root where hatchling
+# reads pyproject.toml, as `build` and an editable install ask it.
+_ASK_HATCHLING = (
+    "import hatchling.build as b, json; "
+    "print(json.dumps([r for k in ('wheel', 'sdist', 'editable') "
+    "for r in getattr(b, f'get_requires_for_build_{k}')()]))"
+)
+
+
+class TestBuildRequirementsAreLocked:
+    """With build isolation off, nothing fetches what the build asks for."""
+
+    def test_every_requirement_hatchling_reports_is_locked(self):
+        import json
+        out = subprocess.run(
+            [sys.executable, "-c", _ASK_HATCHLING],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=True,
+        ).stdout
+        reported = {_requirement_name(r) for r in json.loads(out)}
+        assert reported, "hatchling reported no editable-build requirement"
+        assert reported <= set(_lock_packages()), reported
+        assert reported <= _group_packages("release"), reported
+
+
 # --- The workflows ------------------------------------------------------
 
 

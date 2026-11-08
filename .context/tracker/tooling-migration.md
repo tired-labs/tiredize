@@ -1,10 +1,10 @@
 ---
-assignee: qa-engineer
+assignee: software-engineer
 created: 2026-11-06
 knowledge: []
 priority: high
-status: blocked
-step: acceptance-verification
+status: in-progress
+step: implementation
 tags: []
 type: refactor
 workflow: software-engineering
