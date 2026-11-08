@@ -284,7 +284,9 @@ on TestPyPI before changing any tag.
 
 ## Open Questions
 
-- The `pypi` and `testpypi` environments are set by hand. Bringing them
-  under `iac-github` needs its repository module to support tag
-  deployment rules and required reviewers; that work belongs to
-  `iac-github`.
+- The `pypi` and `testpypi` environments are set by hand. `iac-github`
+  pull request #37 brings them under Terraform with the same settings
+  (`v*` tags and a required reviewer on `pypi`, no protection on
+  `testpypi`); it is open, not yet merged or applied. Once it is
+  applied, the Environments section above changes to say so and this
+  question closes.
