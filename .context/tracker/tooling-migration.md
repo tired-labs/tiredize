@@ -1,10 +1,10 @@
 ---
-assignee: proofreader
+assignee: workflow-owner
 created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: documentation-review
+step: closeout
 tags: []
 type: refactor
 workflow: software-engineering
@@ -76,7 +76,7 @@ This issue updates these wiki pages:
       `tests/linter/rules/` lack them
 - [x] CI passes on the pull request, and a manual `Release` run on the
       branch builds and passes the TestPyPI install check
-- [ ] The CI, testing and releasing wiki pages describe the dependency
+- [x] The CI, testing and releasing wiki pages describe the dependency
       groups, `uv.lock` and the command that regenerates it,
       Dependabot's `uv` updates, and the local setup command
 
