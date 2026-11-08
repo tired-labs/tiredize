@@ -553,19 +553,6 @@ Changes: [CI](../wiki/practices/ci.md)
   SAML is inherited from GitHub sign-in, which needs GitHub
   Enterprise Cloud; the org is on Team, so SAML is not a factor.
 
-### wiki-uv-references
-
-Update the wiki pages `tooling-migration` left out of scope.
-[installing and running](../wiki/operations/installing-and-running.md)
-still shows `pip install -e .` for running from a clone, where the
-contributor setup is now `uv sync`, and
-[layout](../wiki/repository/layout.md) does not list `uv.lock` or
-`.github/dependabot.yml`. [releasing](../wiki/operations/releasing.md)
-also still names `pip install -e .` for the editable install. Raised by
-the technical-architect and ghostwriter on `tooling-migration`.
-
-Changes: [installing and running](../wiki/operations/installing-and-running.md), [layout](../wiki/repository/layout.md), [releasing](../wiki/operations/releasing.md)
-
 ### doc-decision-wiki-sweep
 
 Have the architecture review's documentation decision also search the

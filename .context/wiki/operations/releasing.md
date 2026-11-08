@@ -49,10 +49,10 @@ raw-options = { local_scheme = "no-local-version" }
   a source tree with neither git metadata nor an sdist's `PKG-INFO`,
   such as a GitHub "Download ZIP" archive, fails rather than invent a
   number. An unpacked sdist builds with the version in its `PKG-INFO`.
-- **The installed version is fixed at install time.** An editable
-  install (`pip install -e .`) records the version current when it ran;
+- **The installed version is fixed at install time.** The editable
+  install `uv sync` makes records the version current when it ran;
   `tiredize --version` keeps reporting it after later commits or tags
-  until the install is repeated.
+  until it is reinstalled with `uv sync --reinstall-package tiredize`.
 
 ## Release Workflow
 

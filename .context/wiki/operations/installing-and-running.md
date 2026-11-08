@@ -27,17 +27,21 @@ PyPI holds only releases; the dev versions of practice runs go to
 TestPyPI. A release reaches PyPI only when a `vX.Y.Z` tag is pushed and
 its publication approved.
 
-To run the code in a clone, install it in editable mode:
+To run the code in a clone, set it up with
+[uv](https://docs.astral.sh/uv/). `uv sync` creates a `.venv` and
+installs tiredize in editable mode with the development tools at the
+versions in `uv.lock` (see [CI](../practices/ci.md)):
 
 ```bash
 git clone https://github.com/tired-labs/tiredize.git
 cd tiredize
-pip install -e .
+uv sync
 ```
 
 A clone needs its tags for the version to be right (see
 [releasing](./releasing.md)); `git clone` fetches them, a shallow clone
-may not. The editable install keeps the version it had when it ran.
+may not. The editable install keeps the version it had when it ran,
+until `uv sync --reinstall-package tiredize` reinstalls it.
 
 ## Running
 

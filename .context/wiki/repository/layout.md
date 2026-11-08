@@ -18,10 +18,14 @@ tiredize/                 the package
 tests/                    mirrors tiredize/
 └── test_cases/           shared fixture documents and rules files
 .github/workflows/        CI and release workflows
+.github/dependabot.yml    weekly update PRs for Actions and uv.lock
 .context/wiki/            this wiki
 .context/tracker/         work not yet done (backlog.md, issue files)
-pyproject.toml            package metadata, dependencies, console script,
-                          version source (hatch-vcs)
+pyproject.toml            package metadata, dependencies, dependency
+                          groups, console script, version source
+                          (hatch-vcs), uv settings
+uv.lock                   exact versions and hashes of every package
+                          CI, releases and `uv sync` install
 README.md                 the user guide
 ```
 
@@ -45,8 +49,9 @@ Each component page under `components/` lists its own files.
   page, plus a `Section` field and, if rules should see it, an entry in
   the element vocabulary.
 - **Runtime dependencies** are declared in `pyproject.toml`:
-  `PyYAML>=6.0` and `requests>=2.32.5`. Development tools (pytest, pytest-cov, flake8) are not
-  declared there; CI installs them by name (see [CI](../practices/ci.md)).
+  `PyYAML>=6.0` and `requests>=2.32.5`. Development and release tools
+  are declared there as dependency groups (`dev`, `release`,
+  `coverage`) and installed from `uv.lock` (see [CI](../practices/ci.md)).
 
 ## Design Decisions
 
