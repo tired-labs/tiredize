@@ -1,10 +1,10 @@
 ---
-assignee: technical-architect
+assignee: ghostwriter
 created: 2026-11-06
 knowledge: []
 priority: high
 status: in-progress
-step: architecture-review
+step: user-documentation
 tags: []
 type: refactor
 workflow: software-engineering
